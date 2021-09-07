@@ -52,7 +52,9 @@ getImplants <- function(){
     rename(VendorName = Name.y) %>%
     rename(Material = Name.x.x) %>%
     rename(ExtractionReason = Name.y.y) %>%
-    mutate(ImplantName = iconv(ImplantName,'UTF-8', 'ASCII', sub="byte"), " ", 1)
+    mutate(ImplantName = as.factor(iconv(ImplantName,'UTF-8', 'ASCII', sub="byte"))) %>%
+    mutate_if(is.character, as.factor) %>%
+    mutate(Position = as.factor(Position))
   
   DBI::dbDisconnect(con)
   

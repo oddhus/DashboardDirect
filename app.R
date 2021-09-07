@@ -41,7 +41,8 @@ ui <- dashboardPage(
             box(plotOutput("plot2", height = 300)),
             box(
                 title = "Controls",
-                htmlOutput("selectImplants")
+                htmlOutput("selectImplants"),
+                htmlOutput("selectFactor")
             )
         )
     )
@@ -70,10 +71,17 @@ server <- function(input, output, session) {
     
     output$selectImplants <- renderUI({
         selectInput("select2",
-                    "Select Implants",
-                    choices  = unique(implants()$ImplantName),
-                    selected = implants()$ImplantName[1],
+                    "Select",
+                    choices  = unique(implants()[[input$select3]]),
                     multiple = TRUE)
+    })
+    
+    output$selectFactor <- renderUI({
+        selectInput("select3",
+                    "Select Factor",
+                    choices  = implants() %>% select_if(is.factor) %>% names(),
+                    selected = "Position"
+                    )
     })
     
     output$plot1 <- renderPlot({
@@ -85,22 +93,26 @@ server <- function(input, output, session) {
     })
     
     output$plot2 <- renderPlot({
+      
+        
         filteredData <- implants() %>%
             #Filter data based on input values
-            filter(grepl(paste(input$select2, collapse = "|"), ImplantName))
+            filter(grepl(paste(input$select2, collapse = "|"),  !!sym(input$select3)))
         
         Complications <- filteredData %>% 
-            group_by(ImplantName) %>%
+            group_by_at(input$select3) %>%
             summarise(n = sum(Complications, na.rm = TRUE)) %>%
             mutate(Status = factor("Complications"))
         
         Success <- filteredData %>% 
-            group_by(ImplantName) %>%
+            group_by_at(input$select3) %>%
             summarise(n = sum(Complications, na.rm = FALSE)) %>%
             mutate(Status = factor("Success"))
         
+        print(Complications)
+        
         rbind(Complications, Success) %>%
-            ggplot(aes(x = ImplantName, y=n, col=Status)) +
+            ggplot(aes_string(x=input$select3, y="n", fill="Status")) +
             geom_col()
     })
 }
