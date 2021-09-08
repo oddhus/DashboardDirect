@@ -2,14 +2,44 @@ library(dplyr)
 library(dbplyr)
 library(stringr)
 
-getInsertions <- function(){
+getEnvs <- function(){
+  path <- getwd()
+  env <- readLines(paste(path, "/env.txt", sep = ""))
+  env.vars <- do.call(rbind, strsplit(sub("=", "\n", env), "\n"))
+  env.vars <- as.list(structure(env.vars[,2], names = env.vars[,1]))
+  return(env.vars)
+}
+
+getCon <- function(){
+  env <- getEnvs()
+  con <- DBI::dbConnect(
+    odbc::odbc(),
+    Driver = env$DRIVER, #"SQL Server",
+    Server = env$SERVER, #localhost\\SQLEXPRESS
+    Database = "DentalImplants", #"DentalImplants",
+    Uid = env$UID,
+    Pwd = env$PWD,
+  )
+
+  return(con)
+}
+
+getLocalCon <- function(){
+  env <- getEnvs()
   con <- DBI::dbConnect(
     odbc::odbc(),
     Driver = "SQL Server",
     Server = "localhost\\SQLEXPRESS",
     Database = "DentalImplants",
-    options(connectionObserver = NULL)
   )
+  
+  return(con)
+}
+
+
+
+getInsertions <- function(){
+  con <- getCon()
   
   insertion <- tbl(con, "Insertion")
   antibiotics <-  tbl(con, "Antibiotics")
@@ -22,13 +52,7 @@ getInsertions <- function(){
 }
 
 getImplants <- function(){
-  con <- DBI::dbConnect(
-    odbc::odbc(),
-    Driver = "SQL Server",
-    Server = "localhost\\SQLEXPRESS",
-    Database = "DentalImplants",
-    options(connectionObserver = NULL)
-  )
+  con <- getCon()
   
   implant <- tbl(con, "Implant")
   extractionReason <- tbl(con, "ExtractionReason")
