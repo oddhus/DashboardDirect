@@ -49,7 +49,8 @@ RUN Rscript -e 'renv::restore()'
 
 ## app folder
 #COPY /shiny-app/ ./app
-COPY ./shiny-app/* /srv/shiny-server/
+COPY ./shiny-app/app.R /srv/shiny-server/
+COPY ./shiny-app/* /srv/shiny-server/shiny-app/
 COPY /env.txt ./srv/shiny-server/
 
 # expose port

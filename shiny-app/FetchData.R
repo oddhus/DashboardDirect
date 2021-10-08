@@ -38,7 +38,7 @@ getLocalCon <- function() {
 
 
 getInsertions <- function() {
-  con <- getLocalCon()
+  con <- getCon()
 
   insertion <- tbl(con, "Insertion")
   antibioticsRelation <- tbl(con, "AntibioticsRelation")
@@ -55,7 +55,7 @@ getInsertions <- function() {
 }
 
 getImplants <- function() {
-  con <- getLocalCon()
+  con <- getCon()
 
   implant <- tbl(con, "Implant")
   extractionReason <- tbl(con, "ExtractionReason")

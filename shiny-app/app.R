@@ -29,19 +29,28 @@ ui <- dashboardPage(
         # Boxes need to be put in a row (or column)
         fluidRow(
           box(
-            plotOutput("plot1", height = 250) %>% withSpinner()
+            title = "Antibiotic Plot", status = "primary",
+            plotOutput("plot1", height = 250) %>% withSpinner(),
+            width = 9
           ),
           box(
-            title = "Controls",
-            htmlOutput("selectClincNames")
-          )
+            status = "info",
+            htmlOutput("selectClincNames"),
+            width = 3
+          ),
         ),
         fluidRow(
-          box(plotOutput("plot2", height = 300) %>% withSpinner()),
           box(
+            status = "primary",
+            plotOutput("plot2", height = 300) %>% withSpinner(),
+            width = 9
+          ),
+          box(
+            status = "info",
             title = "Controls",
             htmlOutput("selectFactor"),
-            htmlOutput("selectImplants")
+            htmlOutput("selectImplants"),
+            width = 3
           )
         )
       ),
@@ -52,8 +61,13 @@ ui <- dashboardPage(
         fluidRow(
           box(
             htmlOutput("selectClincNamesTab2"),
+            width = 6
           ),
-          valueBoxOutput("complicationBox")
+          valueBoxOutput("complicationBox", width = 3),
+          valueBoxOutput("insertionsBox", width = 3),
+        ),
+        fluidRow(
+          box(plotOutput("complicationsPlot", height = 300) %>% withSpinner(), width = 12)
         ),
         fluidRow(
           box(
@@ -131,6 +145,10 @@ server <- function(input, output, session) {
     complicationsInfo(insertionsWithImplants, input$selectClinicTab2)
   })
 
+  output$insertionsBox <- renderValueBox({
+    insertionsInfo(insertionsWithImplants, input$selectClinicTab2)
+  })
+
   output$clinicOverTime <- renderPlot({
     clinicPlot(insertionsWithImplants, input$selectClinicTab2, input$variable, ranges$x)
   })
@@ -144,6 +162,10 @@ server <- function(input, output, session) {
     } else {
       ranges$x <- NULL
     }
+  })
+
+  output$complicationsPlot <- renderPlot({
+    complicationsPlot(insertionsWithImplants, input$selectClinicTab2)
   })
 }
 
