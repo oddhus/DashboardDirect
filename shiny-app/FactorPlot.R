@@ -40,7 +40,7 @@ factorPlot <- function(implants, selectedFactor, selectedInsertionAttribute) {
       geom_text(aes(0, 0, label = "N/A")) +
       xlab(NULL)
   } else {
-    filteredData <- implants %>%
+    implants %>%
       # Filter data based on input values
       filter(
         case_when(
@@ -56,20 +56,11 @@ factorPlot <- function(implants, selectedFactor, selectedInsertionAttribute) {
             !!sym(selectedFactor)
           )
         )
-      )
-
-    Complications <- filteredData %>%
+      ) %>%
       group_by_at(selectedFactor) %>%
-      summarise(n = sum(Complications, na.rm = TRUE)) %>%
-      mutate(Status = factor("Complications"))
-
-    Success <- filteredData %>%
-      group_by_at(selectedFactor) %>%
-      summarise(n = sum(Complications, na.rm = FALSE)) %>%
-      mutate(Status = factor("Success"))
-
-    rbind(Complications, Success) %>%
-      ggplot(aes_string(x = selectedFactor, y = "n", fill = "Status")) +
-      geom_col()
+      summarise(percentageComp = sum(Complications, na.rm = TRUE) / n() * 100) %>%
+      ggplot(aes_string(x = selectedFactor, y = "percentageComp")) +
+      geom_col() +
+      ylab("Complication Percentage")
   }
 }

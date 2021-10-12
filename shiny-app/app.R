@@ -6,12 +6,13 @@ library(ggplot2)
 library(dplyr)
 library(tidyr)
 library(lubridate)
+library(patchwork)
 source("shiny-app/FetchData.R")
 source("shiny-app/Utils.R")
 source("shiny-app/AntibioticPlot.R")
 source("shiny-app/FactorPlot.R")
 source("shiny-app/ClinicInfo.R")
-
+source("shiny-app/ImplantPlot.R")
 
 ui <- dashboardPage(
   dashboardHeader(title = "Tooth implants"),
@@ -29,30 +30,62 @@ ui <- dashboardPage(
         # Boxes need to be put in a row (or column)
         fluidRow(
           box(
-            title = "Antibiotic Plot", status = "primary",
-            plotOutput("plot1", height = 250) %>% withSpinner(),
-            width = 9
+            status = "info",
+            selectInput("PositionSelect", choices = seq(1, 100, by = 1), label = "Select Position"),
+            width = 3
           ),
           box(
-            status = "info",
-            htmlOutput("selectClincNames"),
-            width = 3
+            title = "Implant Characteristics Complications",
+            status = "primary",
+            plotOutput("implantDiamterLength") %>% withSpinner(),
+            width = 9
           ),
         ),
         fluidRow(
-          box(
-            status = "primary",
-            plotOutput("plot2", height = 300) %>% withSpinner(),
-            width = 9
-          ),
           box(
             status = "info",
             title = "Controls",
             htmlOutput("selectFactor"),
             htmlOutput("selectImplants"),
             width = 3
+          ),
+          box(
+            status = "primary",
+            plotOutput("plot2", height = 300) %>% withSpinner(),
+            width = 9
+          ),
+        ),
+        fluidRow(
+          box(
+            status = "info",
+            sliderInput(
+              "highlightPercentage",
+              label = "Show id of implant with complication percentage or higher",
+              min = 15, max = 100, value = 50
+            ),
+            width = 3
+          ),
+          box(
+            title = "",
+            status = "primary",
+            plotOutput("implantComplications") %>% withSpinner(),
+            width = 9,
           )
-        )
+        ),
+        fluidRow(
+          box(
+            status = "info",
+            title = "Select Implant",
+            htmlOutput("selectImplantName"),
+            width = 3
+          ),
+          box(
+            title = "Implant models' complication percentage",
+            status = "primary",
+            plotOutput("LotNrComplication") %>% withSpinner(),
+            width = 9,
+          )
+        ),
       ),
       # Second tab content
       tabItem(
@@ -105,29 +138,42 @@ server <- function(input, output, session) {
   insertionsWithImplants <- implants %>% left_join(insertions, by = c("InsertionId" = "Id"))
 
   # Tab 1
-  output$selectClincNames <- renderUI({
-    selectInput("select1",
-      "Select Clinic",
-      choices  = unique(insertions$ClinicId),
-      multiple = TRUE,
-    )
+  ## Length and diamter plot
+  output$implantComplications <- renderPlot({
+    implantComplicationPlot(insertionsWithImplants, input$highlightPercentage)
   })
 
+  output$implantDiamterLength <- renderPlot({
+    implantLengthDiameterPlot(insertionsWithImplants, input$PositionSelect, "Length") +
+      implantLengthDiameterPlot(insertionsWithImplants, input$PositionSelect, "Diameter")
+  })
+
+  ## Factor plot
+  output$selectImplants <- renderUI({
+    selectInsertionAttributeControl(implants, input$selectFactorControl)
+  })
 
   output$selectFactor <- renderUI({
     selectFactorControl(implants)
   })
 
-  output$selectImplants <- renderUI({
-    selectInsertionAttributeControl(implants, input$selectFactorControl)
-  })
-
-  output$plot1 <- renderPlot({
-    antibioticPlot(insertions, input$select1)
-  })
-
   output$plot2 <- renderPlot({
     factorPlot(implants, input$selectFactorControl, input$selectInsertionAttributeControl)
+  })
+
+
+  ## LotNr Complications plot
+  output$selectImplantName <- renderUI({
+    selectInput("LotNrImplantSelect",
+      "Select Implant",
+      choices  = unique(implants$ImplantName),
+      selected = "None",
+      multiple = F,
+    )
+  })
+
+  output$LotNrComplication <- renderPlot({
+    lotNrComplications(insertionsWithImplants, input$LotNrImplantSelect)
   })
 
   # Tab 2

@@ -54,7 +54,9 @@ complicationsPlot <- function(insertionsWithImplants, selectedClinic) {
     geom_point() +
     geom_smooth() +
     scale_x_date(NULL, date_labels = "%b %y", breaks = scales::breaks_width("1 year")) +
-    ylab("Complication Percentage")
+    ylab("Complication Percentage")+
+    xlab("Date") + 
+    theme_minimal()
 }
 
 
