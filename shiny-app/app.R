@@ -77,13 +77,19 @@ ui <- dashboardPage(
             status = "info",
             title = "Select Implant",
             htmlOutput("selectImplantName"),
-            width = 3
+            width = 2
           ),
           box(
             title = "Implant models' complication percentage",
             status = "primary",
             plotOutput("LotNrComplication") %>% withSpinner(),
-            width = 9,
+            width = 8,
+          ),
+          box(
+            title = "Fisher Test",
+            status = "info",
+            textOutput("LotNrFisherTest") %>% tagAppendAttributes(style = "white-space:pre-wrap;"),
+            width = 2
           )
         ),
       ),
@@ -176,6 +182,10 @@ server <- function(input, output, session) {
     lotNrComplications(insertionsWithImplants, input$LotNrImplantSelect)
   })
 
+  output$LotNrFisherTest <- renderText({
+    lotNrFisherTest(insertionsWithImplants, input$LotNrImplantSelect)
+  })
+
   # Tab 2
   ranges <- reactiveValues(x = NULL)
 
@@ -204,7 +214,10 @@ server <- function(input, output, session) {
   observeEvent(input$clinicOverTime_click, {
     brush <- input$clinicOverTime_brush
     if (!is.null(brush)) {
-      ranges$x <- c(as.Date(brush$xmin, origin = "1970-01-01"), as.Date(brush$xmax, origin = "1970-01-01"))
+      ranges$x <- c(
+        as.Date(brush$xmin, origin = "1970-01-01"),
+        as.Date(brush$xmax, origin = "1970-01-01")
+      )
     } else {
       ranges$x <- NULL
     }

@@ -72,3 +72,27 @@ lotNrComplications <- function(insertionsWithImplants, selectedName) {
       )
   }
 }
+
+lotNrFisherTest <- function(insertionsWithImplants, selectedName) {
+  if (is.null(selectedName) | is.null(insertionsWithImplants)) {
+    "Unable to calculate"
+  } else {
+    fisher <- insertionsWithImplants %>%
+      filter(ImplantName == selectedName) %>%
+      group_by(LotNr, Complications) %>%
+      summarize(n = n()) %>%
+      pivot_wider(names_from = LotNr, values_from = n, values_fill = 0) %>%
+      fisher.test()
+
+    strpval <- paste0(
+      "p-value: ",
+      round(fisher$p.value, 4)
+    )
+    strconc <- paste0(
+      if (fisher$p.value < 0.05) "S" else "No s",
+      "ignificant difference in complications between LotNr"
+    )
+
+    return(paste(strpval, strconc, sep = "\n"))
+  }
+}
