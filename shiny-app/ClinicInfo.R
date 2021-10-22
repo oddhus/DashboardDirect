@@ -6,10 +6,10 @@ library(lubridate)
 complicationsInfo <- function(insertionsWithImplants, selectedClinic) {
   if (!is.null(selectedClinic)) {
     ClinicInfo <- insertionsWithImplants %>%
-      group_by(ClinicId, Complications) %>%
+      group_by(Clinic, Complications) %>%
       summarise(cnt = n()) %>%
       mutate(freq = round(cnt / sum(cnt), 3)) %>%
-      filter(ClinicId == selectedClinic & Complications)
+      filter(Clinic == selectedClinic & Complications)
 
     return(valueBox(
       paste0(100 * ClinicInfo$freq, "%"),
@@ -29,9 +29,9 @@ complicationsInfo <- function(insertionsWithImplants, selectedClinic) {
 
 insertionsInfo <- function(insertionsWithImplants, selectedClinic) {
   ClinicInfo <- insertionsWithImplants %>%
-    group_by(ClinicId) %>%
+    group_by(Clinic) %>%
     summarise(cnt = n()) %>%
-    filter(ClinicId == selectedClinic)
+    filter(Clinic == selectedClinic)
 
   return(valueBox(
     ClinicInfo$cnt,
@@ -43,7 +43,7 @@ insertionsInfo <- function(insertionsWithImplants, selectedClinic) {
 
 complicationsPlot <- function(insertionsWithImplants, selectedClinic) {
   insertionsWithImplants %>%
-    filter(ClinicId == selectedClinic) %>%
+    filter(Clinic == selectedClinic) %>%
     # Group by month
     group_by(month = floor_date(InsertionDate, unit = "month")) %>%
     # Sum all occurrences during the particular months
@@ -69,7 +69,7 @@ clinicPlot <- function(insertionsWithImplants, selectedClinic, selectedVariables
   } else {
     insertionsWithImplants %>%
       # Filter selected clinic
-      filter(ClinicId == selectedClinic) %>%
+      filter(Clinic == selectedClinic) %>%
       # Group by month
       group_by(month = floor_date(InsertionDate, unit = "month")) %>%
       # Sum all occurrences during the particular months

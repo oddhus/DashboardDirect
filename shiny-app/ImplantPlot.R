@@ -26,16 +26,16 @@ implantLengthDiameterPlot <- function(insertionsWithImplants, selectedPosition, 
 
 implantComplicationPlot <- function(insertionsWithImplants, threshold) {
   insertionsWithImplants %>%
-    group_by(ImplantsId) %>%
+    group_by(ImplantName) %>%
     summarise(
       percentageComp = sum(Complications, na.rm = TRUE) / n() * 100,
       n = n()
     ) %>%
-    ggplot(aes(x = ImplantsId, y = percentageComp)) +
+    ggplot(aes(x = ImplantName, y = percentageComp)) +
     geom_point(aes(size = n)) +
     gghighlight::gghighlight(
       percentageComp > threshold,
-      label_key = ImplantsId,
+      label_key = ImplantName,
       use_direct_label = FALSE
     ) +
     labs(
@@ -43,7 +43,7 @@ implantComplicationPlot <- function(insertionsWithImplants, threshold) {
       y = "Complication Percentage",
       x = "Implant id"
     ) +
-    geom_label(aes(label = ImplantsId),
+    geom_label(aes(label = ImplantName),
       hjust = 1, vjust = 1, fill = "purple", colour = "white", alpha = 0.5
     )
 }

@@ -2,16 +2,76 @@ library(ggplot2)
 library(dplyr)
 library(shiny)
 
+
+optionsToRemove <- c("LotNr", "RefNr")
+
+selectLabels <- function(col) is.factor(col) | is.logical(col)
+
+selectYAxisControl <- function(implants) {
+  selectInput("selectYAxisControl",
+    "Select Y-axis",
+    choices = case_when(
+      is.null(implants) ~ c("Loading..."),
+      T ~ implants %>%
+        select_if(selectLabels) %>%
+        names()
+    ),
+    selected = "Complications"
+  )
+}
+
 selectFactorControl <- function(implants) {
   selectInput("selectFactorControl",
     "Select Factor",
     choices = case_when(
       is.null(implants) ~ c("Loading..."),
       T ~ implants %>%
-        select_if(is.factor) %>%
+        select(where(is.factor)) %>%
         names()
     ),
     selected = "Position"
+  )
+}
+
+selectColorControl <- function(implants) {
+  selectInput("selectColorControl",
+    "Select Color",
+    choices = case_when(
+      is.null(implants) ~ c("Loading..."),
+      T ~ implants %>%
+        select(where(selectLabels) & !any_of(optionsToRemove)) %>%
+        names()
+    ),
+    selected = NULL,
+    multiple = T
+  )
+}
+
+selectFacetRowControl <- function(implants) {
+  selectInput("selectFacetRowControl",
+    "Select Facet Row",
+    choices = case_when(
+      is.null(implants) ~ c("Loading..."),
+      T ~ implants %>%
+        select(where(selectLabels) & !any_of(optionsToRemove)) %>%
+        names()
+    ),
+    selected = NULL,
+    multiple = T
+  )
+}
+
+selectFacetColControl <- function(implants) {
+  selectInput("selectFacetColControl",
+    "Select Facet Col",
+    choices = case_when(
+      is.null(implants) ~ c("Loading..."),
+      T ~ implants %>%
+        select(where(selectLabels) & !any_of(optionsToRemove)) %>%
+        names()
+    ),
+    selected = NULL,
+    multiple = T
   )
 }
 
@@ -33,7 +93,13 @@ selectInsertionAttributeControl <- function(implants, selectedFactor) {
 }
 
 
-factorPlot <- function(implants, selectedFactor, selectedInsertionAttribute) {
+factorPlot <- function(implants,
+                       selectedYAxis,
+                       selectedFactor,
+                       selectedInsertionAttribute,
+                       selectedColorFactor,
+                       selectedFacetRowFactor,
+                       selectedFacetColFactor) {
   if (is.null(implants) | length(selectedFactor) == 0) {
     ggplot() +
       theme_void() +
@@ -57,10 +123,32 @@ factorPlot <- function(implants, selectedFactor, selectedInsertionAttribute) {
           )
         )
       ) %>%
-      group_by_at(selectedFactor) %>%
-      summarise(percentageComp = sum(Complications, na.rm = TRUE) / n() * 100) %>%
-      ggplot(aes_string(x = selectedFactor, y = "percentageComp")) +
+      group_by_at(
+        c(
+          selectedFacetRowFactor,
+          selectedFacetColFactor,
+          selectedFactor,
+          selectedColorFactor
+        )
+      ) %>%
+      summarise(
+        percentageComp = sum(
+          if (is.null(selectedYAxis)) Complications else !!sym(selectedYAxis),
+          na.rm = TRUE
+        ) / n() * 100
+      ) %>%
+      ggplot(
+        aes_string(
+          x = selectedFactor,
+          y = "percentageComp",
+          fill = selectedColorFactor
+        )
+      ) +
       geom_col() +
-      ylab("Complication Percentage")
+      facet_grid(
+        rows = if (is.null(selectedFacetRowFactor)) NULL else vars(!!sym(selectedFacetRowFactor)),
+        col = if (is.null(selectedFacetColFactor)) NULL else vars(!!sym(selectedFacetColFactor))
+      ) +
+      ylab(paste(selectedYAxis, "Percentage", sep = " "))
   }
 }

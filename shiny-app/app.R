@@ -19,7 +19,8 @@ ui <- dashboardPage(
   dashboardSidebar(
     sidebarMenu(
       menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
-      menuItem("Clinic", tabName = "clinic", icon = icon("th"))
+      menuItem("Clinic", tabName = "clinic", icon = icon("th")),
+      menuItem("Explorer", tabName = "explorer", icon = icon("plane"))
     )
   ),
   dashboardBody(
@@ -38,20 +39,6 @@ ui <- dashboardPage(
             title = "Implant Characteristics Complications",
             status = "primary",
             plotOutput("implantDiamterLength") %>% withSpinner(),
-            width = 9
-          ),
-        ),
-        fluidRow(
-          box(
-            status = "info",
-            title = "Controls",
-            htmlOutput("selectFactor"),
-            htmlOutput("selectImplants"),
-            width = 3
-          ),
-          box(
-            status = "primary",
-            plotOutput("plot2", height = 300) %>% withSpinner(),
             width = 9
           ),
         ),
@@ -133,6 +120,29 @@ ui <- dashboardPage(
             ),
           )
         )
+      ),
+      tabItem(
+        tabName = "explorer",
+        h2("Data explorer"),
+        plotOutput("plot2", height = "500px") %>% withSpinner(),
+        hr(),
+        fluidRow(
+          column(
+            3,
+            htmlOutput("selectYAxis"),
+          ),
+          column(
+            4,
+            htmlOutput("selectFactor"),
+            htmlOutput("selectImplants"),
+            htmlOutput("selectColor"),
+          ),
+          column(
+            4,
+            htmlOutput("selectFacetRow"),
+            htmlOutput("selectFacetCol"),
+          ),
+        ),
       )
     )
   )
@@ -141,7 +151,9 @@ ui <- dashboardPage(
 server <- function(input, output, session) {
   insertions <- getInsertions()
   implants <- getImplants()
-  insertionsWithImplants <- implants %>% left_join(insertions, by = c("InsertionId" = "Id"))
+  insertionsWithImplants <- implants %>%
+    left_join(insertions, by = c("InsertionId" = "Id")) %>%
+    rename(InsertionDate = InsertionDate.y)
 
   # Tab 1
   ## Length and diamter plot
@@ -153,20 +165,6 @@ server <- function(input, output, session) {
     implantLengthDiameterPlot(insertionsWithImplants, input$PositionSelect, "Length") +
       implantLengthDiameterPlot(insertionsWithImplants, input$PositionSelect, "Diameter")
   })
-
-  ## Factor plot
-  output$selectImplants <- renderUI({
-    selectInsertionAttributeControl(implants, input$selectFactorControl)
-  })
-
-  output$selectFactor <- renderUI({
-    selectFactorControl(implants)
-  })
-
-  output$plot2 <- renderPlot({
-    factorPlot(implants, input$selectFactorControl, input$selectInsertionAttributeControl)
-  })
-
 
   ## LotNr Complications plot
   output$selectImplantName <- renderUI({
@@ -192,8 +190,7 @@ server <- function(input, output, session) {
   output$selectClincNamesTab2 <- renderUI({
     selectInput("selectClinicTab2",
       "Select Clinic",
-      choices  = unique(insertions$ClinicId),
-      selected = 1
+      choices  = unique(insertions$Clinic)
     )
   })
 
@@ -225,6 +222,45 @@ server <- function(input, output, session) {
 
   output$complicationsPlot <- renderPlot({
     complicationsPlot(insertionsWithImplants, input$selectClinicTab2)
+  })
+
+
+  # Tab 3 - Data explorer
+  ## Factor plot
+  output$selectImplants <- renderUI({
+    selectInsertionAttributeControl(implants, input$selectFactorControl)
+  })
+
+  output$selectFactor <- renderUI({
+    selectFactorControl(implants)
+  })
+
+  output$selectColor <- renderUI({
+    selectColorControl(implants)
+  })
+
+  output$selectFacetRow <- renderUI({
+    selectFacetRowControl(implants)
+  })
+
+  output$selectFacetCol <- renderUI({
+    selectFacetColControl(implants)
+  })
+
+  output$selectYAxis <- renderUI({
+    selectYAxisControl(implants)
+  })
+
+  output$plot2 <- renderPlot({
+    factorPlot(
+      implants,
+      input$selectYAxisControl,
+      input$selectFactorControl,
+      input$selectInsertionAttributeControl,
+      input$selectColorControl,
+      input$selectFacetRowControl,
+      input$selectFacetColControl
+    )
   })
 }
 
