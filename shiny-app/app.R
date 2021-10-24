@@ -228,32 +228,32 @@ server <- function(input, output, session) {
   # Tab 3 - Data explorer
   ## Factor plot
   output$selectImplants <- renderUI({
-    selectInsertionAttributeControl(implants, input$selectFactorControl)
+    selectInsertionAttributeControl(insertionsWithImplants, input$selectFactorControl)
   })
 
   output$selectFactor <- renderUI({
-    selectFactorControl(implants)
+    selectFactorControl(insertionsWithImplants)
   })
 
   output$selectColor <- renderUI({
-    selectColorControl(implants)
+    selectColorControl(insertionsWithImplants)
   })
 
   output$selectFacetRow <- renderUI({
-    selectFacetRowControl(implants)
+    selectFacetRowControl(insertionsWithImplants)
   })
 
   output$selectFacetCol <- renderUI({
-    selectFacetColControl(implants)
+    selectFacetColControl(insertionsWithImplants)
   })
 
   output$selectYAxis <- renderUI({
-    selectYAxisControl(implants)
+    selectYAxisControl(insertionsWithImplants)
   })
 
   output$plot2 <- renderPlot({
     factorPlot(
-      implants,
+      insertionsWithImplants,
       input$selectYAxisControl,
       input$selectFactorControl,
       input$selectInsertionAttributeControl,

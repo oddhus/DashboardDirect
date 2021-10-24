@@ -132,6 +132,7 @@ factorPlot <- function(implants,
         )
       ) %>%
       summarise(
+        n = n(),
         percentageComp = sum(
           if (is.null(selectedYAxis)) Complications else !!sym(selectedYAxis),
           na.rm = TRUE
@@ -149,6 +150,7 @@ factorPlot <- function(implants,
         rows = if (is.null(selectedFacetRowFactor)) NULL else vars(!!sym(selectedFacetRowFactor)),
         col = if (is.null(selectedFacetColFactor)) NULL else vars(!!sym(selectedFacetColFactor))
       ) +
+      geom_text(aes(label = paste("n = ", n, sep = "")), vjust = -0.5) +
       ylab(paste(selectedYAxis, "Percentage", sep = " "))
   }
 }
