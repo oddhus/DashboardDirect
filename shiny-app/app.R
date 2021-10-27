@@ -18,15 +18,115 @@ ui <- dashboardPage(
   dashboardHeader(title = "Tooth implants"),
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
       menuItem("Clinic", tabName = "clinic", icon = icon("th")),
-      menuItem("Explorer", tabName = "explorer", icon = icon("plane"))
+      menuItem("Explorer", tabName = "explorer", icon = icon("plane")),
+      menuItem("Models", tabName = "models", icon = icon("dashboard"))
     )
   ),
   dashboardBody(
     tabItems(
+      # Second tab content
       tabItem(
-        tabName = "dashboard",
+        tabName = "clinic",
+        fluidRow(
+          column(
+            h3("Information"),
+            htmlOutput("selectClinicName"),
+            width = 6
+          ),
+          column(
+            valueBoxOutput("complicationBox", width = 6),
+            valueBoxOutput("insertionsBox", width = 6),
+            width = 6
+          )
+        ),
+        fluidRow(
+          column(
+            plotOutput("clinicComparePlot", height = 500) %>% withSpinner(),
+            width = 12
+          )
+        ),
+        fluidRow(column(12, h4("Options"))),
+        fluidRow(
+          column(
+            htmlOutput("selectYAxisClinic", width = 12),
+            htmlOutput("selectClinicCompare", width = 12),
+            width = 4
+          ),
+          column(
+            htmlOutput("selectCompareFactor", width = 12),
+            htmlOutput("selectCompareAttribute", width = 12),
+            width = 4
+          ),
+          column(
+            radioButtons("showMean", "Show mean values",
+              choiceNames = list("Yes", "No"),
+              choiceValues = list(T, F),
+              inline = T
+            ),
+            radioButtons("showXLab", "Show labels on x-axis",
+              choiceNames = list("Yes", "No"),
+              choiceValues = list(T, F),
+              inline = T
+            ),
+            width = 4
+          ),
+        )
+
+        # fluidRow(
+        #   box(plotOutput("complicationsPlot", height = 300) %>% withSpinner(), width = 12)
+        # ),
+        # fluidRow(
+        #   box(
+        #     plotOutput("clinicOverTime",
+        #       height = 400,
+        #       dblclick = "clinicOverTime_click",
+        #       brush = brushOpts(
+        #         id = "clinicOverTime_brush",
+        #         resetOnNew = TRUE
+        #       )
+        #     ) %>% withSpinner(),
+        #     width = 12
+        #   )
+        # ),
+        # fluidRow(
+        #   box(
+        #     selectInput("variable", "Variable:",
+        #       c(
+        #         "Insertions" = "insertions",
+        #         "Complications" = "complications",
+        #         "Antibiotics Pre Operation" = "antibioticsUsageBefore"
+        #       ),
+        #       multiple = TRUE
+        #     ),
+        #   )
+        # )
+      ),
+      tabItem(
+        tabName = "explorer",
+        h2("Data explorer"),
+        plotOutput("plot2", height = "500px") %>% withSpinner(),
+        hr(),
+        fluidRow(
+          column(
+            3,
+            htmlOutput("selectYAxis"),
+          ),
+          column(
+            4,
+            htmlOutput("selectFactor"),
+            htmlOutput("selectImplants"),
+            htmlOutput("selectColor"),
+          ),
+          column(
+            4,
+            htmlOutput("selectFacetRow"),
+            htmlOutput("selectFacetCol"),
+          ),
+        ),
+      ),
+      tabItem(
+        tabName = "models",
         # First tab content
         # Boxes need to be put in a row (or column)
         fluidRow(
@@ -79,70 +179,6 @@ ui <- dashboardPage(
             width = 2
           )
         ),
-      ),
-      # Second tab content
-      tabItem(
-        tabName = "clinic",
-        h2("Clinic Information"),
-        fluidRow(
-          box(
-            htmlOutput("selectClincNamesTab2"),
-            width = 6
-          ),
-          valueBoxOutput("complicationBox", width = 3),
-          valueBoxOutput("insertionsBox", width = 3),
-        ),
-        fluidRow(
-          box(plotOutput("complicationsPlot", height = 300) %>% withSpinner(), width = 12)
-        ),
-        fluidRow(
-          box(
-            plotOutput("clinicOverTime",
-              height = 400,
-              dblclick = "clinicOverTime_click",
-              brush = brushOpts(
-                id = "clinicOverTime_brush",
-                resetOnNew = TRUE
-              )
-            ) %>% withSpinner(),
-            width = 12
-          )
-        ),
-        fluidRow(
-          box(
-            selectInput("variable", "Variable:",
-              c(
-                "Insertions" = "insertions",
-                "Complications" = "complications",
-                "Antibiotics Pre Operation" = "antibioticsUsageBefore"
-              ),
-              multiple = TRUE
-            ),
-          )
-        )
-      ),
-      tabItem(
-        tabName = "explorer",
-        h2("Data explorer"),
-        plotOutput("plot2", height = "500px") %>% withSpinner(),
-        hr(),
-        fluidRow(
-          column(
-            3,
-            htmlOutput("selectYAxis"),
-          ),
-          column(
-            4,
-            htmlOutput("selectFactor"),
-            htmlOutput("selectImplants"),
-            htmlOutput("selectColor"),
-          ),
-          column(
-            4,
-            htmlOutput("selectFacetRow"),
-            htmlOutput("selectFacetCol"),
-          ),
-        ),
       )
     )
   )
@@ -187,42 +223,78 @@ server <- function(input, output, session) {
   # Tab 2
   ranges <- reactiveValues(x = NULL)
 
-  output$selectClincNamesTab2 <- renderUI({
-    selectInput("selectClinicTab2",
+  output$selectClinicName <- renderUI({
+    selectInput("selectClinic",
       "Select Clinic",
       choices  = unique(insertions$Clinic)
     )
   })
 
+  output$selectClinicCompare <- renderUI({
+    selectInput("selectClinicCompare",
+      "Clinics to compare against",
+      choices  = unique(insertions$Clinic),
+      multiple = T
+    )
+  })
+
+  output$selectCompareFactor <- renderUI({
+    selectCompareFactorControl(insertionsWithImplants)
+  })
+
+  output$selectCompareAttribute <- renderUI({
+    selectCompareAttributeControl(insertionsWithImplants, input$selectCompareFactorControl)
+  })
+
+  output$selectYAxisClinic <- renderUI({
+    selectYAxisClinicControl(insertionsWithImplants)
+  })
+
+  output$clinicComparePlot <- renderPlot({
+    clinicComparePlot(
+      insertionsWithImplants,
+      input$showMean,
+      input$showXLab,
+      input$selectClinic,
+      input$selectClinicCompare,
+      input$selectCompareFactorControl,
+      input$selectCompareAttributeControl,
+      input$selectYAxisClinicControl
+    )
+  })
+
   output$complicationBox <- renderValueBox({
-    complicationsInfo(insertionsWithImplants, input$selectClinicTab2)
+    complicationsInfo(insertionsWithImplants, input$selectClinic)
   })
 
   output$insertionsBox <- renderValueBox({
-    insertionsInfo(insertionsWithImplants, input$selectClinicTab2)
+    insertionsInfo(insertionsWithImplants, input$selectClinic)
   })
 
-  output$clinicOverTime <- renderPlot({
-    clinicPlot(insertionsWithImplants, input$selectClinicTab2, input$variable, ranges$x)
-  })
+
+
+  # output$clinicOverTime <- renderPlot({
+  #   clinicPlot(insertionsWithImplants, input$selectClinicTab2, input$variable, ranges$x)
+  # })
 
   # When a double-click happens, check if there's a brush on the plot.
   # If so, zoom to the brush bounds; if not, reset the zoom.
-  observeEvent(input$clinicOverTime_click, {
-    brush <- input$clinicOverTime_brush
-    if (!is.null(brush)) {
-      ranges$x <- c(
-        as.Date(brush$xmin, origin = "1970-01-01"),
-        as.Date(brush$xmax, origin = "1970-01-01")
-      )
-    } else {
-      ranges$x <- NULL
-    }
-  })
 
-  output$complicationsPlot <- renderPlot({
-    complicationsPlot(insertionsWithImplants, input$selectClinicTab2)
-  })
+  # observeEvent(input$clinicOverTime_click, {
+  #   brush <- input$clinicOverTime_brush
+  #   if (!is.null(brush)) {
+  #     ranges$x <- c(
+  #       as.Date(brush$xmin, origin = "1970-01-01"),
+  #       as.Date(brush$xmax, origin = "1970-01-01")
+  #     )
+  #   } else {
+  #     ranges$x <- NULL
+  #   }
+  # })
+  #
+  # output$complicationsPlot <- renderPlot({
+  #   complicationsPlot(insertionsWithImplants, input$selectClinicTab2)
+  # })
 
 
   # Tab 3 - Data explorer

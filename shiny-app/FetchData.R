@@ -35,8 +35,6 @@ getLocalCon <- function() {
   return(con)
 }
 
-
-
 getInsertions <- function() {
   con <- getCon()
 
@@ -65,6 +63,8 @@ getInsertions <- function() {
     rename(LekholmZarbDensity = Name.x.x) %>%
     rename(Method = Name.y.y) %>%
     rename(Clinic = Name) %>%
+    mutate(AntibioticsDoseMg = replace_na(AntibioticsDoseMg, 0)) %>%
+    mutate(AntibioticsDurationDays = replace_na(AntibioticsDurationDays, 0)) %>%
     mutate_if(is.character, as.factor) %>%
     select(-(ends_with("Id") & !starts_with("Id")))
 

@@ -13,7 +13,7 @@ selectYAxisControl <- function(implants) {
     choices = case_when(
       is.null(implants) ~ c("Loading..."),
       T ~ implants %>%
-        select_if(selectLabels) %>%
+        select_if(function(col) is.logical(col) | is.numeric(col)) %>%
         names()
     ),
     selected = "Complications"
@@ -26,7 +26,7 @@ selectFactorControl <- function(implants) {
     choices = case_when(
       is.null(implants) ~ c("Loading..."),
       T ~ implants %>%
-        select(where(is.factor)) %>%
+        select(where(is.factor) & !any_of(c("ComplicationsComment", "RefNr", "AntibioticsType"))) %>%
         names()
     ),
     selected = "Position"
@@ -133,24 +133,46 @@ factorPlot <- function(implants,
       ) %>%
       summarise(
         n = n(),
-        percentageComp = sum(
-          if (is.null(selectedYAxis)) Complications else !!sym(selectedYAxis),
-          na.rm = TRUE
-        ) / n() * 100
+        value = if_else(is.numeric(insertionsWithImplants[[selectedYAxis]]),
+          mean(!!sym(selectedYAxis)),
+          sum(!!sym(selectedYAxis), na.rm = TRUE) / n() * 100
+        ),
+        sd = if_else(is.numeric(insertionsWithImplants[[selectedYAxis]]),
+          sd(!!sym(selectedYAxis), na.rm = TRUE) / sqrt(n()),
+          NULL
+        )
       ) %>%
       ggplot(
         aes_string(
           x = selectedFactor,
-          y = "percentageComp",
+          y = "value",
           fill = selectedColorFactor
         )
       ) +
       geom_col() +
+      {
+        if (is.numeric(insertionsWithImplants[[selectedYAxis]])) {
+          geom_errorbar(aes(ymin = value - sd, ymax = value + sd), width = .3)
+        }
+      } +
       facet_grid(
         rows = if (is.null(selectedFacetRowFactor)) NULL else vars(!!sym(selectedFacetRowFactor)),
         col = if (is.null(selectedFacetColFactor)) NULL else vars(!!sym(selectedFacetColFactor))
       ) +
-      geom_text(aes(label = paste("n = ", n, sep = "")), vjust = -0.5) +
-      ylab(paste(selectedYAxis, "Percentage", sep = " "))
+      geom_text(
+        aes(
+          y = 0.5,
+          fontface = 2,
+          label = paste("n = ", n, sep = "")
+        ),
+        position = position_dodge(0.9),
+        angle = 90,
+        hjust = "left",
+        size = 4
+      ) +
+      ylab(if_else(is.numeric(insertionsWithImplants[[selectedYAxis]]),
+        selectedYAxis,
+        paste(selectedYAxis, "Percentage", sep = " ")
+      ))
   }
 }
