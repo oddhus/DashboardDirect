@@ -54,41 +54,58 @@ insertionsInfo <- function(insertionsWithImplants, selectedClinic) {
 }
 
 
-selectCompareFactorControl <- function(implants) {
-  selectInput("selectCompareFactorControl",
-    "Select Factor",
-    choices = case_when(
-      is.null(implants) ~ c("Loading..."),
-      T ~ implants %>%
-        select(
-          where(function(col) is.factor(col) | is.logical(col)) &
-            !any_of(c("ComplicationsComment", "RefNr", "LotNr"))
-        ) %>%
-        names()
-    ),
-    selected = "Position"
+selectClinicFacetRowControl <- function(implants) {
+  pickerInput("selectClinicFacetRowControl",
+    "Select Facet Row",
+    choices = if (is.null(implants)) {
+      NULL
+    } else {
+      c(
+        implants %>%
+          select(
+            where(function(col) is.factor(col) | is.logical(col)) &
+              !any_of(c("ComplicationsComment", "RefNr", "LotNr", "AntibioticsType"))
+          ) %>%
+          names(),
+        "None"
+      )
+    },
+    selected = "None"
+  )
+}
+
+selectSpecificFacetRowControl <- function(implants, selectedRow) {
+  pickerInput("selectSpecificFacetRowControl",
+    # Reactive label.
+    label = if (length(selectedRow) > 0) paste("Select", selectedRow, "") else "Awaiting input",
+    # Reactive choices.
+    choices = as.character(sort(unique(implants[[selectedRow]]))),
+    multiple = TRUE,
+    options = list(
+      `actions-box` = TRUE,
+      size = 10,
+      `selected-text-format` = "count > 3"
+    )
   )
 }
 
 selectCompareAttributeControl <- function(implants, selectedFactor) {
-  selectInput("selectCompareAttributeControl",
+  pickerInput("selectCompareAttributeControl",
     # Reactive label.
-    case_when(
-      length(selectedFactor) > 0 ~ paste("Select", selectedFactor, ""),
-      T ~ "Awaiting input"
-    ),
+    label = if (length(selectedFactor) > 0) paste("Select", selectedFactor, "") else "Awaiting input",
     # Reactive choices.
-    choices = case_when(
-      is.null(implants) ~ c("Loading"),
-      length(selectedFactor) == 0 ~ c("Select factor"),
-      T ~ as.character(unique(implants[[selectedFactor]]))
-    ),
-    multiple = TRUE
+    choices = as.character(sort(unique(implants[[selectedFactor]]))),
+    multiple = TRUE,
+    options = list(
+      `actions-box` = TRUE,
+      size = 10,
+      `selected-text-format` = "count > 3"
+    )
   )
 }
 
 selectYAxisClinicControl <- function(implants) {
-  selectInput("selectYAxisClinicControl",
+  pickerInput("selectYAxisClinicControl",
     "Select Y-axis",
     choices = case_when(
       is.null(implants) ~ c("Loading..."),
@@ -97,6 +114,20 @@ selectYAxisClinicControl <- function(implants) {
         names()
     ),
     selected = "Complications"
+  )
+}
+
+selectXAxisClinicControl <- function(implants) {
+  pickerInput("selectXAxisClinicControl",
+    "Select X-axis",
+    choices = case_when(
+      is.null(implants) ~ c("Loading..."),
+      T ~ implants %>%
+        select(where(is.factor) &
+          !any_of(c("ComplicationsComment", "RefNr", "LotNr", "AntibioticsType"))) %>%
+        names()
+    ),
+    selected = "Clinic"
   )
 }
 
@@ -121,34 +152,52 @@ complicationsPlot <- function(insertionsWithImplants, selectedClinic) {
 
 clinicComparePlot <- function(insertionsWithImplants,
                               showMean,
-                              showXLab,
+                              hideXLab,
                               selectedClinic,
                               compareClinic,
                               selectedFactor,
-                              selectedAttribute,
-                              selectedYAxis) {
+                              selectSpecificFacetRow,
+                              selectLevel,
+                              selectedYAxis,
+                              selectedXAxis) {
   MeanData <- NULL
 
   if (showMean) {
     MeanData <- insertionsWithImplants %>%
+      # Filter X-axis to only show selected levels
       filter(
-        case_when(
-          # When no input is selected show all
-          is.null(selectedAttribute) ~ TRUE,
-          # Otherwise only selected factors
-          T ~ grepl(
+        if (is.null(selectLevel)) {
+          TRUE
+        } else {
+          grepl(
             paste(
-              paste("^", selectedAttribute, "$", sep = ""),
+              paste("^", selectLevel, "$", sep = ""),
+              collapse = "|"
+            ),
+            # Vector where matches are sought. Need to be dynamic
+            !!sym(selectedXAxis)
+          )
+        }
+      ) %>%
+      # Filter Facets
+      filter(
+        if (is.null(selectSpecificFacetRow)) {
+          TRUE
+        } else {
+          grepl(
+            paste(
+              paste("^", selectSpecificFacetRow, "$", sep = ""),
               collapse = "|"
             ),
             # Vector where matches are sought. Need to be dynamic
             !!sym(selectedFactor)
           )
-        )
+        }
       ) %>%
       group_by_at(
         c(
-          selectedFactor
+          if (selectedXAxis == "Clinic") NULL else selectedXAxis,
+          if (selectedFactor == "None") NULL else selectedFactor
         )
       ) %>%
       summarize(
@@ -165,42 +214,53 @@ clinicComparePlot <- function(insertionsWithImplants,
   }
 
   ClinicData <- insertionsWithImplants %>%
+    # Filter to only show selected clinics
     filter(
-      # Always show selected clinic
-      Clinic == selectedClinic |
-        case_when(
-          # When no input is selected show no other clinics
-          is.null(compareClinic) ~ F,
-          # Otherwise only selected factors
-          T ~ grepl(
-            paste(
-              paste("^", compareClinic, "$", sep = ""),
-              collapse = "|"
-            ),
-            # Vector where matches are sought.
-            Clinic
-          )
+      selectedClinic == Clinic |
+        grepl(
+          paste(
+            paste("^", compareClinic, "$", sep = ""),
+            collapse = "|"
+          ),
+          # Vector where matches are sought.
+          Clinic
         )
     ) %>%
+    # Filter X-axis to only show selected levels
     filter(
-      case_when(
-        # When no input is selected show all
-        is.null(selectedAttribute) ~ TRUE,
-        # Otherwise only selected factors
-        T ~ grepl(
+      if (is.null(selectLevel)) {
+        TRUE
+      } else {
+        grepl(
           paste(
-            paste("^", selectedAttribute, "$", sep = ""),
+            paste("^", selectLevel, "$", sep = ""),
+            collapse = "|"
+          ),
+          # Vector where matches are sought. Need to be dynamic
+          !!sym(selectedXAxis)
+        )
+      }
+    ) %>%
+    # Filter facet columns to only show specified columns
+    filter(
+      if (is.null(selectSpecificFacetRow)) {
+        TRUE
+      } else {
+        grepl(
+          paste(
+            paste("^", selectSpecificFacetRow, "$", sep = ""),
             collapse = "|"
           ),
           # Vector where matches are sought. Need to be dynamic
           !!sym(selectedFactor)
         )
-      )
+      }
     ) %>%
     group_by_at(
       c(
         "Clinic",
-        selectedFactor
+        selectedXAxis,
+        if (selectedFactor == "None") NULL else selectedFactor
       )
     ) %>%
     summarise(
@@ -215,19 +275,25 @@ clinicComparePlot <- function(insertionsWithImplants,
     )
 
   bind_rows(ClinicData, MeanData) %>%
-    ggplot(aes(x = Clinic, y = value, fill = Clinic)) +
-    geom_col() +
+    ggplot(aes(
+      x = if (is.null(selectedXAxis)) Clinic else !!sym(selectedXAxis),
+      y = value, fill = Clinic
+    )) +
+    geom_col(position = position_dodge(width = 0.9), width = 0.5) +
     {
       if (is.numeric(insertionsWithImplants[[selectedYAxis]])) {
-        geom_errorbar(aes(ymin = value - sd, ymax = value + sd), width = .3)
+        geom_errorbar(
+          aes(ymin = value - sd, ymax = value + sd),
+          position = position_dodge(width = 0.9), width = .25, size = 0.2
+        )
       }
     } +
-    facet_grid(cols = if (is.null(selectedFactor)) NULL else vars(!!sym(selectedFactor))) +
+    facet_grid(cols = if (is.null(selectedFactor) | selectedFactor == "None") NULL else vars(!!sym(selectedFactor))) +
     theme(
-      axis.text.x = if (showXLab) element_text() else element_blank(),
-      axis.ticks.x = if (showXLab) element_line() else element_blank()
+      axis.text.x = if (hideXLab) element_blank() else element_text(),
+      axis.ticks.x = if (hideXLab) element_blank() else element_line()
     ) +
-    xlab(if (showXLab) "Clinic" else "") +
+    xlab(if (hideXLab) selectedXAxis else "") +
     ylab(if_else(is.numeric(insertionsWithImplants[[selectedYAxis]]),
       selectedYAxis,
       paste(selectedYAxis, "Percentage", sep = " ")

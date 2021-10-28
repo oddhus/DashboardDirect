@@ -7,6 +7,7 @@ library(dplyr)
 library(tidyr)
 library(lubridate)
 library(patchwork)
+library(shinyWidgets)
 source("shiny-app/FetchData.R")
 source("shiny-app/Utils.R")
 source("shiny-app/AntibioticPlot.R")
@@ -51,25 +52,22 @@ ui <- dashboardPage(
           column(
             htmlOutput("selectYAxisClinic", width = 12),
             htmlOutput("selectClinicCompare", width = 12),
-            width = 4
+            width = 3
           ),
           column(
-            htmlOutput("selectCompareFactor", width = 12),
+            htmlOutput("selectXAxisClinic", width = 12),
             htmlOutput("selectCompareAttribute", width = 12),
-            width = 4
+            width = 3
           ),
           column(
-            radioButtons("showMean", "Show mean values",
-              choiceNames = list("Yes", "No"),
-              choiceValues = list(T, F),
-              inline = T
-            ),
-            radioButtons("showXLab", "Show labels on x-axis",
-              choiceNames = list("Yes", "No"),
-              choiceValues = list(T, F),
-              inline = T
-            ),
-            width = 4
+            htmlOutput("selectClinicFacetRow", width = 12),
+            htmlOutput("selectSpecificFacetRow", width = 12),
+            width = 3
+          ),
+          column(
+            materialSwitch(inputId = "showMean", label = "Show mean values"),
+            materialSwitch(inputId = "hideXLab", label = "Hide X-axis labels"),
+            width = 3
           ),
         )
 
@@ -224,42 +222,66 @@ server <- function(input, output, session) {
   ranges <- reactiveValues(x = NULL)
 
   output$selectClinicName <- renderUI({
-    selectInput("selectClinic",
+    pickerInput("selectClinic",
       "Select Clinic",
       choices  = unique(insertions$Clinic)
     )
   })
 
   output$selectClinicCompare <- renderUI({
-    selectInput("selectClinicCompare",
-      "Clinics to compare against",
-      choices  = unique(insertions$Clinic),
-      multiple = T
+    pickerInput("selectClinicCompare",
+      "Compare Clinics",
+      # Do not compare against the current selected clinic
+      choices = unique(insertions$Clinic[insertions$Clinic != input$selectClinic]),
+      multiple = T,
+      options = list(
+        `actions-box` = TRUE,
+        size = 10,
+        `selected-text-format` = "count > 3"
+      )
     )
   })
 
-  output$selectCompareFactor <- renderUI({
-    selectCompareFactorControl(insertionsWithImplants)
+  output$selectClinicFacetRow <- renderUI({
+    selectClinicFacetRowControl(insertionsWithImplants)
+  })
+
+  output$selectSpecificFacetRow <- renderUI({
+    if (input$selectClinicFacetRowControl == "None") {
+      HTML("<div></div>")
+    } else {
+      selectSpecificFacetRowControl(insertionsWithImplants, input$selectClinicFacetRowControl)
+    }
   })
 
   output$selectCompareAttribute <- renderUI({
-    selectCompareAttributeControl(insertionsWithImplants, input$selectCompareFactorControl)
+    if (input$selectXAxisClinicControl == "Clinic") {
+      HTML("<div></div>")
+    } else {
+      selectCompareAttributeControl(insertionsWithImplants, input$selectXAxisClinicControl)
+    }
   })
 
   output$selectYAxisClinic <- renderUI({
     selectYAxisClinicControl(insertionsWithImplants)
   })
 
+  output$selectXAxisClinic <- renderUI({
+    selectXAxisClinicControl(insertionsWithImplants)
+  })
+
   output$clinicComparePlot <- renderPlot({
     clinicComparePlot(
       insertionsWithImplants,
       input$showMean,
-      input$showXLab,
+      input$hideXLab,
       input$selectClinic,
       input$selectClinicCompare,
-      input$selectCompareFactorControl,
+      input$selectClinicFacetRowControl,
+      input$selectSpecificFacetRowControl,
       input$selectCompareAttributeControl,
-      input$selectYAxisClinicControl
+      input$selectYAxisClinicControl,
+      input$selectXAxisClinicControl
     )
   })
 
