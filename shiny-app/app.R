@@ -41,36 +41,44 @@ ui <- dashboardPage(
             width = 6
           )
         ),
-        fluidRow(
-          column(
-            plotOutput("clinicComparePlot", height = 500) %>% withSpinner(),
-            width = 12
+        tabsetPanel(
+          tabPanel(
+            "Insertions",
+            fluidRow(
+              column(
+                plotOutput("clinicComparePlot", height = 500) %>% withSpinner(),
+                width = 12
+              ),
+            ),
+            fluidRow(column(12, h4("Options"))),
+            fluidRow(
+              column(
+                htmlOutput("selectYAxisClinic", width = 12),
+                htmlOutput("selectClinicCompare", width = 12),
+                width = 3
+              ),
+              column(
+                htmlOutput("selectXAxisClinic", width = 12),
+                htmlOutput("selectCompareAttribute", width = 12),
+                width = 3
+              ),
+              column(
+                htmlOutput("selectClinicFacetRow", width = 12),
+                htmlOutput("selectSpecificFacetRow", width = 12),
+                width = 3
+              ),
+              column(
+                materialSwitch(inputId = "showMean", label = "Show mean values"),
+                materialSwitch(inputId = "hideXLab", label = "Hide X-axis labels"),
+                width = 3
+              )
+            )
+          ),
+          tabPanel(
+            "Removals",
+            "hi"
           )
         ),
-        fluidRow(column(12, h4("Options"))),
-        fluidRow(
-          column(
-            htmlOutput("selectYAxisClinic", width = 12),
-            htmlOutput("selectClinicCompare", width = 12),
-            width = 3
-          ),
-          column(
-            htmlOutput("selectXAxisClinic", width = 12),
-            htmlOutput("selectCompareAttribute", width = 12),
-            width = 3
-          ),
-          column(
-            htmlOutput("selectClinicFacetRow", width = 12),
-            htmlOutput("selectSpecificFacetRow", width = 12),
-            width = 3
-          ),
-          column(
-            materialSwitch(inputId = "showMean", label = "Show mean values"),
-            materialSwitch(inputId = "hideXLab", label = "Hide X-axis labels"),
-            width = 3
-          ),
-        )
-
         # fluidRow(
         #   box(plotOutput("complicationsPlot", height = 300) %>% withSpinner(), width = 12)
         # ),
@@ -183,11 +191,8 @@ ui <- dashboardPage(
 )
 
 server <- function(input, output, session) {
-  insertions <- getInsertions()
-  implants <- getImplants()
-  insertionsWithImplants <- implants %>%
-    left_join(insertions, by = c("InsertionId" = "Id")) %>%
-    rename(InsertionDate = InsertionDate.y)
+  insertionsWithImplants <- getInsertionsWithImplants()
+  removalsWithImplants <- getRemovalsWithImplants()
 
   # Tab 1
   ## Length and diamter plot
@@ -204,7 +209,7 @@ server <- function(input, output, session) {
   output$selectImplantName <- renderUI({
     selectInput("LotNrImplantSelect",
       "Select Implant",
-      choices  = unique(implants$ImplantName),
+      choices  = unique(insertionsWithImplants$ImplantName),
       selected = "None",
       multiple = F,
     )
@@ -219,20 +224,30 @@ server <- function(input, output, session) {
   })
 
   # Tab 2
+  ## 
   ranges <- reactiveValues(x = NULL)
 
   output$selectClinicName <- renderUI({
     pickerInput("selectClinic",
       "Select Clinic",
-      choices  = unique(insertions$Clinic)
+      choices  = insertionsWithImplants %>%
+        distinct(Clinic) %>%
+        arrange(Clinic) %>%
+        mutate(Clinic = as.character(Clinic))
     )
   })
 
   output$selectClinicCompare <- renderUI({
+    req(input$selectClinic)
+    
     pickerInput("selectClinicCompare",
       "Compare Clinics",
       # Do not compare against the current selected clinic
-      choices = unique(insertions$Clinic[insertions$Clinic != input$selectClinic]),
+      choices = insertionsWithImplants %>%
+        distinct(Clinic) %>% 
+        filter(Clinic != input$selectClinic) %>% 
+        arrange(Clinic) %>%
+        mutate(Clinic = as.character(Clinic)),
       multiple = T,
       options = list(
         `actions-box` = TRUE,
@@ -247,18 +262,18 @@ server <- function(input, output, session) {
   })
 
   output$selectSpecificFacetRow <- renderUI({
-    if (input$selectClinicFacetRowControl == "None") {
-      HTML("<div></div>")
-    } else {
+    if (isTruthy(input$selectClinicFacetRowControl) & isTruthy(input$selectClinicFacetRowControl != "None")) {
       selectSpecificFacetRowControl(insertionsWithImplants, input$selectClinicFacetRowControl)
+    } else {
+      HTML("<div></div>")
     }
   })
 
   output$selectCompareAttribute <- renderUI({
-    if (input$selectXAxisClinicControl == "Clinic") {
-      HTML("<div></div>")
-    } else {
+    if (isTruthy(input$selectXAxisClinicControl) & isTruthy(input$selectXAxisClinicControl != "Clinic")) {
       selectCompareAttributeControl(insertionsWithImplants, input$selectXAxisClinicControl)
+    } else {
+      HTML("<div></div>")
     }
   })
 
