@@ -1,10 +1,7 @@
-library(ggplot2)
-library(dplyr)
 library(tidyr)
 library(lubridate)
 
 selectLabels <- function(col) is.factor(col) | is.logical(col)
-
 
 complicationsInfo <- function(insertionsWithImplants, selectedClinic) {
   if (isTruthy(selectedClinic)) {
@@ -125,26 +122,7 @@ selectXAxisClinicControl <- function(implants) {
   )
 }
 
-complicationsPlot <- function(insertionsWithImplants, selectedClinic) {
-  insertionsWithImplants %>%
-    filter(Clinic == selectedClinic) %>%
-    # Group by month
-    group_by(month = floor_date(InsertionDate, unit = "month")) %>%
-    # Sum all occurrences during the particular months
-    summarise(
-      complicationsPercent = (sum(Complications, na.rm = TRUE) / n()) * 100,
-    ) %>%
-    ggplot(aes(x = as.Date(month), y = complicationsPercent)) +
-    geom_point() +
-    geom_smooth() +
-    scale_x_date(NULL, date_labels = "%b %y", breaks = scales::breaks_width("1 year")) +
-    ylab("Complication Percentage") +
-    xlab("Date") +
-    theme_minimal()
-}
-
-
-clinicComparePlot <- function(insertionsWithImplants,
+clinicCompareInsertionsPlot <- function(insertionsWithImplants,
                               showMean,
                               hideXLab,
                               selectedClinic,
