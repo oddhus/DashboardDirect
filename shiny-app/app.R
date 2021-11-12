@@ -15,6 +15,7 @@ source("shiny-app/FactorPlot.R")
 source("shiny-app/ClinicInsertionsInfo.R")
 source("shiny-app/ImplantPlot.R")
 source("shiny-app/ClinicRemovalsInfo.R")
+source("shiny-app/ClinicInfoBoxes.R")
 
 
 #Todo
@@ -27,7 +28,7 @@ ui <- dashboardPage(
       conditionalPanel(condition = "input.tabs == 'Clinic'",
                        radioGroupButtons(
                          inputId = "insertionsOrRemovals",
-                         label = "Choices", 
+                         label = "Type", 
                          choices = c("Insertions", "Removals"),
                          status = "primary"
                        ),
@@ -35,7 +36,7 @@ ui <- dashboardPage(
                        htmlOutput("selectClinicCompare", width = 12),
                        materialSwitch(inputId = "showMean", label = "Show mean values"),
                        materialSwitch(inputId = "hideXLab", label = "Hide X-axis labels"),
-                       ),
+                      ),
       conditionalPanel(condition = "input.insertionsOrRemovals == 'Insertions'",
                        htmlOutput("selectYAxisClinic", width = 12),
                        htmlOutput("selectXAxisClinic", width = 12),
@@ -59,13 +60,7 @@ ui <- dashboardPage(
       tabPanel(
         "Clinic",
         h2("Explore and compare clinic data"),
-        # fluidRow(
-        #   column(
-        #     valueBoxOutput("complicationBox", width = 6),
-        #     valueBoxOutput("insertionsBox", width = 6),
-        #     width = 12
-        #   )
-        # ),
+        
         # h3(id = "plotNameInsertions", "Insertions"),
         # h3(id = "plotNameRemovals", "Removals"),
         fluidRow(
@@ -74,7 +69,15 @@ ui <- dashboardPage(
             plotOutput("clinicCompareRemovalsPlot", height = 500) %>% withSpinner(id = "removalsSpinner"),
             width = 12
           ),
-        )
+        ),
+        fluidRow(
+          column(
+            valueBoxOutput("complicationBox", width = 4),
+            valueBoxOutput("insertionsBox", width = 4),
+            valueBoxOutput("removalsBox", width = 4),
+            width = 12
+          )
+        ),
         # fluidRow(
         #   box(plotOutput("complicationsPlot", height = 300) %>% withSpinner(), width = 12)
         # ),
@@ -223,6 +226,18 @@ server <- function(input, output, session) {
   # Clinic
   ranges <- reactiveValues(x = NULL)
   
+  output$complicationBox <- renderValueBox({
+    complicationsInfo(insertionsWithImplants, input$selectClinic)
+  })
+  
+  output$insertionsBox <- renderValueBox({
+    insertionsInfo(insertionsWithImplants, input$selectClinic)
+  })
+  
+  output$removalsBox <- renderValueBox({
+    removalsInfo(removalsWithImplants, input$selectClinic)
+  })
+  
   observeEvent(input$insertionsOrRemovals, {
     if(input$insertionsOrRemovals == "Insertions") {
       shinyjs::show("insertionsSpinner")
@@ -317,14 +332,6 @@ server <- function(input, output, session) {
       input$selectYAxisClinicControl,
       input$selectXAxisClinicControl
     )
-  })
-
-  output$complicationBox <- renderValueBox({
-    complicationsInfo(insertionsWithImplants, input$selectClinic)
-  })
-
-  output$insertionsBox <- renderValueBox({
-    insertionsInfo(insertionsWithImplants, input$selectClinic)
   })
 
   ## Removals
