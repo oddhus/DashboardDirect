@@ -16,178 +16,186 @@ source("shiny-app/ClinicInsertionsInfo.R")
 source("shiny-app/ImplantPlot.R")
 source("shiny-app/ClinicRemovalsInfo.R")
 source("shiny-app/ClinicInfoBoxes.R")
+source("shiny-app/ExplorerPlot.R")
 
 
 #Todo
 #Add features shinydashboardPlus
 
 ui <- dashboardPage(
-  dashboardHeader(title = "Tooth implants"),
-  dashboardSidebar(
-    sidebarMenu(
-      conditionalPanel(condition = "input.tabs == 'Clinic'",
-                       radioGroupButtons(
-                         inputId = "insertionsOrRemovals",
-                         label = "Type", 
-                         choices = c("Insertions", "Removals"),
-                         status = "primary"
-                       ),
-                       htmlOutput("selectClinicName"),
-                       htmlOutput("selectClinicCompare", width = 12),
-                       materialSwitch(inputId = "showMean", label = "Show mean values"),
-                       materialSwitch(inputId = "hideXLab", label = "Hide X-axis labels"),
-                      ),
-      conditionalPanel(condition = "input.insertionsOrRemovals == 'Insertions'",
-                       htmlOutput("selectYAxisClinic", width = 12),
-                       htmlOutput("selectXAxisClinic", width = 12),
-                       htmlOutput("selectCompareAttribute", width = 12),
-                       htmlOutput("selectClinicFacetRow", width = 12),
-                       htmlOutput("selectSpecificFacetRow", width = 12),
-                       ),
-      conditionalPanel(condition = "input.insertionsOrRemovals == 'Removals'",
-                       htmlOutput("selectYAxisRemovals", width = 12),
-                       htmlOutput("selectXAxisRemovals", width = 12),
-                       htmlOutput("selectRemovalsFactorLevels", width = 12),
-                       htmlOutput("selectRemovalsFacetRow", width = 12),
-                       htmlOutput("selectSpecificRemovalsFacetRow", width = 12)
-      )
-    )
-  ),
-  dashboardBody(
-    shinyjs::useShinyjs(),
-    tabsetPanel(
-      id = "tabs",
-      tabPanel(
-        "Clinic",
-        h2("Explore and compare clinic data"),
-        
-        # h3(id = "plotNameInsertions", "Insertions"),
-        # h3(id = "plotNameRemovals", "Removals"),
-        fluidRow(
-          column(
-            plotOutput("clinicCompareInsertionsPlot", height = 500) %>% withSpinner(id = "insertionsSpinner"),
-            plotOutput("clinicCompareRemovalsPlot", height = 500) %>% withSpinner(id = "removalsSpinner"),
-            width = 12
-          ),
-        ),
-        fluidRow(
-          column(
-            valueBoxOutput("complicationBox", width = 4),
-            valueBoxOutput("insertionsBox", width = 4),
-            valueBoxOutput("removalsBox", width = 4),
-            width = 12
-          )
-        ),
-        # fluidRow(
-        #   box(plotOutput("complicationsPlot", height = 300) %>% withSpinner(), width = 12)
-        # ),
-        # fluidRow(
-        #   box(
-        #     plotOutput("clinicOverTime",
-        #       height = 400,
-        #       dblclick = "clinicOverTime_click",
-        #       brush = brushOpts(
-        #         id = "clinicOverTime_brush",
-        #         resetOnNew = TRUE
-        #       )
-        #     ) %>% withSpinner(),
-        #     width = 12
-        #   )
-        # ),
-        # fluidRow(
-        #   box(
-        #     selectInput("variable", "Variable:",
-        #       c(
-        #         "Insertions" = "insertions",
-        #         "Complications" = "complications",
-        #         "Antibiotics Pre Operation" = "antibioticsUsageBefore"
-        #       ),
-        #       multiple = TRUE
-        #     ),
-        #   )
-        # )
+    dashboardHeader(title = "Tooth implants"),
+    dashboardSidebar(
+      sidebarMenu(
+        conditionalPanel(condition = "input.tabs == 'Clinic'",
+                         radioGroupButtons(
+                           inputId = "insertionsOrRemovals",
+                           label = "Type", 
+                           choices = c("Insertions", "Removals"),
+                           status = "primary"
+                         ),
+                         radioGroupButtons(
+                           inputId = "clinicOrAllcombined",
+                           label = "Grouping",
+                           choices = c("Clinic", "All combined"),
+                           status = "primary" ),
+                         materialSwitch(inputId = "showMean", label = "Show mean values",  status = "primary" ),
+                         materialSwitch(inputId = "hideXLab", label = "Hide X-axis labels",  status = "primary")
+                        ),
+        conditionalPanel(condition = "input.tabs == 'Clinic' & input.clinicOrAllcombined == 'Clinic'",
+                         htmlOutput("selectClinicName"),
+                         htmlOutput("selectClinicCompare", width = 12)
+                         ),
+        conditionalPanel(condition = "input.tabs == 'Clinic' & input.insertionsOrRemovals == 'Insertions'",
+                         htmlOutput("selectYAxisClinic", width = 12),
+                         htmlOutput("selectXAxisClinic", width = 12),
+                         htmlOutput("selectCompareAttribute", width = 12),
+                         htmlOutput("selectClinicFacetRow", width = 12),
+                         htmlOutput("selectSpecificFacetRow", width = 12)
+                         ),
+        conditionalPanel(condition = "input.tabs == 'Clinic' & input.insertionsOrRemovals == 'Removals'",
+                         htmlOutput("selectYAxisRemovals", width = 12),
+                         htmlOutput("selectXAxisRemovals", width = 12),
+                         htmlOutput("selectRemovalsFactorLevels", width = 12),
+                         htmlOutput("selectRemovalsFacetRow", width = 12),
+                         htmlOutput("selectSpecificRemovalsFacetRow", width = 12)
+                        )
+        )
       ),
-      tabPanel(
-        "Explorer",
-        h2("Data explorer"),
-        plotOutput("plot2", height = "500px") %>% withSpinner(),
-        hr(),
-        fluidRow(
-          column(
-            3,
-            htmlOutput("selectYAxis"),
-          ),
-          column(
-            4,
-            htmlOutput("selectFactor"),
-            htmlOutput("selectImplants"),
-            htmlOutput("selectColor"),
-          ),
-          column(
-            4,
-            htmlOutput("selectFacetRow"),
-            htmlOutput("selectFacetCol"),
-          ),
-        ),
-      ),
-      tabPanel(
-        "Models",
-        # First tab content
-        # Boxes need to be put in a row (or column)
-        fluidRow(
-          box(
-            status = "info",
-            selectInput("PositionSelect", choices = seq(1, 100, by = 1), label = "Select Position"),
-            width = 3
-          ),
-          box(
-            title = "Implant Characteristics Complications",
-            status = "primary",
-            plotOutput("implantDiamterLength") %>% withSpinner(),
-            width = 9
-          ),
-        ),
-        fluidRow(
-          box(
-            status = "info",
-            sliderInput(
-              "highlightPercentage",
-              label = "Show id of implant with complication percentage or higher",
-              min = 15, max = 100, value = 50
+    dashboardBody(
+      shinyjs::useShinyjs(),
+      tabsetPanel(
+        id = "tabs",
+        tabPanel(
+          "Clinic",
+          h2("Explore and compare clinic data"),
+          h3(textOutput("clinicPlotName")),
+          fluidRow(
+            column(
+              plotOutput("clinicCompareInsertionsPlot", height = 500) %>% withSpinner(id = "insertionsSpinner"),
+              plotOutput("clinicCompareRemovalsPlot", height = 500) %>% withSpinner(id = "removalsSpinner"),
+              width = 12
             ),
-            width = 3
           ),
-          box(
-            title = "",
-            status = "primary",
-            plotOutput("implantComplications") %>% withSpinner(),
-            width = 9,
-          )
+          fluidRow(
+            column(
+              valueBoxOutput("insertionsBox", width = 4),
+              valueBoxOutput("removalsBox", width = 4),
+              valueBoxOutput("complicationBox", width = 4),
+              width = 12
+            )
+          ),
+          # fluidRow(
+          #   box(plotOutput("complicationsPlot", height = 300) %>% withSpinner(), width = 12)
+          # ),
+          # fluidRow(
+          #   box(
+          #     plotOutput("clinicOverTime",
+          #       height = 400,
+          #       dblclick = "clinicOverTime_click",
+          #       brush = brushOpts(
+          #         id = "clinicOverTime_brush",
+          #         resetOnNew = TRUE
+          #       )
+          #     ) %>% withSpinner(),
+          #     width = 12
+          #   )
+          # ),
+          # fluidRow(
+          #   box(
+          #     selectInput("variable", "Variable:",
+          #       c(
+          #         "Insertions" = "insertions",
+          #         "Complications" = "complications",
+          #         "Antibiotics Pre Operation" = "antibioticsUsageBefore"
+          #       ),
+          #       multiple = TRUE
+          #     ),
+          #   )
+          # )
         ),
-        fluidRow(
-          box(
-            status = "info",
-            title = "Select Implant",
-            htmlOutput("selectImplantName"),
-            width = 2
+        tabPanel(
+          "Explorer",
+          h2("Data explorer"),
+          plotOutput("plot2", height = "500px") %>% withSpinner(),
+          hr(),
+          fluidRow(
+            column(
+              3,
+              htmlOutput("selectYAxis"),
+            ),
+            column(
+              4,
+              htmlOutput("selectFactor"),
+              htmlOutput("selectImplants"),
+              htmlOutput("selectColor"),
+            ),
+            column(
+              4,
+              htmlOutput("selectFacetRow"),
+              htmlOutput("selectFacetCol"),
+            ),
           ),
-          box(
-            title = "Implant models' complication percentage",
-            status = "primary",
-            plotOutput("LotNrComplication") %>% withSpinner(),
-            width = 8,
-          ),
-          box(
-            title = "Fisher Test",
-            status = "info",
-            textOutput("LotNrFisherTest") %>% tagAppendAttributes(style = "white-space:pre-wrap;"),
-            width = 2
-          )
         ),
+        tabPanel(
+          "Models",
+          # First tab content
+          # Boxes need to be put in a row (or column)
+          fluidRow(
+            box(
+              status = "info",
+              selectInput("PositionSelect", choices = seq(1, 100, by = 1), label = "Select Position"),
+              width = 3
+            ),
+            box(
+              title = "Implant Characteristics Complications",
+              status = "primary",
+              plotOutput("implantDiamterLength") %>% withSpinner(),
+              width = 9
+            ),
+          ),
+          fluidRow(
+            box(
+              status = "info",
+              sliderInput(
+                "highlightPercentage",
+                label = "Show id of implant with complication percentage or higher",
+                min = 15, max = 100, value = 50
+              ),
+              width = 3
+            ),
+            box(
+              title = "",
+              status = "primary",
+              plotOutput("implantComplications") %>% withSpinner(),
+              width = 9,
+            )
+          ),
+          fluidRow(
+            box(
+              status = "info",
+              title = "Select Implant",
+              htmlOutput("selectImplantName"),
+              width = 2
+            ),
+            box(
+              title = "Implant models' complication percentage",
+              status = "primary",
+              plotOutput("LotNrComplication") %>% withSpinner(),
+              width = 8,
+            ),
+            box(
+              title = "Fisher Test",
+              status = "info",
+              textOutput("LotNrFisherTest") %>% tagAppendAttributes(style = "white-space:pre-wrap;"),
+              width = 2
+            )
+          ),
+        )
       )
     )
   )
-)
+
+
 
 server <- function(input, output, session) {
   insertionsWithImplants <- getInsertionsWithImplants()
@@ -226,16 +234,27 @@ server <- function(input, output, session) {
   # Clinic
   ranges <- reactiveValues(x = NULL)
   
+  allCombined <- reactiveVal(FALSE)
+  observeEvent(input$clinicOrAllcombined, {
+    allCombined("All combined" %in% input$clinicOrAllcombined)
+  })
+  
+  output$clinicPlotName <- renderText({
+    req(input$insertionsOrRemovals)
+    
+    input$insertionsOrRemovals
+  })
+  
   output$complicationBox <- renderValueBox({
-    complicationsInfo(insertionsWithImplants, input$selectClinic)
+    sumInfo(insertionsWithImplants %>% filter(Complications), "Complications", "red", input$selectClinic, allCombined())
   })
   
   output$insertionsBox <- renderValueBox({
-    insertionsInfo(insertionsWithImplants, input$selectClinic)
+    sumInfo(insertionsWithImplants, "Insertions", "purple", input$selectClinic, allCombined())
   })
   
   output$removalsBox <- renderValueBox({
-    removalsInfo(removalsWithImplants, input$selectClinic)
+    sumInfo(removalsWithImplants, "Removals", "yellow", input$selectClinic, allCombined())
   })
   
   observeEvent(input$insertionsOrRemovals, {
@@ -299,7 +318,7 @@ server <- function(input, output, session) {
     if (isTruthy(input$selectClinicFacetRowControl) & isTruthy(input$selectClinicFacetRowControl != "None")) {
       selectSpecificFacetRowControl(insertionsWithImplants, input$selectClinicFacetRowControl)
     } else {
-      HTML("<div></div>")
+     NULL
     }
   })
 
@@ -307,7 +326,7 @@ server <- function(input, output, session) {
     if (isTruthy(input$selectXAxisClinicControl) & isTruthy(input$selectXAxisClinicControl != "Clinic")) {
       selectCompareAttributeControl(insertionsWithImplants, input$selectXAxisClinicControl)
     } else {
-      HTML("<div></div>")
+      NULL
     }
   })
 
@@ -320,7 +339,7 @@ server <- function(input, output, session) {
   })
 
   output$clinicCompareInsertionsPlot <- renderPlot({
-    clinicCompareInsertionsPlot(
+    exploreDataPlot(
       insertionsWithImplants,
       input$showMean,
       input$hideXLab,
@@ -330,7 +349,8 @@ server <- function(input, output, session) {
       input$selectSpecificFacetRowControl,
       input$selectCompareAttributeControl,
       input$selectYAxisClinicControl,
-      input$selectXAxisClinicControl
+      input$selectXAxisClinicControl,
+      allCombined()
     )
   })
 
@@ -343,7 +363,7 @@ server <- function(input, output, session) {
     if (isTruthy(input$selectRemovalsFacetRowControl) & isTruthy(input$selectRemovalsFacetRowControl != "None")) {
       selectSpecificRemovalsFacetRowControl(removalsWithImplants, input$selectRemovalsFacetRowControl)
     } else {
-      HTML("<div></div>")
+      NULL
     }
   })
   
@@ -351,7 +371,7 @@ server <- function(input, output, session) {
     if (isTruthy(input$selectXAxisRemovalsControl) & isTruthy(input$selectXAxisRemovalsControl != "Clinic")) {
       selectRemovalsFactorLevelsControl(removalsWithImplants, input$selectXAxisRemovalsControl)
     } else {
-      HTML("<div></div>")
+      NULL
     }
   })
   
@@ -364,7 +384,7 @@ server <- function(input, output, session) {
   })
   
   output$clinicCompareRemovalsPlot <- renderPlot({
-    clinicCompareRemovalsPlot(
+    exploreDataPlot(
       removalsWithImplants,
       input$showMean,
       input$hideXLab,
@@ -374,7 +394,8 @@ server <- function(input, output, session) {
       input$selectSpecificRemovalsFacetRowControl,
       input$selectRemovalsFactorLevelsControl,
       input$selectYAxisRemovalsControl,
-      input$selectXAxisRemovalsControl
+      input$selectXAxisRemovalsControl,
+      allCombined()
     )
   })
 
