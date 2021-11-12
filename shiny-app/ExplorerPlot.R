@@ -51,7 +51,7 @@ exploreDataPlot <- function(insertionsWithImplants,
         ) %>%
         group_by_at(
           c(
-            if (selectedXAxis == "Clinic") NULL else selectedXAxis,
+            if (selectedXAxis == "Clinic" | combineAll) NULL else selectedXAxis,
             if (selectedFactor == "None") NULL else selectedFactor
           )
         ) %>%

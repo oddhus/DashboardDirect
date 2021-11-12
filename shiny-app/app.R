@@ -12,12 +12,11 @@ source("shiny-app/FetchData.R")
 source("shiny-app/Utils.R")
 source("shiny-app/AntibioticPlot.R")
 source("shiny-app/FactorPlot.R")
-source("shiny-app/ClinicInsertionsInfo.R")
+#source("shiny-app/ClinicInsertionsInfo.R")
 source("shiny-app/ImplantPlot.R")
-source("shiny-app/ClinicRemovalsInfo.R")
-source("shiny-app/ClinicInfoBoxes.R")
+source("shiny-app/ExplorerPlotInputs.R")
 source("shiny-app/ExplorerPlot.R")
-
+source("shiny-app/ClinicInfoBoxes.R")
 
 #Todo
 #Add features shinydashboardPlus
@@ -46,11 +45,11 @@ ui <- dashboardPage(
                          htmlOutput("selectClinicCompare", width = 12)
                          ),
         conditionalPanel(condition = "input.tabs == 'Clinic' & input.insertionsOrRemovals == 'Insertions'",
-                         htmlOutput("selectYAxisClinic", width = 12),
-                         htmlOutput("selectXAxisClinic", width = 12),
-                         htmlOutput("selectCompareAttribute", width = 12),
-                         htmlOutput("selectClinicFacetRow", width = 12),
-                         htmlOutput("selectSpecificFacetRow", width = 12)
+                         htmlOutput("selectYAxisInsertions", width = 12),
+                         htmlOutput("selectXAxisInsertions", width = 12),
+                         htmlOutput("selectInsertionsFactorLevels", width = 12),
+                         htmlOutput("selectInsertionsFacetRow", width = 12),
+                         htmlOutput("selectSpecificInsertionsFacetRow", width = 12)
                          ),
         conditionalPanel(condition = "input.tabs == 'Clinic' & input.insertionsOrRemovals == 'Removals'",
                          htmlOutput("selectYAxisRemovals", width = 12),
@@ -71,8 +70,8 @@ ui <- dashboardPage(
           h3(textOutput("clinicPlotName")),
           fluidRow(
             column(
-              plotOutput("clinicCompareInsertionsPlot", height = 500) %>% withSpinner(id = "insertionsSpinner"),
-              plotOutput("clinicCompareRemovalsPlot", height = 500) %>% withSpinner(id = "removalsSpinner"),
+              plotOutput("insertionsPlot", height = 500) %>% withSpinner(id = "insertionsSpinner"),
+              plotOutput("removalsPlot", height = 500) %>% withSpinner(id = "removalsSpinner"),
               width = 12
             ),
           ),
@@ -261,14 +260,14 @@ server <- function(input, output, session) {
     if(input$insertionsOrRemovals == "Insertions") {
       shinyjs::show("insertionsSpinner")
       shinyjs::hide("removalsSpinner")
-      shinyjs::show("clinicCompareInsertionsPlot")
-      shinyjs::hide("clinicCompareRemovalsPlot")
+      shinyjs::show("insertionsPlot")
+      shinyjs::hide("removalsPlot")
       shinyjs::show("")
     } else if (input$insertionsOrRemovals == "Removals"){
       shinyjs::hide("insertionsSpinner")
       shinyjs::show("removalsSpinner")
-      shinyjs::hide("clinicCompareInsertionsPlot")
-      shinyjs::show("clinicCompareRemovalsPlot")
+      shinyjs::hide("insertionsPlot")
+      shinyjs::show("removalsPlot")
     }
   })
 
@@ -310,46 +309,46 @@ server <- function(input, output, session) {
   input_selectClinicCompare_d <- input_selectClinicCompare %>% debounce(900)
   
   ## Insertions
-  output$selectClinicFacetRow <- renderUI({
-    selectClinicFacetRowControl(insertionsWithImplants)
+  output$selectInsertionsFacetRow <- renderUI({
+    selectInsertionsFacetRowControl(insertionsWithImplants)
   })
 
-  output$selectSpecificFacetRow <- renderUI({
-    if (isTruthy(input$selectClinicFacetRowControl) & isTruthy(input$selectClinicFacetRowControl != "None")) {
+  output$selectSpecificInsertionsFacetRow <- renderUI({
+    if (isTruthy(input$selectInsertionsFacetRowControl) & isTruthy(input$selectInsertionsFacetRowControl != "None")) {
       selectSpecificFacetRowControl(insertionsWithImplants, input$selectClinicFacetRowControl)
     } else {
      NULL
     }
   })
 
-  output$selectCompareAttribute <- renderUI({
-    if (isTruthy(input$selectXAxisClinicControl) & isTruthy(input$selectXAxisClinicControl != "Clinic")) {
-      selectCompareAttributeControl(insertionsWithImplants, input$selectXAxisClinicControl)
+  output$selectInsertionsFactorLevelsControl <- renderUI({
+    if (isTruthy(input$selectXAxisInsertionsControl) & isTruthy(input$selectXAxisInsertionsControl != "Clinic")) {
+      selectInsertionsFactorLevelsControl(insertionsWithImplants, input$selectXAxisInsertionsControl)
     } else {
       NULL
     }
   })
 
-  output$selectYAxisClinic <- renderUI({
-    selectYAxisClinicControl(insertionsWithImplants)
+  output$selectYAxisInsertions <- renderUI({
+    selectYAxisInsertionsControl(insertionsWithImplants)
   })
 
-  output$selectXAxisClinic <- renderUI({
-    selectXAxisClinicControl(insertionsWithImplants)
+  output$selectXAxisInsertions <- renderUI({
+    selectXAxisInsertionsControl(insertionsWithImplants)
   })
 
-  output$clinicCompareInsertionsPlot <- renderPlot({
+  output$insertionsPlot <- renderPlot({
     exploreDataPlot(
       insertionsWithImplants,
       input$showMean,
       input$hideXLab,
       input$selectClinic,
       input_selectClinicCompare_d(),
-      input$selectClinicFacetRowControl,
-      input$selectSpecificFacetRowControl,
-      input$selectCompareAttributeControl,
-      input$selectYAxisClinicControl,
-      input$selectXAxisClinicControl,
+      input$selectInsertionsFacetRowControl,
+      input$selectSpecificInsertionsFacetRowControl,
+      input$selectInsertionsFactorLevelsControl,
+      input$selectYAxisInsertionsControl,
+      input$selectXAxisInsertionsControl,
       allCombined()
     )
   })
@@ -383,7 +382,7 @@ server <- function(input, output, session) {
     selectXAxisRemovalsControl(removalsWithImplants)
   })
   
-  output$clinicCompareRemovalsPlot <- renderPlot({
+  output$removalsPlot <- renderPlot({
     exploreDataPlot(
       removalsWithImplants,
       input$showMean,
@@ -464,3 +463,4 @@ server <- function(input, output, session) {
 }
 
 shinyApp(ui, server)
+
