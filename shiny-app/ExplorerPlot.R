@@ -3,9 +3,9 @@ exploreDataPlot <- function(insertionsWithImplants,
                             hideXLab,
                             selectedClinic,
                             compareClinic,
-                            selectedFactor,
-                            selectSpecificFacetRow,
-                            selectLevel,
+                            selectedFacetRow,
+                            selectedSpecificFacetRow,
+                            selectedFactorLevels,
                             selectedYAxis,
                             selectedXAxis,
                             combineAll) {
@@ -19,31 +19,16 @@ exploreDataPlot <- function(insertionsWithImplants,
   } else {
     if (showMean) {
       MeanData <- insertionsWithImplants %>%
-        # Filter X-axis to only show selected levels
-        filter(
-          if (isTruthy(selectLevel)) {
-            grepl(
-              paste(
-                paste("^", selectLevel, "$", sep = ""),
-                collapse = "|"
-              ),
-              # Vector where matches are sought. Need to be dynamic
-              !!sym(selectedXAxis)
-            )
-          } else {
-            TRUE
-          }
-        ) %>%
         # Filter Facets
         filter(
-          if (isTruthy(selectSpecificFacetRow)) {
+          if (isTruthy(selectedSpecificFacetRow)) {
             grepl(
               paste(
-                paste("^", selectSpecificFacetRow, "$", sep = ""),
+                paste("^", selectedSpecificFacetRow, "$", sep = ""),
                 collapse = "|"
               ),
               # Vector where matches are sought. Need to be dynamic
-              !!sym(selectedFactor)
+              !!sym(selectedFacetRow)
             )
           } else {
             TRUE
@@ -51,13 +36,12 @@ exploreDataPlot <- function(insertionsWithImplants,
         ) %>%
         group_by_at(
           c(
-            if (selectedXAxis == "Clinic" | combineAll) NULL else selectedXAxis,
-            if (selectedFactor == "None") NULL else selectedFactor
+            if (selectedFacetRow == "None") NULL else selectedFacetRow
           )
         ) %>%
         summarize(
           value = if (selectedYAxis == "Antall") {
-            as.double(n())
+            n() / nlevels(insertionsWithImplants[[selectedXAxis]])
           } else {
             if_else(is.numeric(insertionsWithImplants[[selectedYAxis]]),
                     mean(!!sym(selectedYAxis)),
@@ -70,7 +54,7 @@ exploreDataPlot <- function(insertionsWithImplants,
             sd(!!sym(selectedYAxis), na.rm = TRUE) / sqrt(n())
           }
         ) %>%
-        mutate(Clinic = "Mean")
+        mutate(!!sym(selectedXAxis) := "Mean")
     }
     
     ClinicData <- insertionsWithImplants %>%
@@ -91,12 +75,12 @@ exploreDataPlot <- function(insertionsWithImplants,
       ) %>%
       # Filter X-axis to only show selected levels
       filter(
-        if (is.null(selectLevel)) {
+        if (is.null(selectedFactorLevels)) {
           TRUE
         } else {
           grepl(
             paste(
-              paste("^", selectLevel, "$", sep = ""),
+              paste("^", selectedFactorLevels, "$", sep = ""),
               collapse = "|"
             ),
             # Vector where matches are sought. Need to be dynamic
@@ -106,16 +90,16 @@ exploreDataPlot <- function(insertionsWithImplants,
       ) %>%
       # Filter facet columns to only show specified columns
       filter(
-        if (is.null(selectSpecificFacetRow)) {
+        if (is.null(selectedSpecificFacetRow)) {
           TRUE
         } else {
           grepl(
             paste(
-              paste("^", selectSpecificFacetRow, "$", sep = ""),
+              paste("^", selectedSpecificFacetRow, "$", sep = ""),
               collapse = "|"
             ),
             # Vector where matches are sought. Need to be dynamic
-            !!sym(selectedFactor)
+            !!sym(selectedFacetRow)
           )
         }
       ) %>%
@@ -123,7 +107,7 @@ exploreDataPlot <- function(insertionsWithImplants,
         c(
           if(isTruthy(combineAll)) NULL else "Clinic",
           selectedXAxis,
-          if (selectedFactor == "None") NULL else selectedFactor
+          if (selectedFacetRow == "None") NULL else selectedFacetRow
         )
       ) %>%
       summarise(
@@ -162,7 +146,7 @@ exploreDataPlot <- function(insertionsWithImplants,
           )
         }
       } +
-      facet_grid(cols = if (is.null(selectedFactor) | selectedFactor == "None") NULL else vars(!!sym(selectedFactor))) +
+      facet_grid(cols = if (is.null(selectedFacetRow) | selectedFacetRow == "None") NULL else vars(!!sym(selectedFacetRow))) +
       theme(
         axis.text.x = if (hideXLab) element_blank() else element_text(),
         axis.ticks.x = if (hideXLab) element_blank() else element_line()
@@ -174,3 +158,4 @@ exploreDataPlot <- function(insertionsWithImplants,
       ))
   }
 }
+
