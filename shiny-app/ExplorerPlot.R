@@ -37,7 +37,9 @@ exploreDataPlot <- function(insertionsWithImplants,
         ) %>%
         group_by_at(
           c(
-            if (selectedFacetRow == "None") NULL else selectedFacetRow
+            if (selectedFillColor == "None" |
+                selectedFillColor == selectedXAxis) NULL else selectedFillColor,
+            if (selectedFacetRow == "None" ) NULL else selectedFacetRow
           )
         ) %>%
         summarize(
