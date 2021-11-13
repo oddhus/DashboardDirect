@@ -37,7 +37,7 @@ exploreDataPlot <- function(insertionsWithImplants,
         ) %>%
         group_by_at(
           c(
-            if (selectedFillColor == "None") NULL else selectedFillColor,
+            if (selectedFillColor == "None" | !combineAll) NULL else selectedFillColor,
             if (selectedFacetRow == "None" ) NULL else selectedFacetRow
           )
         ) %>%
