@@ -36,10 +36,8 @@ ui <- dashboardPage(
                            inputId = "clinicOrAllcombined",
                            label = "Grouping",
                            choices = c("Clinic", "All combined"),
-                           status = "primary" ),
-                         materialSwitch(inputId = "showMean", label = "Show mean values",  status = "primary" ),
-                         materialSwitch(inputId = "hideXLab", label = "Hide X-axis labels",  status = "primary")
-                        ),
+                           status = "primary" )
+        ),
         conditionalPanel(condition = "input.tabs == 'Clinic' & input.clinicOrAllcombined == 'Clinic'",
                          htmlOutput("selectClinicName"),
                          htmlOutput("selectClinicCompare", width = 12)
@@ -60,7 +58,15 @@ ui <- dashboardPage(
                         htmlOutput("selectSpecificInsertionsFacetRow", width = 12)),
         conditionalPanel(condition = "input.tabs == 'Clinic' & input.insertionsOrRemovals == 'Removals'",
                          htmlOutput("selectRemovalsFacetRow", width = 12),
-                         htmlOutput("selectSpecificRemovalsFacetRow", width = 12))
+                         htmlOutput("selectSpecificRemovalsFacetRow", width = 12)),
+        conditionalPanel(condition = "input.tabs == 'Clinic",
+                         checkboxGroupButtons(
+                           inputId = "showMeanAndXLab",
+                           label = "Show",
+                           choices = c("x-lab", "Mean"),
+                           status = "info",
+                           selected = "x-lab"
+                         ))
         )
       ),
     dashboardBody(
@@ -239,7 +245,6 @@ server <- function(input, output, session) {
   allCombined <- reactiveVal(FALSE)
   fillColor <- reactiveVal("Clinic")
   
-  
   observeEvent(input$clinicOrAllcombined, {
     if ("Clinic" %in% input$clinicOrAllcombined){
       fillColor("Clinic")
@@ -248,7 +253,7 @@ server <- function(input, output, session) {
       fillColor("None")
       allCombined(TRUE)
     }
-})
+  })
   
   observeEvent(input$selectFillColorControl, {
     if("All combined" %in% input$clinicOrAllcombined){
@@ -280,7 +285,6 @@ server <- function(input, output, session) {
       shinyjs::hide("removalsSpinner")
       shinyjs::show("insertionsPlot")
       shinyjs::hide("removalsPlot")
-      shinyjs::show("")
     } else if (input$insertionsOrRemovals == "Removals"){
       shinyjs::hide("insertionsSpinner")
       shinyjs::show("removalsSpinner")
@@ -319,11 +323,17 @@ server <- function(input, output, session) {
     )
   })
   
-  ### Debounce variables to clinic compare plot
-  input_selectClinicCompare <- reactive({
-    input$selectClinicCompare
+  ### Debounce clinc compare variable
+  input_selectClinicCompare <- reactiveVal(NULL)
+  
+  #### Ensure that same value dont trigger rerender
+  observeEvent(input$selectClinicCompare, {
+    if(!identical(input_selectClinicCompare(), input$selectClinicCompare)){
+      input_selectClinicCompare(input$selectClinicCompare)
+    } 
   })
   
+  #### Debounce time
   input_selectClinicCompare_d <- input_selectClinicCompare %>% debounce(900)
   
   output$selectFillColor <- renderUI({
@@ -341,13 +351,13 @@ server <- function(input, output, session) {
 
   output$selectSpecificInsertionsFacetRow <- renderUI({
     if (isTruthy(input$selectInsertionsFacetRowControl) & isTruthy(input$selectInsertionsFacetRowControl != "None")) {
-      selectSpecificFacetRowControl(insertionsWithImplants, input$selectClinicFacetRowControl)
+      selectSpecificInsertionsFacetRowControl(insertionsWithImplants, input$selectInsertionsFacetRowControl)
     } else {
-     NULL
+      NULL
     }
   })
 
-  output$selectInsertionsFactorLevelsControl <- renderUI({
+  output$selectInsertionsFactorLevels <- renderUI({
     if (isTruthy(input$selectXAxisInsertionsControl) & isTruthy(input$selectXAxisInsertionsControl != "Clinic")) {
       selectInsertionsFactorLevelsControl(insertionsWithImplants, input$selectXAxisInsertionsControl)
     } else {
@@ -364,10 +374,14 @@ server <- function(input, output, session) {
   })
 
   output$insertionsPlot <- renderPlot({
+    req(exists("insertionsWithImplants"),
+        isTruthy(input$selectYAxisInsertionsControl),
+        isTruthy(input$selectXAxisInsertionsControl))
+    
     exploreDataPlot(
       insertionsWithImplants,
-      input$showMean,
-      input$hideXLab,
+      "Mean" %in% input$showMeanAndXLab,
+      !("x-lab" %in% input$showMeanAndXLab),
       input$selectClinic,
       input_selectClinicCompare_d(),
       fillColor(),
@@ -390,7 +404,7 @@ server <- function(input, output, session) {
       selectSpecificRemovalsFacetRowControl(removalsWithImplants, input$selectRemovalsFacetRowControl)
     } else {
       NULL
-    }
+      }
   })
   
   output$selectRemovalsFactorLevels <- renderUI({
@@ -410,10 +424,14 @@ server <- function(input, output, session) {
   })
   
   output$removalsPlot <- renderPlot({
+    req(exists("removalsWithImplants"),
+        isTruthy(input$selectYAxisInsertionsControl),
+        isTruthy(input$selectXAxisInsertionsControl))
+    
     exploreDataPlot(
       removalsWithImplants,
-      input$showMean,
-      input$hideXLab,
+      "Mean" %in% input$showMeanAndXLab,
+      !("x-lab" %in% input$showMeanAndXLab),
       input$selectClinic,
       input_selectClinicCompare_d(),
       fillColor(),

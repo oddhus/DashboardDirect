@@ -37,8 +37,7 @@ exploreDataPlot <- function(insertionsWithImplants,
         ) %>%
         group_by_at(
           c(
-            if (selectedFillColor == "None" |
-                selectedFillColor == selectedXAxis) NULL else selectedFillColor,
+            if (selectedFillColor == "None") NULL else selectedFillColor,
             if (selectedFacetRow == "None" ) NULL else selectedFacetRow
           )
         ) %>%
@@ -59,6 +58,8 @@ exploreDataPlot <- function(insertionsWithImplants,
         ) %>%
         mutate(!!sym(selectedXAxis) := "Mean")
     }
+    
+    print(MeanData)
     
     ClinicData <- insertionsWithImplants %>%
       # Filter to only show selected clinics
@@ -109,7 +110,7 @@ exploreDataPlot <- function(insertionsWithImplants,
       group_by_at(
         c(
           selectedXAxis,
-          if (!isTruthy(selectedFillColor) | selectedFillColor == "None") NULL else selectedFillColor,
+          if (!isTruthy(selectedFillColor) | selectedFillColor == "None" ) NULL else selectedFillColor,
           if (selectedFacetRow == "None") NULL else selectedFacetRow
         )
       ) %>%
