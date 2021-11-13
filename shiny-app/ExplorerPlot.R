@@ -3,6 +3,7 @@ exploreDataPlot <- function(insertionsWithImplants,
                             hideXLab,
                             selectedClinic,
                             compareClinic,
+                            selectedFillColor,
                             selectedFacetRow,
                             selectedSpecificFacetRow,
                             selectedFactorLevels,
@@ -105,8 +106,8 @@ exploreDataPlot <- function(insertionsWithImplants,
       ) %>%
       group_by_at(
         c(
-          if(isTruthy(combineAll)) NULL else "Clinic",
           selectedXAxis,
+          if (!isTruthy(selectedFillColor) | selectedFillColor == "None") NULL else selectedFillColor,
           if (selectedFacetRow == "None") NULL else selectedFacetRow
         )
       ) %>%
@@ -128,13 +129,13 @@ exploreDataPlot <- function(insertionsWithImplants,
     
     bind_rows(ClinicData, MeanData) %>%
       ggplot(aes(
-        x = if (is.null(selectedXAxis)) Clinic else !!sym(selectedXAxis),
+        x = if (!isTruthy(selectedXAxis)) Clinic else !!sym(selectedXAxis),
         y = value,
-        fill = if(isTruthy(combineAll)) NULL else Clinic
+        fill = if(!isTruthy(selectedFillColor) | selectedFillColor == "None") NULL else !!sym(selectedFillColor)
       )) + 
       {
-        if(!isTruthy(combineAll)){
-          guides(fill = guide_legend(title = "Clinic"))
+        if(isTruthy(selectedFillColor) & selectedFillColor != "None"){
+          guides(fill = guide_legend(title = selectedFillColor))
         }
       } +
       geom_col(position = position_dodge(width = 0.9), width = 0.5) +

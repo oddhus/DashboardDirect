@@ -48,16 +48,19 @@ ui <- dashboardPage(
                          htmlOutput("selectYAxisInsertions", width = 12),
                          htmlOutput("selectXAxisInsertions", width = 12),
                          htmlOutput("selectInsertionsFactorLevels", width = 12),
-                         htmlOutput("selectInsertionsFacetRow", width = 12),
-                         htmlOutput("selectSpecificInsertionsFacetRow", width = 12)
                          ),
         conditionalPanel(condition = "input.tabs == 'Clinic' & input.insertionsOrRemovals == 'Removals'",
                          htmlOutput("selectYAxisRemovals", width = 12),
                          htmlOutput("selectXAxisRemovals", width = 12),
-                         htmlOutput("selectRemovalsFactorLevels", width = 12),
+                         htmlOutput("selectRemovalsFactorLevels", width = 12)),
+        conditionalPanel(condition = "input.tabs == 'Clinic' & input.clinicOrAllcombined == 'All combined'",
+                         htmlOutput("selectFillColor", width = 12)),
+        conditionalPanel(condition = "input.tabs == 'Clinic' & input.insertionsOrRemovals == 'Insertions'",
+                        htmlOutput("selectInsertionsFacetRow", width = 12),
+                        htmlOutput("selectSpecificInsertionsFacetRow", width = 12)),
+        conditionalPanel(condition = "input.tabs == 'Clinic' & input.insertionsOrRemovals == 'Removals'",
                          htmlOutput("selectRemovalsFacetRow", width = 12),
-                         htmlOutput("selectSpecificRemovalsFacetRow", width = 12)
-                        )
+                         htmlOutput("selectSpecificRemovalsFacetRow", width = 12))
         )
       ),
     dashboardBody(
@@ -234,8 +237,23 @@ server <- function(input, output, session) {
   ranges <- reactiveValues(x = NULL)
   
   allCombined <- reactiveVal(FALSE)
+  fillColor <- reactiveVal("Clinic")
+  
+  
   observeEvent(input$clinicOrAllcombined, {
-    allCombined("All combined" %in% input$clinicOrAllcombined)
+    if ("Clinic" %in% input$clinicOrAllcombined){
+      fillColor("Clinic")
+      allCombined(FALSE)
+    } else {
+      fillColor("None")
+      allCombined(TRUE)
+    }
+})
+  
+  observeEvent(input$selectFillColorControl, {
+    if("All combined" %in% input$clinicOrAllcombined){
+      fillColor(input$selectFillColorControl)
+    }
   })
   
   output$clinicPlotName <- renderText({
@@ -308,6 +326,14 @@ server <- function(input, output, session) {
   
   input_selectClinicCompare_d <- input_selectClinicCompare %>% debounce(900)
   
+  output$selectFillColor <- renderUI({
+    if(input$insertionsOrRemovals == "Insertions"){
+      selectFillColorControl(insertionsWithImplants)
+    } else {
+      selectFillColorControl(removalsWithImplants)
+    }
+  })
+  
   ## Insertions
   output$selectInsertionsFacetRow <- renderUI({
     selectInsertionsFacetRowControl(insertionsWithImplants)
@@ -344,6 +370,7 @@ server <- function(input, output, session) {
       input$hideXLab,
       input$selectClinic,
       input_selectClinicCompare_d(),
+      fillColor(),
       input$selectInsertionsFacetRowControl,
       input$selectSpecificInsertionsFacetRowControl,
       input$selectInsertionsFactorLevelsControl,
@@ -389,6 +416,7 @@ server <- function(input, output, session) {
       input$hideXLab,
       input$selectClinic,
       input_selectClinicCompare_d(),
+      fillColor(),
       input$selectRemovalsFacetRowControl,
       input$selectSpecificRemovalsFacetRowControl,
       input$selectRemovalsFactorLevelsControl,

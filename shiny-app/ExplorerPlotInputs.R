@@ -1,3 +1,21 @@
+# Common ---------------------------------------------------------------------
+selectFillColorControl <- function(data) {
+  pickerInput("selectFillColorControl",
+              "Select Fill Color",
+              choices =
+                c(
+                  data %>%
+                    select(
+                      where(function(col) is.factor(col) | is.logical(col)) &
+                        !any_of(c("RefNr"))
+                    ) %>%
+                    names(),
+                  "None"
+                ),
+              selected = "None"
+  )
+}
+
 # Removals --------------------------------------------------------------------
 selectRemovalsFacetRowControl <- function(removalsWithImplants) {
   pickerInput("selectRemovalsFacetRowControl",
