@@ -12,9 +12,7 @@ source("shiny-app/FetchData.R")
 source("shiny-app/Utils.R")
 source("shiny-app/AntibioticPlot.R")
 source("shiny-app/FactorPlot.R")
-#source("shiny-app/ClinicInsertionsInfo.R")
 source("shiny-app/ImplantPlot.R")
-#source("shiny-app/ExplorerPlotInputs.R")
 source("shiny-app/ExplorerPlot.R")
 source("shiny-app/ClinicInfoBoxes.R")
 
@@ -45,12 +43,12 @@ ui <- dashboardPage(
         conditionalPanel(condition = "input.tabs == 'Clinic' & input.insertionsOrRemovals == 'Insertions'",
                          htmlOutput("selectYAxisInsertions", width = 12),
                          htmlOutput("selectXAxisInsertions", width = 12),
-                         htmlOutput("selectInsertionsFactorLevels", width = 12),
+                         htmlOutput("selectInsertionsFactorLevels", width = 12)
                          ),
         conditionalPanel(condition = "input.tabs == 'Clinic' & input.insertionsOrRemovals == 'Removals'",
                          htmlOutput("selectYAxisRemovals", width = 12),
                          htmlOutput("selectXAxisRemovals", width = 12),
-                         htmlOutput("selectRemovalsFactorLevels", width = 12)
+                         htmlOutput("selectRemovalsFactorLevels", width = 12) 
                          ),
         conditionalPanel(condition = "input.tabs == 'Clinic' & input.clinicOrAllcombined == 'All combined'",
                          htmlOutput("selectFillColor", width = 12)
@@ -61,7 +59,7 @@ ui <- dashboardPage(
                         ),
         conditionalPanel(condition = "input.tabs == 'Clinic' & input.insertionsOrRemovals == 'Removals'",
                          htmlOutput("selectRemovalsFacetRow", width = 12),
-                         htmlOutput("selectSpecificRemovalsFacetRow", width = 12)
+                         htmlOutput("selectSpecificRemovalsFacetRow", width = 12) 
                          ),
         conditionalPanel(condition = "input.tabs == 'Clinic",
                          checkboxGroupButtons(
@@ -337,7 +335,7 @@ server <- function(input, output, session) {
       options = list(
         `actions-box` = TRUE,
         size = 10,
-        `selected-text-format` = "count > 3"
+        `selected-text-format` = "count > 2"
       )
     )
   })
@@ -382,11 +380,10 @@ server <- function(input, output, session) {
   output$selectSpecificInsertionsFacetRow <- renderUI({
     if (isTruthy(input$selectInsertionsFacetRowControl) &
         isTruthy(input$selectInsertionsFacetRowControl != "None")) {
-      selectedFactor <- input$selectXAxisInsertionsControl
       pickerInput("selectSpecificInsertionsFacetRowControl",
-                  label = paste0("Select", selectedFactor),
+                  label = paste0("Select ", input$selectInsertionsFacetRowControl),
                   choices = as.character(
-                    sort(unique(insertionsWithImplants[[selectedFactor]]))
+                    sort(unique(insertionsWithImplants[[input$selectInsertionsFacetRowControl]]))
                     ),
                   multiple = TRUE,
                   options = list(`actions-box` = TRUE, size = 10,
@@ -398,11 +395,10 @@ server <- function(input, output, session) {
   output$selectInsertionsFactorLevels <- renderUI({
     if (isTruthy(input$selectXAxisInsertionsControl) &
         (isTruthy(input$selectXAxisInsertionsControl != "Clinic") | allCombined())) {
-      selectedFactor <- input$selectXAxisInsertionsControl
       pickerInput("selectInsertionsFactorLevelsControl",
-                  label = paste0("Select", selectedFactor),
+                  label = paste0("Select ", input$selectXAxisInsertionsControl),
                   choices = as.character(
-                    sort(unique(insertionsWithImplants[[selectedFactor]]))
+                    sort(unique(insertionsWithImplants[[input$selectXAxisInsertionsControl]]))
                     ),
                   multiple = TRUE,
                   options = list(`actions-box` = TRUE, size = 10,
@@ -457,11 +453,10 @@ server <- function(input, output, session) {
   output$selectSpecificRemovalsFacetRow <- renderUI({
     if (isTruthy(input$selectRemovalsFacetRowControl) &
         isTruthy(input$selectRemovalsFacetRowControl != "None")) {
-      selectedRow <- input$selectRemovalsFacetRowControl
       pickerInput("selectSpecificRemovalsFacetRowControl",
-                  label = paste0("Select", selectedRow),
+                  label = paste0("Select ", selectRemovalsFacetRowControl),
                   choices = as.character(
-                    sort(unique(removalsWithImplants[[selectedRow]]))
+                    sort(unique(removalsWithImplants[[selectRemovalsFacetRowControl]]))
                     ),
                   multiple = TRUE,
                   options = list(`actions-box` = TRUE, size = 10,
@@ -473,13 +468,12 @@ server <- function(input, output, session) {
   output$selectRemovalsFactorLevels <- renderUI({
     if (isTruthy(input$selectXAxisRemovalsControl) &
         (isTruthy(input$selectXAxisRemovalsControl != "Clinic") | allCombined())) {
-      selectedFactor <- input$selectXAxisRemovalsControl
       pickerInput("selectRemovalsFactorLevelsControl",
                   # Reactive label.
-                  label = paste0("Select", selectedFactor),
+                  label = paste0("Select ", input$selectXAxisRemovalsControl),
                   # Reactive choices.
                   choices = as.character(
-                    sort(unique(removalsWithImplants[[selectedFactor]]))
+                    sort(unique(removalsWithImplants[[input$selectXAxisRemovalsControl]]))
                     ),
                   multiple = TRUE,
                   options = list(`actions-box` = TRUE, size = 10,
