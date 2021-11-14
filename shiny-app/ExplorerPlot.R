@@ -79,8 +79,14 @@ exploreDataPlot <- function(insertionsWithImplants,
       ) %>%
       # Filter X-axis to only show selected levels
       filter(
+        # Return all if none specific levels are selected
         if (is.null(selectedFactorLevels)) {
           TRUE
+        # All clinics are select-able when returning to the Clinic tab, even if
+        # selecting some of them in "Combine all".
+        } else if (!isTruthy(combineAll) & selectedXAxis == "Clinic") {
+          TRUE
+        # Return all selected levels
         } else {
           grepl(
             paste(

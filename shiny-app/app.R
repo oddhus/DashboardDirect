@@ -256,29 +256,34 @@ server <- function(input, output, session) {
     lotNrFisherTest(insertionsWithImplants, input$LotNrImplantSelect)
   })
 
-  #Tab 1 ---------------------------------------
+  #Tab 1 ----------------------------------------------------------------------
   # Clinic
   ranges <- reactiveValues(x = NULL)
   
   allCombined <- reactiveVal(FALSE)
   fillColor <- reactiveVal("Clinic")
   
+  # Update relevant values when switching from clinic to all combined mode
   observeEvent(input$clinicOrAllcombined, {
     if ("Clinic" %in% input$clinicOrAllcombined){
       fillColor("Clinic")
       allCombined(FALSE)
     } else {
-      fillColor("None")
       allCombined(TRUE)
+      fillColor("None")
+      #Update the picker to reflect the current value
+      updatePickerInput(session, "selectFillColorControl", selected = "None")
     }
   })
   
+  #Only change fill color when in all combined
   observeEvent(input$selectFillColorControl, {
     if("All combined" %in% input$clinicOrAllcombined){
       fillColor(input$selectFillColorControl)
     }
   })
   
+  # Render Insertions or removals depending on the plot viewed by user
   output$clinicPlotName <- renderText({
     input$insertionsOrRemovals
   })
@@ -298,6 +303,8 @@ server <- function(input, output, session) {
             "Removals", "yellow", input$selectClinic, allCombined())
   })
   
+  # Hides the plot not currently viewed by user, avoiding to generate the hidden
+  # plot again
   observeEvent(input$insertionsOrRemovals, {
     if(input$insertionsOrRemovals == "Insertions") {
       shinyjs::show("insertionsSpinner")
@@ -390,7 +397,7 @@ server <- function(input, output, session) {
 
   output$selectInsertionsFactorLevels <- renderUI({
     if (isTruthy(input$selectXAxisInsertionsControl) &
-        isTruthy(input$selectXAxisInsertionsControl != "Clinic")) {
+        (isTruthy(input$selectXAxisInsertionsControl != "Clinic") | allCombined())) {
       selectedFactor <- input$selectXAxisInsertionsControl
       pickerInput("selectInsertionsFactorLevelsControl",
                   label = paste0("Select", selectedFactor),
@@ -401,7 +408,6 @@ server <- function(input, output, session) {
                   options = list(`actions-box` = TRUE, size = 10,
                                  `selected-text-format` = "count > 2")
       )
-      selectInsertionsFactorLevelsControl(insertionsWithImplants, input$selectXAxisInsertionsControl)
     }
   })
 
@@ -422,10 +428,6 @@ server <- function(input, output, session) {
   })
 
   output$insertionsPlot <- renderPlot({
-    req(exists("insertionsWithImplants"),
-        isTruthy(input$selectYAxisInsertionsControl),
-        isTruthy(input$selectXAxisInsertionsControl))
-    
     exploreDataPlot(
       insertionsWithImplants,
       "Mean" %in% input$showMeanAndXLab,
@@ -462,15 +464,15 @@ server <- function(input, output, session) {
                     sort(unique(removalsWithImplants[[selectedRow]]))
                     ),
                   multiple = TRUE,
-                  options = list(`actions-box` = TRUE,
-                                 size = 10, `selected-text-format` = "count > 2")
+                  options = list(`actions-box` = TRUE, size = 10,
+                                 `selected-text-format` = "count > 2")
       )
     }
   })
   
   output$selectRemovalsFactorLevels <- renderUI({
     if (isTruthy(input$selectXAxisRemovalsControl) &
-        isTruthy(input$selectXAxisRemovalsControl != "Clinic")) {
+        (isTruthy(input$selectXAxisRemovalsControl != "Clinic") | allCombined())) {
       selectedFactor <- input$selectXAxisRemovalsControl
       pickerInput("selectRemovalsFactorLevelsControl",
                   # Reactive label.
@@ -500,7 +502,6 @@ server <- function(input, output, session) {
                 choices = c(removalsFactors),
                 selected = "Clinic"
     )
-    selectXAxisRemovalsControl(removalsWithImplants)
   })
   
   output$removalsPlot <- renderPlot({
