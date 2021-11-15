@@ -15,6 +15,8 @@ source("shiny-app/FactorPlot.R")
 source("shiny-app/ImplantPlot.R")
 source("shiny-app/ExplorerPlot.R")
 source("shiny-app/ClinicInfoBoxes.R")
+source("shiny-app/LogRegPlot.R")
+
 
 #Todo
 #Add features shinydashboardPlus
@@ -23,19 +25,20 @@ ui <- dashboardPage(
     dashboardHeader(title = "Tooth implants"),
     dashboardSidebar(
       sidebarMenu(
-        conditionalPanel(condition = "input.tabs == 'Clinic'",
+        conditionalPanel(condition = "input.tabs == 'Clinic' | input.tabs == 'Analyses'",
                          radioGroupButtons(
                            inputId = "insertionsOrRemovals",
                            label = "Type", 
                            choices = c("Insertions", "Removals"),
-                           status = "primary"
-                         ),
+                           status = "primary")
+                          ),
+        conditionalPanel(condition = "input.tabs == 'Clinic'",   
                          radioGroupButtons(
                            inputId = "clinicOrAllcombined",
                            label = "Grouping",
                            choices = c("Clinic", "All combined"),
                            status = "primary" )
-        ),
+                         ),
         conditionalPanel(condition = "input.tabs == 'Clinic' & input.clinicOrAllcombined == 'Clinic'",
                          htmlOutput("selectClinicName"),
                          htmlOutput("selectClinicCompare", width = 12)
@@ -61,7 +64,7 @@ ui <- dashboardPage(
                          htmlOutput("selectRemovalsFacetRow", width = 12),
                          htmlOutput("selectSpecificRemovalsFacetRow", width = 12) 
                          ),
-        conditionalPanel(condition = "input.tabs == 'Clinic",
+        conditionalPanel(condition = "input.tabs == 'Clinic'",
                          checkboxGroupButtons(
                            inputId = "showMeanAndXLab",
                            label = "Show",
@@ -69,7 +72,23 @@ ui <- dashboardPage(
                            status = "info",
                            selected = "x-lab"
                          ))
-        )
+        ),
+        conditionalPanel(condition = "input.tabs == 'Analyses'",
+                         pickerInput("analyzeMethod",
+                                     label = "Select analysis",
+                                     choices = c("Logistic Regression"),
+                                     selected = "Logistic Regression" )
+                         ),
+        conditionalPanel(condition = "input.tabs == 'Analyses' & input.insertionsOrRemovals == 'Insertions' & input.analyzeMethod == 'Logistic Regression'",
+                         htmlOutput("logRegDependentInsertions"),
+                         htmlOutput("logRegNumericIndependentInsertions"),
+                         htmlOutput("logRegFactorLogicalIndependentInsertions"),
+                         ),
+        conditionalPanel(condition = "input.tabs == 'Analyses' & input.insertionsOrRemovals == 'Removals' & input.analyzeMethod == 'Logistic Regression'",
+                         htmlOutput("logRegDependentRemovals"),
+                         htmlOutput("logRegNumericIndependentRemovals"),
+                         htmlOutput("logRegFactorLogicalIndependentRemovals"),
+      )
       ),
     dashboardBody(
       shinyjs::useShinyjs(),
@@ -96,8 +115,28 @@ ui <- dashboardPage(
           ),
         ),
         tabPanel(
-          "Explorer",
-          h2("Data explorer")
+          "Analyses",
+          h2("Analyze data"),
+          fluidRow(
+            column(
+              plotOutput("logRegPlotInsertions", height = 600) %>% withSpinner(id = "logRegInsertionsSpinner"),
+              htmlOutput("logRegHighlightInsertions"),
+              width = 6
+            ),
+            column(
+              verbatimTextOutput("logRegPrintInsertions"), 
+              width = 6
+            ),
+            column(
+              plotOutput("logRegPlotRemovals", height = 600) %>% withSpinner(id = "logRegRemovalsSpinner"),
+              htmlOutput("logRegHighlightRemovals"),
+              width = 6
+            ),
+            column(
+              verbatimTextOutput("logRegPrintRemovals"), 
+              width = 6
+            )
+          )
         ),
         tabPanel(
           "Models",
@@ -158,25 +197,73 @@ ui <- dashboardPage(
     )
   )
 
-columnsToRemove <- c("RefNr", "Id.y", "Id", "ComplicationsComment", "AntibioticsType")
-
-facetRowsColumnsToRemove <- c("LotNr")
-
-
 server <- function(input, output, session) {
+  columnsToRemove <- c("RefNr", "Id.y", "Id", "ComplicationsComment", "AntibioticsType")
+  facetRowsColumnsToRemove <- c("LotNr")
+  
+  # ---------------------------------------------------------------------------
+  # Data 
+  # ---------------------------------------------------------------------------
+  
   insertionsWithImplants <- getInsertionsWithImplants()
   removalsWithImplants <- getRemovalsWithImplants()
   
-  insertionsFactors <- insertionsWithImplants %>% select(where(is.factor) & !any_of(columnsToRemove)) %>% names()
-  insertionsLogical <- insertionsWithImplants %>% select(where(is.logical) & !any_of(columnsToRemove)) %>% names()
-  insertionsNumeric <- insertionsWithImplants %>% select(where(is.numeric) & !any_of(columnsToRemove)) %>% names()
+  insertionsFactors <- insertionsWithImplants %>%
+    select(where(is.factor) & !any_of(columnsToRemove)) %>% names()
+  insertionsLogical <- insertionsWithImplants %>%
+    select(where(is.logical) & !any_of(columnsToRemove)) %>% names()
+  insertionsNumeric <- insertionsWithImplants %>%
+    select(where(is.numeric) & !any_of(columnsToRemove)) %>% names()
   
-  removalsFactors <- removalsWithImplants %>% select(where(is.factor) & !any_of(columnsToRemove)) %>% names()
-  removalsLogical <- removalsWithImplants %>% select(where(is.logical) & !any_of(columnsToRemove)) %>% names()
-  removalsNumeric <- removalsWithImplants %>% select(where(is.numeric) & !any_of(columnsToRemove)) %>% names()
+  removalsFactors <- removalsWithImplants %>%
+    select(where(is.factor) & !any_of(columnsToRemove)) %>% names()
+  removalsLogical <- removalsWithImplants %>%
+    select(where(is.logical) & !any_of(columnsToRemove)) %>% names()
+  removalsNumeric <- removalsWithImplants %>% 
+    select(where(is.numeric) & !any_of(columnsToRemove)) %>% names()
   
   clinics <- insertionsWithImplants %>% distinct(Clinic) %>% arrange(Clinic) %>% 
     mutate(Clinic = as.character(Clinic))
+  
+  # ---------------------------------------------------------------------------
+  # Global events
+  # ---------------------------------------------------------------------------
+  
+  # Hides the plot not currently viewed by user, avoiding to generate the hidden
+  # plot again
+  observeEvent(input$insertionsOrRemovals, {
+    if(input$tabs == "Clinic"){
+      if(input$insertionsOrRemovals == "Insertions") {
+        shinyjs::show("insertionsSpinner")
+        shinyjs::hide("removalsSpinner")
+        shinyjs::show("insertionsPlot")
+        shinyjs::hide("removalsPlot")
+      } else if (input$insertionsOrRemovals == "Removals"){
+        shinyjs::hide("insertionsSpinner")
+        shinyjs::show("removalsSpinner")
+        shinyjs::hide("insertionsPlot")
+        shinyjs::show("removalsPlot")
+      }
+    } else {
+      if(input$insertionsOrRemovals == "Insertions") {
+        shinyjs::show("logRegInsertionsSpinner")
+        shinyjs::hide("logRegRemovalsSpinner")
+        shinyjs::show("logRegPlotInsertions")
+        shinyjs::hide("logRegPlotRemovals")
+        shinyjs::show("logRegPrintInsertions")
+        shinyjs::hide("logRegPrintRemovals")
+      } else if (input$insertionsOrRemovals == "Removals"){
+        shinyjs::hide("logRegInsertionsSpinner")
+        shinyjs::show("logRegRemovalsSpinner")
+        shinyjs::hide("logRegPlotInsertions")
+        shinyjs::show("logRegPlotRemovals")
+        shinyjs::hide("logRegPrintInsertions")
+        shinyjs::show("logRegPrintRemovals")
+      }
+    }
+
+  })
+  
   
   # Tab 1
   ## Length and diamter plot
@@ -207,8 +294,9 @@ server <- function(input, output, session) {
     lotNrFisherTest(insertionsWithImplants, input$LotNrImplantSelect)
   })
 
-  #Tab 1 ----------------------------------------------------------------------
-  # Clinic
+  #----------------------------------------------------------------------------
+  # Explorer plot
+  #----------------------------------------------------------------------------
   
   ## Reactive vals ------------------------------------------------------------
   
@@ -244,22 +332,6 @@ server <- function(input, output, session) {
     if(!identical(input_selectClinicCompare(), input$selectClinicCompare)){
       input_selectClinicCompare(input$selectClinicCompare)
     } 
-  })
-  
-  # Hides the plot not currently viewed by user, avoiding to generate the hidden
-  # plot again
-  observeEvent(input$insertionsOrRemovals, {
-    if(input$insertionsOrRemovals == "Insertions") {
-      shinyjs::show("insertionsSpinner")
-      shinyjs::hide("removalsSpinner")
-      shinyjs::show("insertionsPlot")
-      shinyjs::hide("removalsPlot")
-    } else if (input$insertionsOrRemovals == "Removals"){
-      shinyjs::hide("insertionsSpinner")
-      shinyjs::show("removalsSpinner")
-      shinyjs::hide("insertionsPlot")
-      shinyjs::show("removalsPlot")
-    }
   })
   
   ## Debounce -----------------------------------------------------------------
@@ -487,6 +559,145 @@ server <- function(input, output, session) {
   output$removalsBox <- renderValueBox({
     sumInfo(removalsWithImplants,
             "Removals", "yellow", input$selectClinic, allCombined())
+  })
+  
+  #----------------------------------------------------------------------------
+  # Analyses
+  #----------------------------------------------------------------------------
+  
+  # Logistic Regression -------------------------------------------------------
+  
+  ## Inputs -------------------------------------------------------------------
+  
+  ### Dependent variable
+  output$logRegDependentInsertions <- renderUI({
+    pickerInput("logRegDependentInsertions",
+      label = "Select dependent variable",
+      choices = insertionsLogical
+    )
+  })
+  
+  output$logRegDependentRemovals <- renderUI({
+    pickerInput("logRegDependentRemovals",
+                label = "Select dependent variable",
+                choices = removalsLogical
+    )
+  })
+  
+  ### Independent variables
+  output$logRegNumericIndependentInsertions <- renderUI({
+    pickerInput("logRegNumericIndependentInsertions",
+                label = "Select independent variable(s)",
+                choices = insertionsNumeric,
+                multiple = TRUE
+    )
+  })
+  
+  output$logRegNumericIndependentRemovals <- renderUI({
+    pickerInput("logRegNumericIndependentRemovals",
+                label = "Select independent variable(s)",
+                choices = removalsNumeric,
+                multiple = TRUE
+    )
+  })
+  
+  ### Additional independent variables
+  output$logRegFactorLogicalIndependentInsertions <- renderUI({
+    pickerInput("logRegFactorLogicalIndependentInsertions",
+                label = "Select additional independent factors",
+                choices = c(insertionsFactors, insertionsLogical),
+                multiple = TRUE
+    )
+  })
+  
+  output$logRegFactorLogicalIndependentRemovals <- renderUI({
+    pickerInput("logRegFactorLogicalIndependentRemovals",
+                label = "Select additional independent factors",
+                choices = c(removalsFactors, removalsLogical),
+                multiple = TRUE
+    )
+  })
+  
+  ### Highlight
+  output$logRegHighlightInsertions <- renderUI({
+    req(isTruthy(input$logRegFactorLogicalIndependentInsertions))
+    
+    pickerInput("logRegHighlightInsertions",
+                label = "Hightlight factor",
+                choices = as.character(
+                  sort(unique(insertionsWithImplants[[input$logRegFactorLogicalIndependentInsertions[1]]]))
+                ),
+                multiple = TRUE,
+                options = list(`actions-box` = TRUE, size = 10,
+                               `selected-text-format` = "count > 2")
+    )
+  })
+  
+  output$logRegHighlightRemovals <- renderUI({
+    req(isTruthy(input$logRegFactorLogicalIndependentRemovals))
+    
+    pickerInput("logRegHighlightRemovals",
+                label = "Hightlight factor",
+                choices = as.character(
+                  sort(unique(removalsWithImplants[[input$logRegFactorLogicalIndependentRemovals[1]]]))
+                ),
+                multiple = TRUE,
+                options = list(`actions-box` = TRUE, size = 10,
+                               `selected-text-format` = "count > 2")
+    )
+  })
+  
+  ## Plots -------------------------------------------------------------------
+  
+  output$logRegPlotInsertions <- renderPlot({
+    req(isTruthy(input$logRegDependentInsertions),
+        isTruthy(input$logRegNumericIndependentInsertions))
+    
+    logRegPlot(insertionsWithImplants,
+                 input$logRegDependentInsertions,
+                 input$logRegNumericIndependentInsertions,
+                 input$logRegFactorLogicalIndependentInsertions,
+                 input$logRegHighlightInsertions
+    )
+  })
+  
+  output$logRegPlotRemovals <- renderPlot({
+    req(isTruthy(input$logRegDependentRemovals),
+        isTruthy(input$logRegNumericIndependentRemovals))
+    
+    logRegPlot(removalsWithImplants,
+                 input$logRegDependentRemovals,
+                 input$logRegNumericIndependentRemovals,
+                 input$logRegFactorLogicalIndependentRemovals,
+               input$logRegHighlightRemoval
+    )
+  })
+  
+  ## SummaryText --------------------------------------------------------------
+  output$logRegPrintInsertions <- renderPrint({
+    req(isTruthy(input$logRegDependentInsertions),
+        isTruthy(input$logRegNumericIndependentInsertions))
+    
+    form <- paste0(input$logRegDependentInsertions, "~",
+                   paste0(c(input$logRegNumericIndependentInsertions, 
+                            input$logRegFactorLogicalIndependentInsertions)
+                            ,collapse = "+"))
+    print(paste0("Formula: ", form))
+    logreg <-glm(as.formula(form),family=binomial(),data=insertionsWithImplants)
+    print(summary(logreg))
+  })
+  
+  output$logRegPrintRemovals <- renderPrint({
+    req(isTruthy(input$logRegDependentRemovals),
+        isTruthy(input$logRegNumericIndependentRemovals))
+    
+    form <- paste0(input$logRegDependentRemovals, "~",
+                   paste0(c(input$logRegNumericIndependentRemovals, 
+                            input$logRegFactorLogicalIndependentRemovals)
+                          ,collapse = "+"))
+    print(paste0("Formula: ", form))
+    logreg <-glm(as.formula(form),family=binomial(),data=removalsWithImplants)
+    print(summary(logreg))
   })
 }
 

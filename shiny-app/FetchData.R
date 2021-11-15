@@ -41,28 +41,16 @@ getInsertionsWithImplants <- function() {
   
   insertionsWithImplants <- insertions %>%
     left_join(implants, by = c("Id" = "InsertionId")) %>%
-    rename(ImplantName = Name.x.y,
-           AntibioticsName = Name.x.x.x.x.x,
-           LekholmZarbVolume = Name.y.x,
-           LekholmZarbDensity = Name.x.x.x.x.x.x,
-           Method = Name.y.y.x,
-           Clinic = Name,
-           Brand = Name.y.y.y,
-           Material = Name.x.x.y,
-           ExtractionReason = Name.y.y.y.y,
-           Stability = Name.x.x.x,
-           MissingReason = Name.y.y.y.y.y,
-           BoneAugmentation = Name.x.x.x.x,
-           TimeUntilLoad = Name.y.y.y.y.y.y,
-           Id = Id.x
-           ) %>%
+    rename(Id = Id.x) %>%
     select(-(ends_with("Id") & !starts_with("Id"))) %>%
     select(-c("Id.y")) %>%
     collect()
   
   DBI::dbDisconnect(con)
   
-  return(insertionsWithImplants %>% mutate(across(where(is.character),as.factor)))
+  return(insertionsWithImplants %>%
+           mutate(across(where(is.character),as.factor)) %>%
+           mutate(across(starts_with("Position"), as.factor)))
 }
 
 getRemovalsWithImplants <- function() {
@@ -72,11 +60,7 @@ getRemovalsWithImplants <- function() {
   
   removalsWithImplants <- removals %>%
     left_join(implants, by = c("Id" = "RemovalId")) %>%
-    rename(ImplantName = Name.x.y,
-           Brand = Name.y.y,
-           RemovalReason = Name.x.x.x.x.x,
-           Clinic = Name.y.x,
-           Id = Id.x) %>%
+    rename(Id = Id.x) %>%
     select(-(ends_with("Id") & !starts_with("Id"))) %>%
     select(-(starts_with("Name"))) %>%
     select(-c("HelfoRefund", "Membrane", "Resorbable", "Boneaugmentation", "Complications", "ComplicationsComment",
@@ -105,7 +89,9 @@ getRemovals <- function(con) {
   
   removalData <- removal %>%
     left_join(removalReason, by = c("ReasonId" = "Id")) %>%
-    left_join(clinic, by = c("ClinicId" = "Id"))
+    left_join(clinic, by = c("ClinicId" = "Id")) %>%
+    rename(RemovalReason = Name.x,
+           Clinic = Name.y)
 }
 
 getInsertions <- function(con) {
@@ -124,7 +110,12 @@ getInsertions <- function(con) {
     left_join(lekholmZarbVolume, by = c("LekholmZarbVolumeId" = "Id")) %>%
     left_join(lekholmZarbDensity, by = c("LekholmZarbDensityId" = "Id")) %>%
     left_join(method, by = c("MethodId" = "Id")) %>%
-    left_join(clinic, by = c("ClinicId" = "Id"))
+    left_join(clinic, by = c("ClinicId" = "Id")) %>%
+    rename(AntibioticsName = Name.x,
+           LekholmZarbVolume = Name.y,
+           LekholmZarbDensity = Name.x.x,
+           Method = Name.y.y,
+           Clinic = Name)
 }
 
 getImplants <- function(con) {
@@ -151,5 +142,15 @@ getImplants <- function(con) {
     left_join(missingReason, by = c("MissingReasonId" = "Id")) %>%
     left_join(boneAugmentationMethod, by = c("BoneAugmentationMethodId" = "Id")) %>%
     left_join(prostheticConstruction, by = c("ProstheticConstructionId" = "Id")) %>%
-    left_join(timeUntilLoad, by = c("TimeUntilLoadId" = "Id")))
+    left_join(timeUntilLoad, by = c("TimeUntilLoadId" = "Id")) %>%
+      rename(ImplantName = Name.x,
+             Brand = Name.y,
+             Material = Name.x.x,
+             ExtractionReason = Name.y.y,
+             Stability = Name.x.x.x,
+             MissingReason = Name.y.y.y,
+             BoneAugmentationMethod = Name.x.x.x.x,
+             TimeUntilLoad = Name.y.y.y.y
+      )
+      )
 }
