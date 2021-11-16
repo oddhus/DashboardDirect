@@ -17,10 +17,6 @@ source("shiny-app/ExplorerPlot.R")
 source("shiny-app/ClinicInfoBoxes.R")
 source("shiny-app/LogRegPlot.R")
 
-
-#Todo
-#Add features shinydashboardPlus
-
 ui <- dashboardPage(
     dashboardHeader(title = "Tooth implants"),
     dashboardSidebar(
@@ -93,7 +89,15 @@ ui <- dashboardPage(
                          htmlOutput("logicalIndependentRemovals")
                         ),
         conditionalPanel(condition = "input.tabs == 'Implants'",
-                         htmlOutput("selectRemovalReason")
+                         htmlOutput("selectRemovalReason"),
+                         htmlOutput("selectImplantName"),
+                         checkboxGroupButtons(
+                           inputId = "implantPlotOptions",
+                           label = "Show",
+                           choices = c("LotNr"),
+                           status = "info",
+                           selected = NULL
+                         )
       )
       ),
     dashboardBody(
@@ -226,19 +230,36 @@ server <- function(input, output, session) {
   # ---------------------------------------------------------------------------
   # Removals Plot
   # ---------------------------------------------------------------------------
-  output$removalsImplantPlot <- renderPlot({
-    implantPlot(removalsWithImplants,
-                input$selectRemovalReason)
-  })
   
+  ## Inputs -------------------------------------------------------------------
   output$selectRemovalReason <- renderUI({
     pickerInput("selectRemovalReason",
-                "Select Removal Reason",
+                "Select Removal Reason(s)",
                 choices = as.character(
                   sort(unique(removalsWithImplants[["RemovalReason"]]))
                 ),
                 multiple = T)
   })
+  
+  output$selectImplantName <- renderUI({
+    pickerInput("selectImplantName",
+                "Select Implant Name(s)",
+                choices = as.character(
+                  sort(unique(removalsWithImplants[["ImplantName"]]))
+                ),
+                multiple = T)
+  })
+  
+  ## Plots --------------------------------------------------------------------
+  
+  output$removalsImplantPlot <- renderPlot({
+    implantPlot(removalsWithImplants,
+                input$selectRemovalReason,
+                input$selectImplantName,
+                "LotNr" %in% input$implantPlotOptions)
+  })
+  
+
   
 
   # output$LotNrComplication <- renderPlot({

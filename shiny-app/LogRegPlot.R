@@ -1,9 +1,7 @@
 analyzePlot <- function(data, dependent, numeric, factors, booleans, highlight, type) {
   isBinomial <- identical("Binary Logistic Regression", type)
   isLinear <- identical("Linear Model", type)
-  
-  print(highlight)
-  
+
   if(length(numeric) > 1 ){
     ggplot() +
       theme_void() +
