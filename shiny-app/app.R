@@ -76,18 +76,21 @@ ui <- dashboardPage(
         conditionalPanel(condition = "input.tabs == 'Analyses'",
                          pickerInput("analyzeMethod",
                                      label = "Select analysis",
-                                     choices = c("Logistic Regression"),
-                                     selected = "Logistic Regression" )
+                                     choices = c("Binary Logistic Regression", 
+                                                 "Linear Model"),
+                                     selected = "Binary Logistic Regression" )
                          ),
-        conditionalPanel(condition = "input.tabs == 'Analyses' & input.insertionsOrRemovals == 'Insertions' & input.analyzeMethod == 'Logistic Regression'",
-                         htmlOutput("logRegDependentInsertions"),
-                         htmlOutput("logRegNumericIndependentInsertions"),
-                         htmlOutput("logRegFactorLogicalIndependentInsertions"),
+        conditionalPanel(condition = "input.tabs == 'Analyses' & input.insertionsOrRemovals == 'Insertions'",
+                         htmlOutput("dependentInsertions"),
+                         htmlOutput("numericIndependentInsertions"),
+                         htmlOutput("factorIndependentInsertions"),
+                         htmlOutput("logicalIndependentInsertions")
                          ),
-        conditionalPanel(condition = "input.tabs == 'Analyses' & input.insertionsOrRemovals == 'Removals' & input.analyzeMethod == 'Logistic Regression'",
-                         htmlOutput("logRegDependentRemovals"),
-                         htmlOutput("logRegNumericIndependentRemovals"),
-                         htmlOutput("logRegFactorLogicalIndependentRemovals"),
+        conditionalPanel(condition = "input.tabs == 'Analyses' & input.insertionsOrRemovals == 'Removals'",
+                         htmlOutput("dependentRemovals"),
+                         htmlOutput("numericIndependentRemovals"),
+                         htmlOutput("factorIndependentRemovals"),
+                         htmlOutput("logicalIndependentRemovals")
       )
       ),
     dashboardBody(
@@ -119,21 +122,21 @@ ui <- dashboardPage(
           h2("Analyze data"),
           fluidRow(
             column(
-              plotOutput("logRegPlotInsertions", height = 600) %>% withSpinner(id = "logRegInsertionsSpinner"),
-              htmlOutput("logRegHighlightInsertions"),
+              plotOutput("plotAnalyzeInsertions", height = 600) %>% withSpinner(id = "analyzeInsertionsSpinner"),
+              htmlOutput("highlightInsertions"),
               width = 6
             ),
             column(
-              verbatimTextOutput("logRegPrintInsertions"), 
+              verbatimTextOutput("printAnalyzeInsertions"), 
               width = 6
             ),
             column(
-              plotOutput("logRegPlotRemovals", height = 600) %>% withSpinner(id = "logRegRemovalsSpinner"),
-              htmlOutput("logRegHighlightRemovals"),
+              plotOutput("plotAnalyzeRemovals", height = 600) %>% withSpinner(id = "analyzeRemovalsSpinner"),
+              htmlOutput("highlightRemovals"),
               width = 6
             ),
             column(
-              verbatimTextOutput("logRegPrintRemovals"), 
+              verbatimTextOutput("printAnalyzeRemovals"), 
               width = 6
             )
           )
@@ -248,17 +251,17 @@ server <- function(input, output, session) {
       if(input$insertionsOrRemovals == "Insertions") {
         shinyjs::show("logRegInsertionsSpinner")
         shinyjs::hide("logRegRemovalsSpinner")
-        shinyjs::show("logRegPlotInsertions")
-        shinyjs::hide("logRegPlotRemovals")
-        shinyjs::show("logRegPrintInsertions")
-        shinyjs::hide("logRegPrintRemovals")
+        shinyjs::show("plotAnalyzeInsertions")
+        shinyjs::hide("plotAnalyzeRemovals")
+        shinyjs::show("printAnalyzeInsertions")
+        shinyjs::hide("printAnalyzeRemovals")
       } else if (input$insertionsOrRemovals == "Removals"){
-        shinyjs::hide("logRegInsertionsSpinner")
-        shinyjs::show("logRegRemovalsSpinner")
-        shinyjs::hide("logRegPlotInsertions")
-        shinyjs::show("logRegPlotRemovals")
-        shinyjs::hide("logRegPrintInsertions")
-        shinyjs::show("logRegPrintRemovals")
+        shinyjs::hide("analyzeInsertionsSpinner")
+        shinyjs::show("analyzeRemovalsSpinner")
+        shinyjs::hide("plotAnalyzeInsertions")
+        shinyjs::show("plotAnalyzeRemovals")
+        shinyjs::hide("printAnalyzeInsertions")
+        shinyjs::show("printAnalyzeRemovals")
       }
     }
 
@@ -570,62 +573,87 @@ server <- function(input, output, session) {
   ## Inputs -------------------------------------------------------------------
   
   ### Dependent variable
-  output$logRegDependentInsertions <- renderUI({
-    pickerInput("logRegDependentInsertions",
-      label = "Select dependent variable",
-      choices = insertionsLogical
+  output$dependentInsertions <- renderUI({
+    pickerInput("dependentInsertions",
+              label = "Select dependent variable",
+              choices = if(input$analyzeMethod == "Binary Logistic Regression"){
+                insertionsLogical
+              } else if (input$analyzeMethod == "Linear Model") {
+                insertionsNumeric
+              }
     )
   })
   
-  output$logRegDependentRemovals <- renderUI({
-    pickerInput("logRegDependentRemovals",
+  output$dependentRemovals <- renderUI({
+    pickerInput("dependentRemovals",
                 label = "Select dependent variable",
-                choices = removalsLogical
+                choices = if(input$analyzeMethod == "Binary Logistic Regression"){
+                  removalsLogical
+                } else if (input$analyzeMethod == "Linear Model") {
+                  removalsNumeric
+                }
     )
   })
   
-  ### Independent variables
-  output$logRegNumericIndependentInsertions <- renderUI({
-    pickerInput("logRegNumericIndependentInsertions",
-                label = "Select independent variable(s)",
+  ### Numeric Independent variables
+  output$numericIndependentInsertions <- renderUI({
+    pickerInput("numericIndependentInsertions",
+                label = "Select numeric variable(s)",
                 choices = insertionsNumeric,
                 multiple = TRUE
     )
   })
   
-  output$logRegNumericIndependentRemovals <- renderUI({
-    pickerInput("logRegNumericIndependentRemovals",
-                label = "Select independent variable(s)",
+  output$numericIndependentRemovals <- renderUI({
+    pickerInput("numericIndependentRemovals",
+                label = "Select numeric variable(s)",
                 choices = removalsNumeric,
                 multiple = TRUE
     )
   })
   
-  ### Additional independent variables
-  output$logRegFactorLogicalIndependentInsertions <- renderUI({
-    pickerInput("logRegFactorLogicalIndependentInsertions",
-                label = "Select additional independent factors",
-                choices = c(insertionsFactors, insertionsLogical),
+  ### Factor independent variables
+  output$factorIndependentInsertions <- renderUI({
+    pickerInput("factorIndependentInsertions",
+                label = "Select factors",
+                choices = insertionsFactors,
                 multiple = TRUE
     )
   })
   
-  output$logRegFactorLogicalIndependentRemovals <- renderUI({
-    pickerInput("logRegFactorLogicalIndependentRemovals",
-                label = "Select additional independent factors",
-                choices = c(removalsFactors, removalsLogical),
+  output$factorIndependentRemovals <- renderUI({
+    pickerInput("factorIndependentRemovals",
+                label = "Select factors",
+                choices = removalsFactors,
+                multiple = TRUE
+    )
+  })
+  
+  ### Logical independent variables
+  output$logicalIndependentInsertions <- renderUI({
+    pickerInput("logicalIndependentInsertions",
+                label = "Select logical variables",
+                choices = insertionsLogical,
+                multiple = TRUE
+    )
+  })
+  
+  output$logicalIndependentRemovals <- renderUI({
+    pickerInput("logicalIndependentRemovals",
+                label = "Select logical variables",
+                choices = removalsLogical,
                 multiple = TRUE
     )
   })
   
   ### Highlight
-  output$logRegHighlightInsertions <- renderUI({
-    req(isTruthy(input$logRegFactorLogicalIndependentInsertions))
+  output$highlightInsertions <- renderUI({
+    req(isTruthy(input$factorIndependentInsertions))
     
-    pickerInput("logRegHighlightInsertions",
+    pickerInput("highlightInsertions",
                 label = "Hightlight factor",
                 choices = as.character(
-                  sort(unique(insertionsWithImplants[[input$logRegFactorLogicalIndependentInsertions[1]]]))
+                  sort(unique(insertionsWithImplants[[input$factorIndependentInsertions[1]]]))
                 ),
                 multiple = TRUE,
                 options = list(`actions-box` = TRUE, size = 10,
@@ -633,13 +661,13 @@ server <- function(input, output, session) {
     )
   })
   
-  output$logRegHighlightRemovals <- renderUI({
-    req(isTruthy(input$logRegFactorLogicalIndependentRemovals))
+  output$highlightRemovals <- renderUI({
+    req(isTruthy(input$factorIndependentRemovals))
     
-    pickerInput("logRegHighlightRemovals",
+    pickerInput("highlightRemovals",
                 label = "Hightlight factor",
                 choices = as.character(
-                  sort(unique(removalsWithImplants[[input$logRegFactorLogicalIndependentRemovals[1]]]))
+                  sort(unique(removalsWithImplants[[input$factorIndependentRemovals[1]]]))
                 ),
                 multiple = TRUE,
                 options = list(`actions-box` = TRUE, size = 10,
@@ -649,55 +677,86 @@ server <- function(input, output, session) {
   
   ## Plots -------------------------------------------------------------------
   
-  output$logRegPlotInsertions <- renderPlot({
-    req(isTruthy(input$logRegDependentInsertions),
-        isTruthy(input$logRegNumericIndependentInsertions))
-    
-    logRegPlot(insertionsWithImplants,
-                 input$logRegDependentInsertions,
-                 input$logRegNumericIndependentInsertions,
-                 input$logRegFactorLogicalIndependentInsertions,
-                 input$logRegHighlightInsertions
-    )
+  output$plotAnalyzeInsertions <- renderPlot({
+      req(isTruthy(input$dependentInsertions),
+          isTruthy(input$numericIndependentInsertions))
+
+      analyzePlot(insertionsWithImplants,
+                 input$dependentInsertions,
+                 input$numericIndependentInsertions,
+                 input$factorIndependentInsertions,
+                 input$logicalIndependentInsertions,
+                 input$highlightInsertions,
+                 input$analyzeMethod
+      )
   })
   
-  output$logRegPlotRemovals <- renderPlot({
-    req(isTruthy(input$logRegDependentRemovals),
-        isTruthy(input$logRegNumericIndependentRemovals))
+  output$plotAnalyzeRemovals <- renderPlot({
+    req(isTruthy(input$dependentRemovals),
+        isTruthy(input$numericIndependentRemovals))
     
-    logRegPlot(removalsWithImplants,
-                 input$logRegDependentRemovals,
-                 input$logRegNumericIndependentRemovals,
-                 input$logRegFactorLogicalIndependentRemovals,
-               input$logRegHighlightRemoval
+    analyzePlot(removalsWithImplants,
+                 input$dependentRemovals,
+                 input$numericIndependentRemovals,
+                 input$factorIndependentRemovals,
+                 input$logicalIndependentRemovals,
+                 input$highlightRemovals,
+                 input$analyzeMethod
+                
     )
   })
   
   ## SummaryText --------------------------------------------------------------
-  output$logRegPrintInsertions <- renderPrint({
-    req(isTruthy(input$logRegDependentInsertions),
-        isTruthy(input$logRegNumericIndependentInsertions))
+  
+
+  
+  output$printAnalyzeInsertions <- renderPrint({
+
+
+    form <- paste0(input$dependentInsertions, "~",
+                   paste0(c(input$numericIndependentInsertions, 
+                            input$factorIndependentInsertions,
+                            input$logicalIndependentInsertions)
+                          ,collapse = "+"))
     
-    form <- paste0(input$logRegDependentInsertions, "~",
-                   paste0(c(input$logRegNumericIndependentInsertions, 
-                            input$logRegFactorLogicalIndependentInsertions)
-                            ,collapse = "+"))
     print(paste0("Formula: ", form))
-    logreg <-glm(as.formula(form),family=binomial(),data=insertionsWithImplants)
-    print(summary(logreg))
+    
+
+    
+    if(input$analyzeMethod == "Binary Logistic Regression"){
+      req(isTruthy(input$dependentInsertions),
+          isTruthy(input$numericIndependentInsertions) | isTruthy(input$factorIndependentInsertions))
+      logreg <-glm(as.formula(form),family=binomial(),data=insertionsWithImplants)
+      print(summary(logreg))
+    } else if (input$analyzeMethod == "Linear Model") {
+      req(isTruthy(input$dependentInsertions),
+          (isTruthy(input$numericIndependentInsertions)))
+      lm <- lm(as.formula(form), data = insertionsWithImplants)
+      print(summary(lm))
+    }
   })
   
-  output$logRegPrintRemovals <- renderPrint({
-    req(isTruthy(input$logRegDependentRemovals),
-        isTruthy(input$logRegNumericIndependentRemovals))
-    
-    form <- paste0(input$logRegDependentRemovals, "~",
-                   paste0(c(input$logRegNumericIndependentRemovals, 
-                            input$logRegFactorLogicalIndependentRemovals)
+  output$printAnalyzeRemovals <- renderPrint({
+    form <- paste0(input$dependentRemovals, "~",
+                   paste0(c(input$numericIndependentRemovals, 
+                            input$factorIndependentRemovals,
+                            input$logicalIndependentRemovals)
                           ,collapse = "+"))
     print(paste0("Formula: ", form))
-    logreg <-glm(as.formula(form),family=binomial(),data=removalsWithImplants)
-    print(summary(logreg))
+    
+    if(input$analyzeMethod == "Binary Logistic Regression"){
+      req(isTruthy(input$dependentRemovals),
+          (isTruthy(input$numericIndependentRemovals) | isTruthy(input$factorsIndependentRemovals)))
+      
+      logreg <-glm(as.formula(form),family=binomial(),data=removalsWithImplants)
+      print(summary(logreg))
+    } else if (input$analyzeMethod == "Linear Model") {
+      req(isTruthy(input$dependentRemovals),
+          (isTruthy(input$numericIndependentRemovals)))
+      
+      lm <- lm(as.formula(form), data = removalsWithImplants)
+      print(summary(lm))
+    }
   })
 }
 
