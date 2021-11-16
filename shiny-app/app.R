@@ -91,6 +91,9 @@ ui <- dashboardPage(
                          htmlOutput("numericIndependentRemovals"),
                          htmlOutput("factorIndependentRemovals"),
                          htmlOutput("logicalIndependentRemovals")
+                        ),
+        conditionalPanel(condition = "input.tabs == 'Implants'",
+                         htmlOutput("selectRemovalReason")
       )
       ),
     dashboardBody(
@@ -142,58 +145,11 @@ ui <- dashboardPage(
           )
         ),
         tabPanel(
-          "Models",
-          # First tab content
-          # Boxes need to be put in a row (or column)
-          fluidRow(
-            box(
-              status = "info",
-              selectInput("PositionSelect", choices = seq(1, 100, by = 1), label = "Select Position"),
-              width = 3
-            ),
-            box(
-              title = "Implant Characteristics Complications",
-              status = "primary",
-              plotOutput("implantDiamterLength") %>% withSpinner(),
-              width = 9
-            ),
-          ),
-          fluidRow(
-            box(
-              status = "info",
-              sliderInput(
-                "highlightPercentage",
-                label = "Show id of implant with complication percentage or higher",
-                min = 15, max = 100, value = 50
-              ),
-              width = 3
-            ),
-            box(
-              title = "",
-              status = "primary",
-              plotOutput("implantComplications") %>% withSpinner(),
-              width = 9,
-            )
-          ),
-          fluidRow(
-            box(
-              status = "info",
-              title = "Select Implant",
-              htmlOutput("selectImplantName"),
-              width = 2
-            ),
-            box(
-              title = "Implant models' complication percentage",
-              status = "primary",
-              plotOutput("LotNrComplication") %>% withSpinner(),
-              width = 8,
-            ),
-            box(
-              title = "Fisher Test",
-              status = "info",
-              textOutput("LotNrFisherTest") %>% tagAppendAttributes(style = "white-space:pre-wrap;"),
-              width = 2
-            )
+          "Implants",
+          h2("Overview of removed Implants"),
+          column(
+            plotOutput("removalsImplantPlot", height = 500) %>% withSpinner(),
+            width = 12
           ),
         )
       )
@@ -267,35 +223,31 @@ server <- function(input, output, session) {
 
   })
   
+  # ---------------------------------------------------------------------------
+  # Removals Plot
+  # ---------------------------------------------------------------------------
+  output$removalsImplantPlot <- renderPlot({
+    implantPlot(removalsWithImplants,
+                input$selectRemovalReason)
+  })
   
-  # Tab 1
-  ## Length and diamter plot
-  output$implantComplications <- renderPlot({
-    implantComplicationPlot(insertionsWithImplants, input$highlightPercentage)
+  output$selectRemovalReason <- renderUI({
+    pickerInput("selectRemovalReason",
+                "Select Removal Reason",
+                choices = as.character(
+                  sort(unique(removalsWithImplants[["RemovalReason"]]))
+                ),
+                multiple = T)
   })
+  
 
-  output$implantDiamterLength <- renderPlot({
-    implantLengthDiameterPlot(insertionsWithImplants, input$PositionSelect, "Length") +
-      implantLengthDiameterPlot(insertionsWithImplants, input$PositionSelect, "Diameter")
-  })
-
-  ## LotNr Complications plot
-  output$selectImplantName <- renderUI({
-    selectInput("LotNrImplantSelect",
-      "Select Implant",
-      choices  = unique(insertionsWithImplants$ImplantName),
-      selected = "None",
-      multiple = F,
-    )
-  })
-
-  output$LotNrComplication <- renderPlot({
-    lotNrComplications(insertionsWithImplants, input$LotNrImplantSelect)
-  })
-
-  output$LotNrFisherTest <- renderText({
-    lotNrFisherTest(insertionsWithImplants, input$LotNrImplantSelect)
-  })
+  # output$LotNrComplication <- renderPlot({
+  #   lotNrComplications(insertionsWithImplants, input$LotNrImplantSelect)
+  # })
+  # 
+  # output$LotNrFisherTest <- renderText({
+  #   lotNrFisherTest(insertionsWithImplants, input$LotNrImplantSelect)
+  # })
 
   #----------------------------------------------------------------------------
   # Explorer plot
@@ -406,11 +358,9 @@ server <- function(input, output, session) {
     pickerInput("selectFillColorControl",
                 "Select Fill Color",
                 choices = if(input$insertionsOrRemovals == "Insertions") {
-                  c(insertionsFactors[insertionsFactors != "LotNr"],
-                    insertionsLogical, "None")
+                  c(insertionsFactors, insertionsLogical, "None")
                 } else {
-                  c(removalsFactors[removalsFactors != "LotNr"],
-                    removalsLogical, "None")
+                  c(removalsFactors, removalsLogical, "None")
                 },
                 selected = "None"
     )
@@ -488,9 +438,9 @@ server <- function(input, output, session) {
     if (isTruthy(input$selectRemovalsFacetRowControl) &
         isTruthy(input$selectRemovalsFacetRowControl != "None")) {
       pickerInput("selectSpecificRemovalsFacetRowControl",
-                  label = paste0("Select ", selectRemovalsFacetRowControl),
+                  label = paste0("Select ", input$selectRemovalsFacetRowControl),
                   choices = as.character(
-                    sort(unique(removalsWithImplants[[selectRemovalsFacetRowControl]]))
+                    sort(unique(removalsWithImplants[[input$selectRemovalsFacetRowControl]]))
                   ),
                   multiple = TRUE,
                   options = list(`actions-box` = TRUE, size = 10,
@@ -708,21 +658,14 @@ server <- function(input, output, session) {
   
   ## SummaryText --------------------------------------------------------------
   
-
-  
   output$printAnalyzeInsertions <- renderPrint({
-
-
     form <- paste0(input$dependentInsertions, "~",
                    paste0(c(input$numericIndependentInsertions, 
                             input$factorIndependentInsertions,
                             input$logicalIndependentInsertions)
                           ,collapse = "+"))
-    
     print(paste0("Formula: ", form))
-    
 
-    
     if(input$analyzeMethod == "Binary Logistic Regression"){
       req(isTruthy(input$dependentInsertions),
           isTruthy(input$numericIndependentInsertions) | isTruthy(input$factorIndependentInsertions))
