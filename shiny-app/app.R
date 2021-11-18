@@ -21,46 +21,46 @@ ui <- dashboardPage(
     dashboardHeader(title = "Tooth implants"),
     dashboardSidebar(
       sidebarMenu(
-        conditionalPanel(condition = "input.tabs == 'Clinic' | input.tabs == 'Analyses'",
+        conditionalPanel(condition = "input.tabs == 'Explorer' | input.tabs == 'Analyses'",
                          radioGroupButtons(
                            inputId = "insertionsOrRemovals",
                            label = "Type", 
                            choices = c("Insertions", "Removals"),
                            status = "primary")
                           ),
-        conditionalPanel(condition = "input.tabs == 'Clinic'",   
+        conditionalPanel(condition = "input.tabs == 'Explorer'",   
                          radioGroupButtons(
                            inputId = "clinicOrAllcombined",
                            label = "Grouping",
                            choices = c("Clinic", "All combined"),
                            status = "primary" )
                          ),
-        conditionalPanel(condition = "input.tabs == 'Clinic' & input.clinicOrAllcombined == 'Clinic'",
+        conditionalPanel(condition = "input.tabs == 'Explorer' & input.clinicOrAllcombined == 'Clinic'",
                          htmlOutput("selectClinicName"),
                          htmlOutput("selectClinicCompare", width = 12)
                          ),
-        conditionalPanel(condition = "input.tabs == 'Clinic' & input.insertionsOrRemovals == 'Insertions'",
+        conditionalPanel(condition = "input.tabs == 'Explorer' & input.insertionsOrRemovals == 'Insertions'",
                          htmlOutput("selectYAxisInsertions", width = 12),
                          htmlOutput("selectXAxisInsertions", width = 12),
                          htmlOutput("selectInsertionsFactorLevels", width = 12)
                          ),
-        conditionalPanel(condition = "input.tabs == 'Clinic' & input.insertionsOrRemovals == 'Removals'",
+        conditionalPanel(condition = "input.tabs == 'Explorer' & input.insertionsOrRemovals == 'Removals'",
                          htmlOutput("selectYAxisRemovals", width = 12),
                          htmlOutput("selectXAxisRemovals", width = 12),
                          htmlOutput("selectRemovalsFactorLevels", width = 12) 
                          ),
-        conditionalPanel(condition = "input.tabs == 'Clinic' & input.clinicOrAllcombined == 'All combined'",
+        conditionalPanel(condition = "input.tabs == 'Explorer' & input.clinicOrAllcombined == 'All combined'",
                          htmlOutput("selectFillColor", width = 12)
                          ),
-        conditionalPanel(condition = "input.tabs == 'Clinic' & input.insertionsOrRemovals == 'Insertions'",
+        conditionalPanel(condition = "input.tabs == 'Explorer' & input.insertionsOrRemovals == 'Insertions'",
                         htmlOutput("selectInsertionsFacetRow", width = 12),
                         htmlOutput("selectSpecificInsertionsFacetRow", width = 12)
                         ),
-        conditionalPanel(condition = "input.tabs == 'Clinic' & input.insertionsOrRemovals == 'Removals'",
+        conditionalPanel(condition = "input.tabs == 'Explorer' & input.insertionsOrRemovals == 'Removals'",
                          htmlOutput("selectRemovalsFacetRow", width = 12),
                          htmlOutput("selectSpecificRemovalsFacetRow", width = 12) 
                          ),
-        conditionalPanel(condition = "input.tabs == 'Clinic'",
+        conditionalPanel(condition = "input.tabs == 'Explorer'",
                          checkboxGroupButtons(
                            inputId = "showMeanAndXLab",
                            label = "Show",
@@ -105,7 +105,15 @@ ui <- dashboardPage(
       tabsetPanel(
         id = "tabs",
         tabPanel(
-          "Clinic",
+          "Implants",
+          h2("Overview of removed Implants"),
+          column(
+            plotOutput("removalsImplantPlot", height = 700) %>% withSpinner(),
+            width = 12
+          )
+        ),
+        tabPanel(
+          "Explorer",
           h2("Explore and compare clinic data"),
           h3(textOutput("clinicPlotName")),
           fluidRow(
@@ -147,14 +155,6 @@ ui <- dashboardPage(
               width = 6
             )
           )
-        ),
-        tabPanel(
-          "Implants",
-          h2("Overview of removed Implants"),
-          column(
-            plotOutput("removalsImplantPlot", height = 500) %>% withSpinner(),
-            width = 12
-          ),
         )
       )
     )
@@ -192,10 +192,26 @@ server <- function(input, output, session) {
   # Global events
   # ---------------------------------------------------------------------------
   
+  observeEvent(input$tabs, {
+    if(input$tabs == "Explorer"){
+      shinyjs::show("insertionsSpinner")
+      shinyjs::hide("removalsSpinner")
+      shinyjs::show("insertionsPlot")
+      shinyjs::hide("removalsPlot")
+    } else if (input$tabs == "Analyses") {
+      shinyjs::show("analyzeInsertionsSpinner")
+      shinyjs::hide("analyzeRemovalsSpinner")
+      shinyjs::show("plotAnalyzeInsertions")
+      shinyjs::hide("plotAnalyzeRemovals")
+      shinyjs::show("printAnalyzeInsertions")
+      shinyjs::hide("printAnalyzeRemovals")
+    }
+  })
+  
   # Hides the plot not currently viewed by user, avoiding to generate the hidden
   # plot again
   observeEvent(input$insertionsOrRemovals, {
-    if(input$tabs == "Clinic"){
+    if(input$tabs == "Explorer"){
       if(input$insertionsOrRemovals == "Insertions") {
         shinyjs::show("insertionsSpinner")
         shinyjs::hide("removalsSpinner")
@@ -224,7 +240,6 @@ server <- function(input, output, session) {
         shinyjs::show("printAnalyzeRemovals")
       }
     }
-
   })
   
   # ---------------------------------------------------------------------------
@@ -259,17 +274,7 @@ server <- function(input, output, session) {
                 "LotNr" %in% input$implantPlotOptions)
   })
   
-
   
-
-  # output$LotNrComplication <- renderPlot({
-  #   lotNrComplications(insertionsWithImplants, input$LotNrImplantSelect)
-  # })
-  # 
-  # output$LotNrFisherTest <- renderText({
-  #   lotNrFisherTest(insertionsWithImplants, input$LotNrImplantSelect)
-  # })
-
   #----------------------------------------------------------------------------
   # Explorer plot
   #----------------------------------------------------------------------------
@@ -369,7 +374,7 @@ server <- function(input, output, session) {
   output$selectXAxisRemovals <- renderUI({
     pickerInput("selectXAxisRemovalsControl",
                 "Select X-axis",
-                choices = c(removalsFactors),
+                choices = removalsFactors,
                 selected = "Clinic"
     )
   })
@@ -619,7 +624,8 @@ server <- function(input, output, session) {
   
   ### Highlight
   output$highlightInsertions <- renderUI({
-    req(isTruthy(input$factorIndependentInsertions))
+    req(isTruthy(input$factorIndependentInsertions),
+        isTruthy(input$insertionsOrRemovals) & input$insertionsOrRemovals == "Insertions")
     
     pickerInput("highlightInsertions",
                 label = "Hightlight factor",
@@ -633,7 +639,8 @@ server <- function(input, output, session) {
   })
   
   output$highlightRemovals <- renderUI({
-    req(isTruthy(input$factorIndependentRemovals))
+    req(isTruthy(input$factorIndependentRemovals),
+        isTruthy(input$insertionsOrRemovals) & input$insertionsOrRemovals == "Removals")
     
     pickerInput("highlightRemovals",
                 label = "Hightlight factor",
@@ -688,13 +695,23 @@ server <- function(input, output, session) {
     print(paste0("Formula: ", form))
 
     if(input$analyzeMethod == "Binary Logistic Regression"){
-      req(isTruthy(input$dependentInsertions),
-          isTruthy(input$numericIndependentInsertions) | isTruthy(input$factorIndependentInsertions))
+      req(isTruthy(input$dependentInsertions))
+      validate(
+        need(isTruthy(input$numericIndependentInsertions) | 
+               isTruthy(input$factorsIndependentInsertions) |
+               isTruthy(input$logicalIndependentInsertions),
+             "Please select an independent variable")
+      )
+
       logreg <-glm(as.formula(form),family=binomial(),data=insertionsWithImplants)
       print(summary(logreg))
     } else if (input$analyzeMethod == "Linear Model") {
-      req(isTruthy(input$dependentInsertions),
-          (isTruthy(input$numericIndependentInsertions)))
+      req(isTruthy(input$dependentInsertions))
+      validate(
+        need(isTruthy(input$numericIndependentInsertions),
+             "Please select an numeric independent variable")
+      )
+      
       lm <- lm(as.formula(form), data = insertionsWithImplants)
       print(summary(lm))
     }
@@ -709,15 +726,24 @@ server <- function(input, output, session) {
     print(paste0("Formula: ", form))
     
     if(input$analyzeMethod == "Binary Logistic Regression"){
-      req(isTruthy(input$dependentRemovals),
-          (isTruthy(input$numericIndependentRemovals) | isTruthy(input$factorsIndependentRemovals)))
+      req(isTruthy(input$dependentRemovals))
+      validate(
+          need(isTruthy(input$numericIndependentRemovals) | 
+                 isTruthy(input$factorsIndependentRemovals) |
+                 isTruthy(input$logicalIndependentRemovals),
+               "Please select an independent variable")
+        )
       
       logreg <-glm(as.formula(form),family=binomial(),data=removalsWithImplants)
       print(summary(logreg))
     } else if (input$analyzeMethod == "Linear Model") {
-      req(isTruthy(input$dependentRemovals),
-          (isTruthy(input$numericIndependentRemovals)))
+      req(isTruthy(input$dependentRemovals))
       
+      validate(
+        need(isTruthy(input$numericIndependentRemovals),
+             "Please select an numeric independent variable")
+      )
+
       lm <- lm(as.formula(form), data = removalsWithImplants)
       print(summary(lm))
     }

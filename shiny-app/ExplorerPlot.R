@@ -59,8 +59,6 @@ exploreDataPlot <- function(insertionsWithImplants,
         mutate(!!sym(selectedXAxis) := "Mean")
     }
     
-    print(MeanData)
-    
     ClinicData <- insertionsWithImplants %>%
       # Filter to only show selected clinics
       filter(

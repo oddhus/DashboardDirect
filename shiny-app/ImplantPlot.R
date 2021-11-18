@@ -56,8 +56,15 @@ implantPlot <- function(removalsWithImplants, removalReason, implantNames, showL
     ggplot(aes(x = fct_reorder(ImplantName, percentage),
                y = percentage,
                fill = if(showLotNr) LotNr else NULL)) +
-    geom_col() +
-    facet_grid(. ~ RemovalReason) +
-    coord_flip()
+    geom_col(width = 0.5) +
+    facet_grid(RemovalReason ~ .) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+    xlab("Implant Name") + 
+    {
+      if(showLotNr){
+        labs(fill = "LotNr")
+      }
+    }
+    #coord_flip() 
 }
 
