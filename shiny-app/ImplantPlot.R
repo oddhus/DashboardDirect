@@ -7,30 +7,10 @@ implantPlot <- function(removalsWithImplants, removalReason, implantNames, showL
 
   removalsWithImplants %>%
     filter(
-      if (is.null(removalReason)) {
-        TRUE
-      } else {
-        grepl(
-          paste(
-            paste("^", removalReason, "$", sep = ""),
-            collapse = "|"
-          ),
-          RemovalReason
-        )
-      }
+      vectorContainsAnyElement(.,removalReason,"RemovalReason")
     ) %>%
     filter(
-      if (is.null(implantNames)) {
-        TRUE
-      } else {
-        grepl(
-          paste(
-            paste("^", implantNames, "$", sep = ""),
-            collapse = "|"
-          ),
-          ImplantName
-        )
-      }
+      vectorContainsAnyElement(.,implantNames,"ImplantName")
     ) %>%
     select(
       RemovalReason,

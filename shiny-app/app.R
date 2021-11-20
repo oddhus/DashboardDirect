@@ -8,6 +8,7 @@ library(tidyr)
 library(lubridate)
 library(patchwork)
 library(shinyWidgets)
+source("shiny-app/Utils.R")
 source("shiny-app/FetchData.R")
 source("shiny-app/Utils.R")
 source("shiny-app/AntibioticPlot.R")
@@ -217,11 +218,31 @@ server <- function(input, output, session) {
         shinyjs::hide("removalsSpinner")
         shinyjs::show("insertionsPlot")
         shinyjs::hide("removalsPlot")
+        if(isTruthy(input$selectXAxisInsertionsControl)){
+          updateCheckboxGroupButtons(
+            session,
+            inputId = "showMeanAndXLab",
+            disabledChoices = if (is.numeric(insertionsWithImplants[[input$selectXAxisInsertionsControl]])){
+              c("Mean")
+            } else {
+              NULL
+            }
+          )}
       } else if (input$insertionsOrRemovals == "Removals"){
         shinyjs::hide("insertionsSpinner")
         shinyjs::show("removalsSpinner")
         shinyjs::hide("insertionsPlot")
         shinyjs::show("removalsPlot")
+        if(isTruthy(input$selectXAxisRemovalsControl)){
+          updateCheckboxGroupButtons(
+            session,
+            inputId = "showMeanAndXLab",
+            disabledChoices = if (is.numeric(removalsWithImplants[[input$selectXAxisRemovalsControl]])){
+              c("Mean")
+            } else {
+              NULL
+            }
+          )}
       }
     } else {
       if(input$insertionsOrRemovals == "Insertions") {
@@ -313,7 +334,33 @@ server <- function(input, output, session) {
     if(!identical(input_selectClinicCompare(), input$selectClinicCompare)){
       input_selectClinicCompare(input$selectClinicCompare)
     } 
-  })
+  }, ignoreNULL = FALSE)
+  
+  observeEvent(input$selectXAxisInsertionsControl, {
+    if(isTruthy(input$selectXAxisInsertionsControl)){
+      updateCheckboxGroupButtons(
+        session,
+        inputId = "showMeanAndXLab",
+        disabledChoices = if (is.numeric(insertionsWithImplants[[input$selectXAxisInsertionsControl]])){
+          c("Mean")
+        } else {
+          NULL
+        }
+      )}
+  }, ignoreInit = TRUE)
+  
+  observeEvent(input$selectXAxisRemovalsControl, {
+    if(isTruthy(input$selectXAxisRemovalsControl)){
+      updateCheckboxGroupButtons(
+        session,
+        inputId = "showMeanAndXLab",
+        disabledChoices = if (is.numeric(removalsWithImplants[[input$selectXAxisRemovalsControl]])){
+          c("Mean")
+        } else {
+          NULL
+        }
+      )}
+  }, ignoreInit = TRUE)
   
   ## Debounce -----------------------------------------------------------------
   ### Debounce clinc compare variable
@@ -366,7 +413,7 @@ server <- function(input, output, session) {
   output$selectXAxisInsertions <- renderUI({
     pickerInput("selectXAxisInsertionsControl",
                 "Select X-axis",
-                choices = insertionsFactors,
+                choices = c(insertionsFactors, insertionsNumeric),
                 selected = "Clinic"
     )
   })
@@ -374,7 +421,7 @@ server <- function(input, output, session) {
   output$selectXAxisRemovals <- renderUI({
     pickerInput("selectXAxisRemovalsControl",
                 "Select X-axis",
-                choices = removalsFactors,
+                choices = c(removalsFactors, removalsNumeric),
                 selected = "Clinic"
     )
   })
@@ -394,7 +441,9 @@ server <- function(input, output, session) {
   
   ### X-axis levels
   output$selectInsertionsFactorLevels <- renderUI({
-    if (isTruthy(input$selectXAxisInsertionsControl) &
+    req(input$selectXAxisInsertionsControl)
+    
+    if (is.factor(insertionsWithImplants[[input$selectXAxisInsertionsControl]]) &
         (isTruthy(input$selectXAxisInsertionsControl != "Clinic") | allCombined())) {
       pickerInput("selectInsertionsFactorLevelsControl",
                   label = paste0("Select ", input$selectXAxisInsertionsControl),
@@ -409,7 +458,9 @@ server <- function(input, output, session) {
   })
   
   output$selectRemovalsFactorLevels <- renderUI({
-    if (isTruthy(input$selectXAxisRemovalsControl) &
+    req(input$selectXAxisRemovalsControl)
+    
+    if (is.factor(removalsWithImplants[[input$selectXAxisRemovalsControl]]) &
         (isTruthy(input$selectXAxisRemovalsControl != "Clinic") | allCombined())) {
       pickerInput("selectRemovalsFactorLevelsControl",
                   # Reactive label.
