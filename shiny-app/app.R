@@ -123,16 +123,15 @@ ui <- dashboardPage(
       id = "tabs",
       tabPanel(
         "Implants",
-        h2("Overview of removed Implants"),
+        h4("Overview of removed Implants"),
         column(
-          plotOutput("removalsImplantPlot", height = 700) %>% withSpinner(),
+          plotOutput("removalsImplantPlot", height = 600) %>% withSpinner(),
           width = 12
         )
       ),
       tabPanel(
         "Explorer",
-        h2("Explore and compare clinic data"),
-        h3(textOutput("clinicPlotName")),
+        h4(textOutput("clinicPlotName")),
         fluidRow(
           column(
             plotOutput("insertionsPlot", height = 500) %>% withSpinner(id = "insertionsSpinner"),
@@ -151,10 +150,10 @@ ui <- dashboardPage(
       ),
       tabPanel(
         "Analyses",
-        h2("Analyze data"),
+        h4("Analyze data"),
         fluidRow(
           column(
-            plotOutput("plotAnalyzeInsertions", height = 600) %>% withSpinner(id = "analyzeInsertionsSpinner"),
+            plotOutput("plotAnalyzeInsertions", height = 550) %>% withSpinner(id = "analyzeInsertionsSpinner"),
             htmlOutput("highlightInsertions"),
             width = 6
           ),
@@ -163,7 +162,7 @@ ui <- dashboardPage(
             width = 6
           ),
           column(
-            plotOutput("plotAnalyzeRemovals", height = 600) %>% withSpinner(id = "analyzeRemovalsSpinner"),
+            plotOutput("plotAnalyzeRemovals", height = 550) %>% withSpinner(id = "analyzeRemovalsSpinner"),
             htmlOutput("highlightRemovals"),
             width = 6
           ),
@@ -583,7 +582,7 @@ server <- function(input, output, session) {
 
   # Render Insertions or removals depending on the plot viewed by user
   output$clinicPlotName <- renderText({
-    input$insertionsOrRemovals
+    paste0("Explore ", input$insertionsOrRemovals)
   })
 
   output$insertionsPlot <- renderPlot({
