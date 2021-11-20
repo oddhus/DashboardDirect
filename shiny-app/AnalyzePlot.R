@@ -51,7 +51,6 @@ analyzePlot <- function(data, dependent, numeric, factors, booleans, highlight, 
       facet_grid(rows = if(isTruthy(factors) & length(factors) > 1) vars(!!sym(factors[2])) else NULL,
                  cols = if(isTruthy(booleans)) vars(!!sym(booleans[1])) else NULL) +
       labs(title = dependent)
-      #theme(legend.position = "none")
   }
 }
 

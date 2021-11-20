@@ -18,7 +18,7 @@ exploreDataPlot <- function(insertionsWithImplants,
       theme_void() +
       geom_text(aes(0, 0, label = "Select implant")) +
       xlab(NULL)
-  } else if  (selectedYAxis == "Antall" & numericXAxis) {
+  } else if (selectedYAxis == "Antall" & numericXAxis) {
     ggplot() +
       theme_void() +
       geom_text(aes(0, 0, label = "Antall is not supported with a numeric x-axis")) +
@@ -109,25 +109,24 @@ exploreDataPlot <- function(insertionsWithImplants,
       ggplot(aes(
         x = if (!isTruthy(selectedXAxis)) Clinic else !!sym(selectedXAxis),
         y = if (numericXAxis) !!sym(selectedYAxis) else value,
-        fill =if(!numericXAxis){
+        fill = if (!numericXAxis) {
           if (!isTruthy(selectedFillColor) | selectedFillColor == "None") NULL else !!sym(selectedFillColor)
         },
-        color = if(numericXAxis){
+        color = if (numericXAxis) {
           if (!isTruthy(selectedFillColor) | selectedFillColor == "None") NULL else !!sym(selectedFillColor)
-        } 
+        }
       )) +
       {
         if (isTruthy(selectedFillColor) & selectedFillColor != "None") {
-          if (numericXAxis){
+          if (numericXAxis) {
             guides(color = guide_legend(title = selectedFillColor))
-            
           } else {
             guides(fill = guide_legend(title = selectedFillColor))
           }
         }
       } +
       {
-        if(numericXAxis){
+        if (numericXAxis) {
           geom_point()
         } else {
           geom_col(position = position_dodge(width = 0.9), width = 0.5)
@@ -148,15 +147,14 @@ exploreDataPlot <- function(insertionsWithImplants,
       ) +
       xlab(if (hideXLab) "" else selectedXAxis) +
       {
-        if(numericXAxis){
+        if (numericXAxis) {
           ylab(selectedYAxis)
         } else {
           ylab(if_else(selectedYAxis == "Antall" | is.numeric(insertionsWithImplants[[selectedYAxis]]),
-                       selectedYAxis,
-                       paste(selectedYAxis, "Percentage", sep = " ")
+            selectedYAxis,
+            paste(selectedYAxis, "Percentage", sep = " ")
           ))
         }
       }
-      
   }
 }

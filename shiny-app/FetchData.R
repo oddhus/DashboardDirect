@@ -38,60 +38,62 @@ getInsertionsWithImplants <- function() {
   con <- getLocalCon()
   insertions <- getInsertions(con)
   implants <- getImplants(con)
-  
+
   insertionsWithImplants <- insertions %>%
     left_join(implants, by = c("Id" = "InsertionId")) %>%
     rename(Id = Id.x) %>%
     select(-(ends_with("Id") & !starts_with("Id"))) %>%
     select(-c("Id.y")) %>%
     collect()
-  
+
   DBI::dbDisconnect(con)
-  
+
   return(insertionsWithImplants %>%
-           mutate(across(where(is.character),as.factor)) %>%
-           mutate(across(starts_with("Position"), as.factor)))
+    mutate(across(where(is.character), as.factor)) %>%
+    mutate(across(starts_with("Position"), as.factor)))
 }
 
 getRemovalsWithImplants <- function() {
   con <- getLocalCon()
   removals <- getRemovals(con)
   implants <- getImplants(con)
-  
+
   removalsWithImplants <- removals %>%
     left_join(implants, by = c("Id" = "RemovalId")) %>%
     rename(Id = Id.x) %>%
     select(-(ends_with("Id") & !starts_with("Id"))) %>%
     select(-(starts_with("Name"))) %>%
-    select(-c("HelfoRefund", "Membrane", "Resorbable", "Boneaugmentation", "Complications", "ComplicationsComment",
-              "PositionFrom", "PositionTo", "IsPlateProsthetics", "ExtractionTime", "Position")) %>%
+    select(-c(
+      "HelfoRefund", "Membrane", "Resorbable", "Boneaugmentation", "Complications", "ComplicationsComment",
+      "PositionFrom", "PositionTo", "IsPlateProsthetics", "ExtractionTime", "Position"
+    )) %>%
     collect()
-  
+
   DBI::dbDisconnect(con)
-  
+
   return(removalsWithImplants %>%
-           mutate(across(where(is.character),as.factor)) %>%
-           mutate(DaysSinceInsertion = time_length(
-             interval(
-               parse_date_time(InsertionDate, orders = "Ymd HMS", truncated = 3),
-               parse_date_time(RemovalDate,orders = "Ymd HMS", truncated = 3)
-             ),
-             "days"
-           )
-           )
-         ) 
+    mutate(across(where(is.character), as.factor)) %>%
+    mutate(DaysSinceInsertion = time_length(
+      interval(
+        parse_date_time(InsertionDate, orders = "Ymd HMS", truncated = 3),
+        parse_date_time(RemovalDate, orders = "Ymd HMS", truncated = 3)
+      ),
+      "days"
+    )))
 }
 
 getRemovals <- function(con) {
   removal <- tbl(con, "Removal")
   removalReason <- tbl(con, "RemovalReason")
   clinic <- tbl(con, "Clinic")
-  
+
   removalData <- removal %>%
     left_join(removalReason, by = c("ReasonId" = "Id")) %>%
     left_join(clinic, by = c("ClinicId" = "Id")) %>%
-    rename(RemovalReason = Name.x,
-           Clinic = Name.y)
+    rename(
+      RemovalReason = Name.x,
+      Clinic = Name.y
+    )
 }
 
 getInsertions <- function(con) {
@@ -102,7 +104,7 @@ getInsertions <- function(con) {
   lekholmZarbDensity <- tbl(con, "LekholmZarbDensity")
   method <- tbl(con, "Method")
   clinic <- tbl(con, "Clinic")
-  
+
 
   insertion %>%
     left_join(antibioticsRelation, by = c("Id" = "InsertionId")) %>%
@@ -111,11 +113,13 @@ getInsertions <- function(con) {
     left_join(lekholmZarbDensity, by = c("LekholmZarbDensityId" = "Id")) %>%
     left_join(method, by = c("MethodId" = "Id")) %>%
     left_join(clinic, by = c("ClinicId" = "Id")) %>%
-    rename(AntibioticsName = Name.x,
-           LekholmZarbVolume = Name.y,
-           LekholmZarbDensity = Name.x.x,
-           Method = Name.y.y,
-           Clinic = Name)
+    rename(
+      AntibioticsName = Name.x,
+      LekholmZarbVolume = Name.y,
+      LekholmZarbDensity = Name.x.x,
+      Method = Name.y.y,
+      Clinic = Name
+    )
 }
 
 getImplants <- function(con) {
@@ -143,14 +147,14 @@ getImplants <- function(con) {
     left_join(boneAugmentationMethod, by = c("BoneAugmentationMethodId" = "Id")) %>%
     left_join(prostheticConstruction, by = c("ProstheticConstructionId" = "Id")) %>%
     left_join(timeUntilLoad, by = c("TimeUntilLoadId" = "Id")) %>%
-      rename(ImplantName = Name.x,
-             Brand = Name.y,
-             Material = Name.x.x,
-             ExtractionReason = Name.y.y,
-             Stability = Name.x.x.x,
-             MissingReason = Name.y.y.y,
-             BoneAugmentationMethod = Name.x.x.x.x,
-             TimeUntilLoad = Name.y.y.y.y
-      )
-      )
+    rename(
+      ImplantName = Name.x,
+      Brand = Name.y,
+      Material = Name.x.x,
+      ExtractionReason = Name.y.y,
+      Stability = Name.x.x.x,
+      MissingReason = Name.y.y.y,
+      BoneAugmentationMethod = Name.x.x.x.x,
+      TimeUntilLoad = Name.y.y.y.y
+    ))
 }
