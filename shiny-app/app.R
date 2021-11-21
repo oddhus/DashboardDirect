@@ -141,9 +141,7 @@ ui <- dashboardPage(
         ),
         fluidRow(
           column(
-            valueBoxOutput("insertionsBox", width = 4),
-            valueBoxOutput("removalsBox", width = 4),
-            valueBoxOutput("complicationBox", width = 4),
+            infoBoxesUI("InfoBoxes"),
             width = 12
           )
         ),
@@ -333,6 +331,7 @@ server <- function(input, output, session) {
 
   ranges <- reactiveValues(x = NULL)
   allCombined <- reactiveVal(FALSE)
+  selectedClinic <- reactiveVal(NULL)
   fillColor <- reactiveVal("Clinic")
   input_selectClinicCompare <- reactiveVal(NULL)
 
@@ -367,6 +366,12 @@ server <- function(input, output, session) {
     },
     ignoreNULL = FALSE
   )
+  
+  observeEvent(input$selectClinic, {
+    if (!identical(selectedClinic(), input$selectClinic)) {
+      selectedClinic(input$selectClinic)
+    }
+  })
 
   observeEvent(input$selectXAxisInsertionsControl,
     {
@@ -632,26 +637,11 @@ server <- function(input, output, session) {
   })
 
   # 3 Info-boxes --------------------------------------------------------------
-  output$complicationBox <- renderValueBox({
-    sumInfo(
-      insertionsWithImplants %>% filter(Complications),
-      "Complications", "red", input$selectClinic, allCombined()
-    )
-  })
-
-  output$insertionsBox <- renderValueBox({
-    sumInfo(
-      insertionsWithImplants,
-      "Insertions", "purple", input$selectClinic, allCombined()
-    )
-  })
-
-  output$removalsBox <- renderValueBox({
-    sumInfo(
-      removalsWithImplants,
-      "Removals", "yellow", input$selectClinic, allCombined()
-    )
-  })
+  infoBoxesModule("InfoBoxes",
+                  insertionsWithImplants,
+                  removalsWithImplants,
+                  allCombined,
+                  selectedClinic)
 
   #----------------------------------------------------------------------------
   # Analyses
