@@ -1,4 +1,4 @@
-source("shiny-app/ExplorerPlot.R")
+source("shiny-app/ReportPlot.R")
 
 explorePlotOptionsUI <- function(id) {
   ns <- NS(id)

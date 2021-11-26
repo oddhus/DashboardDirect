@@ -12,7 +12,8 @@ exploreDataPlot <- function(insertionsWithImplants,
                             combineAll) {
   MeanData <- NULL
   numericXAxis <- is.numeric(insertionsWithImplants[[selectedXAxis]])
-
+  numericYAxis <- is.numeric(insertionsWithImplants[[selectedYAxis]])
+  
   if (!(isTruthy(selectedYAxis) & isTruthy(selectedXAxis) & isTruthy(selectedClinic))) {
     ggplot() +
       theme_void() +
@@ -32,20 +33,20 @@ exploreDataPlot <- function(insertionsWithImplants,
         ) %>%
         group_by_at(
           c(
-            if (selectedFillColor == "None" | !combineAll) NULL else selectedFillColor,
-            if (selectedFacetRow == "None") NULL else selectedFacetRow
+            if (!isTruthy(selectedFillColor) | identical(selectedFillColor, "None") | !combineAll) NULL else selectedFillColor,
+            if (!isTruthy(selectedFacetRow) | identical(selectedFacetRow, "None")) NULL else selectedFacetRow
           )
         ) %>%
         summarize(
           value = if (selectedYAxis == "Antall") {
-            n() / nlevels(insertionsWithImplants[[selectedXAxis]])
+            n() / nlevels(numericXAxis)
           } else {
-            if_else(is.numeric(insertionsWithImplants[[selectedYAxis]]),
+            if_else(numericYAxis,
               mean(!!sym(selectedYAxis)),
               sum(!!sym(selectedYAxis), na.rm = TRUE) / n() * 100
             )
           },
-          sd = if (selectedYAxis == "Antall" | !is.numeric(insertionsWithImplants[[selectedYAxis]])) {
+          sd = if (selectedYAxis == "Antall" | !numericYAxis) {
             NULL
           } else {
             sd(!!sym(selectedYAxis), na.rm = TRUE) / sqrt(n())
@@ -57,7 +58,7 @@ exploreDataPlot <- function(insertionsWithImplants,
     ClinicData <- insertionsWithImplants %>%
       # Filter to only show selected clinics
       filter(
-        if (isTruthy(combineAll)) {
+        if (isTRUE(combineAll)) {
           TRUE
         } else {
           selectedClinic == Clinic |
@@ -84,25 +85,30 @@ exploreDataPlot <- function(insertionsWithImplants,
         group_by_at(
           c(
             selectedXAxis,
-            if (!isTruthy(selectedFillColor) | selectedFillColor == "None") NULL else selectedFillColor,
-            if (selectedFacetRow == "None") NULL else selectedFacetRow
+            if (!isTruthy(selectedFillColor) | identical(selectedFillColor,"None")) NULL else selectedFillColor,
+            if (!isTruthy(selectedFacetRow) | identical(selectedFacetRow, "None")) NULL else selectedFacetRow
           )
         ) %>%
         summarise(
           value = if (selectedYAxis == "Antall") {
             as.double(n())
           } else {
-            if_else(is.numeric(insertionsWithImplants[[selectedYAxis]]),
+            if_else(numericYAxis,
               mean(!!sym(selectedYAxis)),
               sum(!!sym(selectedYAxis), na.rm = TRUE) / n() * 100
             )
           },
-          sd = if (selectedYAxis == "Antall" | !is.numeric(insertionsWithImplants[[selectedYAxis]])) {
+          sd = if (selectedYAxis == "Antall" | !numericYAxis) {
             NULL
           } else {
             sd(!!sym(selectedYAxis), na.rm = TRUE) / sqrt(n())
           },
         )
+    }
+    
+    # Sometimes it renames the first group_by_at variable to "x"
+    if("x" %in% colnames(ClinicData)){
+      ClinicData <- ClinicData %>% rename(!!sym(selectedXAxis) := x)
     }
 
     bind_rows(ClinicData, MeanData) %>%
@@ -110,14 +116,14 @@ exploreDataPlot <- function(insertionsWithImplants,
         x = if (!isTruthy(selectedXAxis)) Clinic else !!sym(selectedXAxis),
         y = if (numericXAxis) !!sym(selectedYAxis) else value,
         fill = if (!numericXAxis) {
-          if (!isTruthy(selectedFillColor) | selectedFillColor == "None") NULL else !!sym(selectedFillColor)
+          if (!isTruthy(selectedFillColor) | identical(selectedFillColor, "None")) NULL else !!sym(selectedFillColor)
         },
         color = if (numericXAxis) {
-          if (!isTruthy(selectedFillColor) | selectedFillColor == "None") NULL else !!sym(selectedFillColor)
+          if (!isTruthy(selectedFillColor) | identical(selectedFillColor == "None")) NULL else !!sym(selectedFillColor)
         }
       )) +
       {
-        if (isTruthy(selectedFillColor) & selectedFillColor != "None") {
+        if (isTruthy(selectedFillColor) & !identical(selectedFillColor, "None")) {
           if (numericXAxis) {
             guides(color = guide_legend(title = selectedFillColor))
           } else {
@@ -133,14 +139,14 @@ exploreDataPlot <- function(insertionsWithImplants,
         }
       } +
       {
-        if (is.numeric(insertionsWithImplants[[selectedYAxis]]) & !numericXAxis) {
+        if (numericYAxis & !numericXAxis) {
           geom_errorbar(
             aes(ymin = value - sd, ymax = value + sd),
             position = position_dodge(width = 0.9), width = .25, size = 0.2
           )
         }
       } +
-      facet_grid(cols = if (is.null(selectedFacetRow) | selectedFacetRow == "None") NULL else vars(!!sym(selectedFacetRow))) +
+      facet_grid(cols = if (!isTruthy(selectedFacetRow) | identical(selectedFacetRow, "None")) NULL else vars(!!sym(selectedFacetRow))) +
       theme(
         axis.text.x = if (hideXLab) element_blank() else element_text(),
         axis.ticks.x = if (hideXLab) element_blank() else element_line()
@@ -150,7 +156,7 @@ exploreDataPlot <- function(insertionsWithImplants,
         if (numericXAxis) {
           ylab(selectedYAxis)
         } else {
-          ylab(if_else(selectedYAxis == "Antall" | is.numeric(insertionsWithImplants[[selectedYAxis]]),
+          ylab(if_else(selectedYAxis == "Antall" | numericYAxis,
             selectedYAxis,
             paste(selectedYAxis, "Percentage", sep = " ")
           ))

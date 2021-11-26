@@ -15,6 +15,7 @@ source("shiny-app/ExplorerPlotModule.R")
 source("shiny-app/ClinicInfoBoxes.R")
 source("shiny-app/AnalyzePlotModule.R")
 source("shiny-app/ClinicSelectModule.R")
+source("shiny-app/ReportModule.R")
 
 ui <- dashboardPage(
   dashboardHeader(title = "Tooth implants"),
@@ -61,6 +62,10 @@ ui <- dashboardPage(
       conditionalPanel(
         condition = "input.tabs == 'Implants'",
         implantInputUI("RemovalReason")
+      ),
+      conditionalPanel(
+        condition = "input.tabs == 'Report'",
+        reportSidebarUI("Report")
       )
     )
   ),
@@ -107,6 +112,11 @@ ui <- dashboardPage(
             width = 6
           )
         )
+      ),
+      tabPanel(
+        "Report",
+        h4("Generate a report"),
+        reportUI("Report")
       )
     )
   )
@@ -129,6 +139,8 @@ server <- function(input, output, session) {
 
   showInsertions <- reactiveVal(TRUE)
   showRemovals <- reactiveVal(FALSE)
+  myValues <- reactiveValues()
+  
 
   # Hides the plot not currently viewed by user, avoiding to generate the hidden
   # plot again
@@ -209,6 +221,18 @@ server <- function(input, output, session) {
     columnsToRemove,
     isVisible = showRemovals
   )
+  
+  #----------------------------------------------------------------------------
+  # Report
+  #----------------------------------------------------------------------------
+  
+  reportServer("Report", 
+               insertionsWithImplants,
+               columnsToRemove,
+               allCombined,
+               selectedClinic = clinicValues[[1]],
+               clinicCompare = clinicValues[[2]],
+               myValues)
 }
 
 shinyApp(ui, server)

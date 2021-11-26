@@ -1,0 +1,59 @@
+---
+title: "Dynamic report"
+output: html_document
+params:
+  n: NA
+  plotArgs: NA
+  data: NA
+---
+
+```{r eval = FALSE, echo = FALSE}
+# For PDF output, change the header to have "output: pdf_document".
+#
+# Note that due to an issue in rmarkdown, the default value of a parameter in
+# the header cannot be `NULL`, so I used a default of `NA` for the default value
+# of `n`.
+```
+
+
+```{r}
+# The `params` object is available in the document.
+params$n
+```
+
+A plot of `params$n` random points.
+
+```{r}
+plot(rnorm(params$n), rnorm(params$n))
+```
+
+```{r}
+plot(rnorm(params$n), rnorm(params$n))
+length(params$plotArgs)
+```
+
+<!-- # ```{r setup, include=FALSE} -->
+<!-- # knitr::opts_chunk$set(echo = TRUE) -->
+<!-- # ``` -->
+
+
+
+```{r plot}
+  for (i in 1:length(params$plotArgs)) {
+    print(exploreDataPlot(
+      params$data,
+      FALSE,
+      FALSE,
+      params$plotArgs[[i]]["selectedClinic"],
+      params$plotArgs[[i]]["clinicCompare"],
+      if (params$plotArgs[[i]]["allCombined"]) params$plotArgs[[i]]["selectFillColor"] else "Clinic",
+      params$plotArgs[[i]]["selectFacetRow"],
+      params$plotArgs[[i]]["selectSpecificFacetRow"],
+      params$plotArgs[[i]]["selectFactorLevels"],
+      params$plotArgs[[i]]["y"],
+      params$plotArgs[[i]]["x"],
+      params$plotArgs[[i]]["allCombined"]
+    ))
+  }
+
+```

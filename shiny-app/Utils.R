@@ -2,7 +2,7 @@ vectorContainsAnyElement <- function(data,
                                      elements,
                                      searchCol,
                                      vectorNullReturn = TRUE) {
-  if (is.null(elements)) {
+  if (!(isTruthy(elements) & isTruthy(searchCol))) {
     return(vectorNullReturn)
   }
 
