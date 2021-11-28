@@ -1,6 +1,6 @@
 analyzePlot <- function(data, dependent, numeric, factors, booleans, highlight, type) {
-  isBinomial <- identical("Binary Logistic Regression", type)
-  isLinear <- identical("Linear Model", type)
+  isBinomial <- isTRUE("Binary Logistic Regression" == type)
+  isLinear <- isTRUE("Linear Model" == type)
 
   if (length(numeric) > 1) {
     ggplot() +
@@ -19,7 +19,7 @@ analyzePlot <- function(data, dependent, numeric, factors, booleans, highlight, 
       xlab(NULL)
   } else {
     data %>%
-      mutate_at(dependent, function(col) as.numeric(col, na.rm = TRUE)) %>%
+      mutate_if(is.logical, function(col) as.numeric(col, na.rm = TRUE)) %>%
       ggplot(aes_string(
         x = numeric, y = dependent,
         color = if (isTruthy(factors)) factors[1] else NULL

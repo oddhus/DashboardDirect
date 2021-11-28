@@ -1,6 +1,8 @@
 library(forcats)
 
 implantPlot <- function(removalsWithImplants, removalReason, implantNames, showLotNr) {
+  showLotNr <- isTRUE(as.logical(showLotNr))
+  
   if (showLotNr & (is.null(implantNames) | length(implantNames) > 8)) {
     return(
       ggplot() +

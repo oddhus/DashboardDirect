@@ -1,19 +1,19 @@
-exploreDataPlot <- function(insertionsWithImplants,
+exploreDataPlot <- function(data,
                             showMean,
                             hideXLab,
                             selectedClinic,
                             compareClinic,
-                            selectedFillColor,
-                            selectedFacetRow,
-                            selectedSpecificFacetRow,
-                            selectedFactorLevels,
+                            fillColor,
+                            facetRow,
+                            specificFacetRow,
+                            factorLevels,
                             selectedYAxis,
                             selectedXAxis,
                             combineAll) {
   MeanData <- NULL
-  numericXAxis <- is.numeric(insertionsWithImplants[[selectedXAxis]])
-  numericYAxis <- is.numeric(insertionsWithImplants[[selectedYAxis]])
-  
+  numericXAxis <- is.numeric(data[[selectedXAxis]])
+  numericYAxis <- is.numeric(data[[selectedYAxis]])
+
   if (!(isTruthy(selectedYAxis) & isTruthy(selectedXAxis) & isTruthy(selectedClinic))) {
     ggplot() +
       theme_void() +
@@ -26,17 +26,21 @@ exploreDataPlot <- function(insertionsWithImplants,
       xlab(NULL)
   } else {
     if (showMean & !numericXAxis) {
-      MeanData <- insertionsWithImplants %>%
-        # Filter Facets
-        filter(
-          vectorContainsAnyElement(., selectedSpecificFacetRow, selectedFacetRow)
-        ) %>%
-        group_by_at(
+      MeanData <- data
+      # Filter Facets
+      if (!(isTruthy(specificFacetRow) & isTruthy(facetRow)) | isTRUE(facetRow == "None")) {
+        MeanData <- MeanData %>% filter(
+          vectorContainsAnyElement(., specificFacetRow, facetRow)
+        )
+      }
+
+      MeanData %>%
+        group_by(across(any_of(
           c(
-            if (!isTruthy(selectedFillColor) | identical(selectedFillColor, "None") | !combineAll) NULL else selectedFillColor,
-            if (!isTruthy(selectedFacetRow) | identical(selectedFacetRow, "None")) NULL else selectedFacetRow
+            if (isTruthy(fillColor) & isFALSE(fillColor == "None") & combineAll) fillColor else NULL,
+            if (isTruthy(facetRow) & isFALSE(facetRow == "None")) facetRow else NULL
           )
-        ) %>%
+        ))) %>%
         summarize(
           value = if (selectedYAxis == "Antall") {
             n() / nlevels(numericXAxis)
@@ -55,10 +59,10 @@ exploreDataPlot <- function(insertionsWithImplants,
         mutate(!!sym(selectedXAxis) := "Mean")
     }
 
-    ClinicData <- insertionsWithImplants %>%
+    ClinicData <- data %>%
       # Filter to only show selected clinics
       filter(
-        if (isTRUE(combineAll)) {
+        if (isTRUE(as.logical(combineAll))) {
           TRUE
         } else {
           selectedClinic == Clinic |
@@ -69,26 +73,29 @@ exploreDataPlot <- function(insertionsWithImplants,
       filter(
         # All clinics are select-able when returning to the Clinic tab, even if
         # selecting some of them while in "Combine all".
-        if (!isTruthy(combineAll) & selectedXAxis == "Clinic") {
+        if (isFALSE(as.logical(combineAll)) & selectedXAxis == "Clinic") {
           TRUE
         } else {
-          vectorContainsAnyElement(., selectedFactorLevels, selectedXAxis)
+          vectorContainsAnyElement(., factorLevels, selectedXAxis)
         }
-      ) %>%
-      # Filter facet columns to only show specified columns
-      filter(
-        vectorContainsAnyElement(., selectedSpecificFacetRow, selectedFacetRow)
       )
+
+    # Filter facet rows if facet row and specific facet row is present
+    if (!(isTruthy(specificFacetRow) & isTruthy(facetRow)) | isTRUE(facetRow == "None")) {
+      ClinicData <- ClinicData %>% filter(
+        vectorContainsAnyElement(., specificFacetRow, facetRow)
+      )
+    }
 
     if (!numericXAxis) {
       ClinicData <- ClinicData %>%
-        group_by_at(
+        group_by(across(any_of(
           c(
             selectedXAxis,
-            if (!isTruthy(selectedFillColor) | identical(selectedFillColor,"None")) NULL else selectedFillColor,
-            if (!isTruthy(selectedFacetRow) | identical(selectedFacetRow, "None")) NULL else selectedFacetRow
+            if (isTruthy(fillColor) & isFALSE(fillColor == "None")) fillColor else NULL,
+            if (isTruthy(facetRow) & isFALSE(facetRow == "None")) facetRow else NULL
           )
-        ) %>%
+        ))) %>%
         summarise(
           value = if (selectedYAxis == "Antall") {
             as.double(n())
@@ -105,29 +112,47 @@ exploreDataPlot <- function(insertionsWithImplants,
           },
         )
     }
-    
-    # Sometimes it renames the first group_by_at variable to "x"
-    if("x" %in% colnames(ClinicData)){
+
+    if ("x" %in% colnames(ClinicData)) {
       ClinicData <- ClinicData %>% rename(!!sym(selectedXAxis) := x)
     }
+    
+    if ("factorLevels" %in% colnames(ClinicData)) {
+      ClinicData <- ClinicData %>% rename(!!sym(factorLevels) := factorLevels)
+    }
+    
+    
+    if ("fillColor" %in% colnames(ClinicData)) {
+      ClinicData <- ClinicData %>% rename(!!sym(fillColor) := fillColor)
+    }
+    
+    if ("facetRow" %in% colnames(ClinicData)) {
+      ClinicData <- ClinicData %>% rename(!!sym(facetRow) := facetRow)
+    }
+    
+    if ("specificFacetRow" %in% colnames(ClinicData)) {
+      ClinicData <- ClinicData %>% rename(!!sym(specificFacetRow) := specificFacetRow)
+    }
+    
+    
 
     bind_rows(ClinicData, MeanData) %>%
       ggplot(aes(
         x = if (!isTruthy(selectedXAxis)) Clinic else !!sym(selectedXAxis),
         y = if (numericXAxis) !!sym(selectedYAxis) else value,
         fill = if (!numericXAxis) {
-          if (!isTruthy(selectedFillColor) | identical(selectedFillColor, "None")) NULL else !!sym(selectedFillColor)
+          if (!isTruthy(fillColor) | isTRUE(fillColor == "None")) NULL else !!sym(fillColor)
         },
         color = if (numericXAxis) {
-          if (!isTruthy(selectedFillColor) | identical(selectedFillColor == "None")) NULL else !!sym(selectedFillColor)
+          if (!isTruthy(fillColor) | isTRUE(fillColor == "None")) NULL else !!sym(fillColor)
         }
       )) +
       {
-        if (isTruthy(selectedFillColor) & !identical(selectedFillColor, "None")) {
+        if (isTruthy(fillColor) & isFALSE(fillColor == "None")) {
           if (numericXAxis) {
-            guides(color = guide_legend(title = selectedFillColor))
+            guides(color = guide_legend(title = fillColor))
           } else {
-            guides(fill = guide_legend(title = selectedFillColor))
+            guides(fill = guide_legend(title = fillColor))
           }
         }
       } +
@@ -146,7 +171,11 @@ exploreDataPlot <- function(insertionsWithImplants,
           )
         }
       } +
-      facet_grid(cols = if (!isTruthy(selectedFacetRow) | identical(selectedFacetRow, "None")) NULL else vars(!!sym(selectedFacetRow))) +
+      {
+        if (isTruthy(facetRow) & isFALSE(facetRow == "None")) {
+          facet_grid(cols = vars(!!sym(facetRow)))
+        }
+      } +
       theme(
         axis.text.x = if (hideXLab) element_blank() else element_text(),
         axis.ticks.x = if (hideXLab) element_blank() else element_line()

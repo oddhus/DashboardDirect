@@ -14,7 +14,8 @@ analyzePlotInputUI <- function(id) {
     htmlOutput(ns("dependent")),
     htmlOutput(ns("numericIndependent")),
     htmlOutput(ns("factorIndependent")),
-    htmlOutput(ns("logicalIndependent"))
+    htmlOutput(ns("logicalIndependent")),
+    actionBttn(ns("add"), "Add to report", style = "stretch", color = "warning")
   )
 }
 
@@ -31,7 +32,7 @@ analyzePrintUI <- function(id) {
   verbatimTextOutput(ns("printAnalyze"))
 }
 
-analyzePlotServer <- function(id, data, optionsToRemove, isVisible) {
+analyzePlotServer <- function(id, data, optionsToRemove, isVisible, plotInReport) {
   moduleServer(
     id,
     function(input, output, session) {
@@ -61,6 +62,43 @@ analyzePlotServer <- function(id, data, optionsToRemove, isVisible) {
           shinyjs::hide("highlight")
         }
       })
+      
+      observeEvent(input$add, {
+        # Show a modal when the button is pressed
+        shinyalert::shinyalert(
+          title = "Confirm",
+          text = "Do you want to add this graph to the report?",
+          size = "s", 
+          closeOnEsc = TRUE,
+          closeOnClickOutside = FALSE,
+          html = FALSE,
+          type = "warning",
+          showConfirmButton = TRUE,
+          showCancelButton = TRUE,
+          confirmButtonText = "OK",
+          confirmButtonCol = "#AEDEF4",
+          cancelButtonText = "Cancel",
+          timer = 0,
+          imageUrl = "",
+          animation = TRUE,
+          inputId = "confirm"
+        )
+      })
+      
+      observeEvent(input$confirm, {
+        if(input$confirm){
+          plotInReport$dList <- c(isolate(plotInReport$dList),
+                                  list(c("dependent" = isolate(input$dependent),
+                                         "numericIndependent" = isolate(paste(input$numericIndependent, collapse = ";")),
+                                         "factorIndependent" = isolate(paste(input$factorIndependent, collapse = ";")),
+                                         "logicalIndependent" = isolate(paste(input$logicalIndependent, collapse = ";")),
+                                         "highlight" = isolate(paste(input$highlight, collapse = ";")),
+                                         "analyzeMethod" =  isolate(input$analyzeMethod),
+                                         "dataset" = id,
+                                         "tab" = "Analyze")))
+        }
+      })
+      
       #----------------------------------------------------------------------------
       # Analyses
       #----------------------------------------------------------------------------

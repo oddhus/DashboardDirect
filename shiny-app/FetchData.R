@@ -35,7 +35,7 @@ getLocalCon <- function() {
 }
 
 getInsertionsWithImplants <- function() {
-  con <- getCon()
+  con <- getLocalCon()
   insertions <- getInsertions(con)
   implants <- getImplants(con)
 
@@ -54,7 +54,7 @@ getInsertionsWithImplants <- function() {
 }
 
 getRemovalsWithImplants <- function() {
-  con <- getCon()
+  con <- getLocalCon()
   removals <- getRemovals(con)
   implants <- getImplants(con)
 

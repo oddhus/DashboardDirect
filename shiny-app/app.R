@@ -62,15 +62,12 @@ ui <- dashboardPage(
       conditionalPanel(
         condition = "input.tabs == 'Implants'",
         implantInputUI("RemovalReason")
-      ),
-      conditionalPanel(
-        condition = "input.tabs == 'Report'",
-        reportSidebarUI("Report")
       )
     )
   ),
   dashboardBody(
     shinyjs::useShinyjs(),
+    shinyalert::useShinyalert(),
     tabsetPanel(
       id = "tabs",
       tabPanel(
@@ -139,7 +136,7 @@ server <- function(input, output, session) {
 
   showInsertions <- reactiveVal(TRUE)
   showRemovals <- reactiveVal(FALSE)
-  myValues <- reactiveValues()
+  plotsInReport <- reactiveValues()
   
 
   # Hides the plot not currently viewed by user, avoiding to generate the hidden
@@ -158,7 +155,7 @@ server <- function(input, output, session) {
   # Removals Plot
   # ---------------------------------------------------------------------------
 
-  implantServer("RemovalReason", removalsWithImplants)
+  implantServer("RemovalReason", removalsWithImplants, plotsInReport)
 
   #----------------------------------------------------------------------------
   # Explorer plot
@@ -187,14 +184,16 @@ server <- function(input, output, session) {
     allCombined,
     selectedClinic = clinicValues[[1]],
     clinicCompare = clinicValues[[2]],
-    isVisible = showInsertions
+    isVisible = showInsertions,
+    plotInReport = plotsInReport
   )
 
   explorerPlotServer("Removals", removalsWithImplants, columnsToRemove,
     allCombined,
     selectedClinic = clinicValues[[1]],
     clinicCompare = clinicValues[[2]],
-    isVisible = showRemovals
+    isVisible = showRemovals,
+    plotInReport = plotsInReport
   )
 
   # 3 Info-boxes --------------------------------------------------------------
@@ -213,26 +212,26 @@ server <- function(input, output, session) {
   analyzePlotServer("InsertionsAnalyze",
     insertionsWithImplants,
     columnsToRemove,
-    isVisible = showInsertions
+    isVisible = showInsertions,
+    plotInReport = plotsInReport
   )
 
   analyzePlotServer("RemovalsAnalyze",
     removalsWithImplants,
     columnsToRemove,
-    isVisible = showRemovals
+    isVisible = showRemovals,
+    plotInReport = plotsInReport
   )
-  
+
   #----------------------------------------------------------------------------
   # Report
   #----------------------------------------------------------------------------
   
   reportServer("Report", 
                insertionsWithImplants,
-               columnsToRemove,
-               allCombined,
-               selectedClinic = clinicValues[[1]],
-               clinicCompare = clinicValues[[2]],
-               myValues)
+               removalsWithImplants,
+               plotsInReport)
 }
 
 shinyApp(ui, server)
+

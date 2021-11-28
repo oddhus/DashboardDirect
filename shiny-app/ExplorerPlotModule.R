@@ -1,4 +1,4 @@
-source("shiny-app/ReportPlot.R")
+source("shiny-app/ExplorerPlot.R")
 
 explorePlotOptionsUI <- function(id) {
   ns <- NS(id)
@@ -15,7 +15,8 @@ explorePlotOptionsUI <- function(id) {
       choices = c("x-lab", "Mean"),
       status = "info",
       selected = "x-lab"
-    )
+    ),
+    actionBttn(ns("add"), "Add to report", style = "stretch", color = "warning")
   )
 }
 
@@ -33,7 +34,8 @@ explorerPlotServer <- function(id,
                                allCombined,
                                selectedClinic,
                                clinicCompare,
-                               isVisible) {
+                               isVisible,
+                               plotInReport) {
   moduleServer(
     id,
     function(input, output, session) {
@@ -77,6 +79,44 @@ explorerPlotServer <- function(id,
         },
         ignoreInit = TRUE
       )
+      
+        observeEvent(input$add, {
+          # Show a modal when the button is pressed
+          shinyalert::shinyalert(
+            title = "Confirm",
+            text = "Do you want to add this graph to the report?",
+            size = "s", 
+            closeOnEsc = TRUE,
+            closeOnClickOutside = FALSE,
+            html = FALSE,
+            type = "warning",
+            showConfirmButton = TRUE,
+            showCancelButton = TRUE,
+            confirmButtonText = "OK",
+            confirmButtonCol = "#AEDEF4",
+            cancelButtonText = "Cancel",
+            timer = 0,
+            imageUrl = "",
+            animation = TRUE
+          )
+        })
+        
+      observeEvent(input$shinyalert, {
+        if(input$shinyalert){
+          plotInReport$dList <- c(isolate(plotInReport$dList),
+                              list(c("y" = isolate(input$selectYAxis),
+                                     "x" = isolate(input$selectXAxis),
+                                     "allCombined" = isolate(allCombined()),
+                                     "selectedClinic" = isolate(selectedClinic()),
+                                     "clinicCompare" = isolate(paste(clinicCompare(), collapse = ";")),
+                                     "facetRow" =  isolate(input$selectFacetRow),
+                                     "specificFacetRow" =  isolate(input$selectSpecificFacetRow),
+                                     "factorLevels" =  isolate(input$selectFactorLevels),
+                                     "fillColor" = isolate(input$selectFillColor),
+                                     "dataset" = id,
+                                     "tab" = "Explorer")))
+        }
+      })
 
       ### Y-axis
       output$selectYAxis <- renderUI({
@@ -185,29 +225,6 @@ explorerPlotServer <- function(id,
           allCombined()
         )
       })
-
-      # output$removalsPlot <- renderPlot({
-      #   req(
-      #     exists("removalsWithImplants"),
-      #     isTruthy(input$selectYAxisRemovalsControl),
-      #     isTruthy(input$selectXAxisRemovalsControl)
-      #   )
-      #
-      #   exploreDataPlot(
-      #     removalsWithImplants,
-      #     "Mean" %in% input$showMeanAndXLab,
-      #     !("x-lab" %in% input$showMeanAndXLab),
-      #     input$selectClinic,
-      #     input_selectClinicCompare_d(),
-      #     fillColor(),
-      #     input$selectRemovalsFacetRowControl,
-      #     input$selectSpecificRemovalsFacetRowControl,
-      #     input$selectRemovalsFactorLevelsControl,
-      #     input$selectYAxisRemovalsControl,
-      #     input$selectXAxisRemovalsControl,
-      #     allCombined()
-      #   )
-      # })
     }
   )
 }

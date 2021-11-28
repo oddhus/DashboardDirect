@@ -20,7 +20,6 @@ clinicSelectServer <- function(id, data) {
       selectedClinic <- reactiveVal(NULL)
       selectedClinicCompare <- reactiveVal(NULL)
 
-
       observeEvent(input$selectClinicCompare,
         {
           #### Ensure that same value dont trigger rerender
