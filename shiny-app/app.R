@@ -16,6 +16,7 @@ source("shiny-app/ClinicInfoBoxes.R")
 source("shiny-app/AnalyzePlotModule.R")
 source("shiny-app/ClinicSelectModule.R")
 source("shiny-app/ReportModule.R")
+source("shiny-app/StdReportModule.R")
 
 ui <- dashboardPage(
   dashboardHeader(title = "Tooth implants"),
@@ -114,6 +115,11 @@ ui <- dashboardPage(
         "Report",
         h4("Generate a report"),
         reportUI("Report")
+      ),
+      tabPanel(
+        "Standard Report",
+        h4("Standard tooth implant registry report"),
+        stdReportUI("StdReport")
       )
     )
   )
@@ -231,6 +237,10 @@ server <- function(input, output, session) {
                insertionsWithImplants,
                removalsWithImplants,
                plotsInReport)
+  
+  stdReportServer("StdReport",
+                  insertionsWithImplants,
+                  removalsWithImplants)
 }
 
 shinyApp(ui, server)

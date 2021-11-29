@@ -110,8 +110,8 @@ explorerPlotServer <- function(id,
                                      "selectedClinic" = isolate(selectedClinic()),
                                      "clinicCompare" = isolate(paste(clinicCompare(), collapse = ";")),
                                      "facetRow" =  isolate(input$selectFacetRow),
-                                     "specificFacetRow" =  isolate(input$selectSpecificFacetRow),
-                                     "factorLevels" =  isolate(input$selectFactorLevels),
+                                     "specificFacetRow" =  isolate(paste(input$selectSpecificFacetRow, collapese = ";")),
+                                     "factorLevels" =  isolate(paste(input$selectFactorLevels, collapse = ";")),
                                      "fillColor" = isolate(input$selectFillColor),
                                      "dataset" = id,
                                      "tab" = "Explorer")))
@@ -177,15 +177,14 @@ explorerPlotServer <- function(id,
       })
 
       ### Specific facet row
-      output$selectSpecificFactorLevels <- renderUI({
-        req(input$selectFactorLevels)
+      output$selectSpecificFacetRow <- renderUI({
+        req(input$selectFacetRow)
 
-        if (isTruthy(input$selectFactorLevels) &
-          isTruthy(input$selectFactorLevels != "None")) {
-          pickerInput(ns("selectSpecificFactorLevels"),
-            label = paste0("Select ", input$selectFactorLevels),
+        if (isTRUE(input$selectFacetRow != "None")) {
+          pickerInput(ns("selectSpecificFacetRow"),
+            label = paste0("Select ", input$selectFacetRow),
             choices = as.character(
-              sort(unique(data[[input$selectFactorLevels]]))
+              sort(unique(data[[input$selectFacetRow]]))
             ),
             multiple = TRUE,
             options = list(

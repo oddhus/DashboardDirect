@@ -1,35 +1,44 @@
-reportUI <- function(id) {
+stdReportUI <- function(id) {
   ns <- NS(id)
   tagList(
-    verbatimTextOutput(ns('argList')),
-    downloadButton(ns("report"), "Generate report"),
+    htmlOutput(ns("selectClinic"), width = 12),
+    downloadButton(ns("stdReport"), "Generate standard report")
   )
 }
 
 
-reportServer <- function(id, insertions, removals, myValues) {
+stdReportServer <- function(id, insertions,
+                         removals,
+                         myValues) {
   moduleServer(
     id,
     function(input, output, session) {
       ns <- session$ns
       
-      output$argList<-renderPrint({
-        print(myValues$dList)
+      clinics <- removals %>%
+        distinct(Clinic) %>%
+        arrange(Clinic) %>%
+        mutate(Clinic = as.character(Clinic))
+      
+      output$selectClinic <- renderUI({
+        pickerInput(ns("selectClinic"),
+                    "Select Clinic",
+                    choices = clinics
+        )
       })
       
-      output$report <- downloadHandler(
+      output$stdReport <- downloadHandler(
         # For PDF output, change this to "report.pdf"
-        filename = "report.html",
+        filename = "stdReport.html",
         content = function(file) {
           # Copy the report file to a temporary directory before processing it, in
           # case we don't have write permissions to the current working dir (which
           # can happen when deployed).
-          tempReport <- file.path(tempdir(), "report.Rmd")
-          file.copy("shiny-app/report.Rmd", tempReport, overwrite = TRUE)
+          tempReport <- file.path(tempdir(), "stdReport.Rmd")
+          file.copy("shiny-app/stdReport.Rmd", tempReport, overwrite = TRUE)
           
           # Set up parameters to pass to Rmd document
-          params <- list(plotArgs = myValues$dList,
-                         insertions = insertions, removals = removals)
+          params <- list(clinic = input$selectClinic, insertions = insertions, removals = removals)
           
           # Knit the document, passing in the `params` list, and eval it in a
           # child of the global environment (this isolates the code in the document
@@ -40,5 +49,6 @@ reportServer <- function(id, insertions, removals, myValues) {
           )
         }
       )
+  
     })
 }

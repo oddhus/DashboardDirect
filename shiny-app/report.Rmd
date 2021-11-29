@@ -36,8 +36,8 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor i
        strsplit(params$plotArgs[[i]]["clinicCompare"], ";")[[1]],
        if (params$plotArgs[[i]]["allCombined"]) params$plotArgs[[i]]["fillColor"] else "Clinic",
        params$plotArgs[[i]]["facetRow"],
-       params$plotArgs[[i]]["specificFacetRow"],
-       params$plotArgs[[i]]["factorLevels"],
+       strsplit(params$plotArgs[[i]]["specificFacetRow"], ";")[[1]],
+       strsplit(params$plotArgs[[i]]["factorLevels"], ";")[[1]],
        params$plotArgs[[i]]["y"],
        params$plotArgs[[i]]["x"],
        params$plotArgs[[i]]["allCombined"]

@@ -1,0 +1,56 @@
+---
+title: "Rapport"
+output: html_document
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+author: "Tannimplantatregisteret"
+params:
+  clinic: NA
+  insertions: NA
+  removals: NA
+---
+
+```{r eval = FALSE, echo = FALSE}
+# For PDF output, change the header to have "output: pdf_document".
+#
+# Note that due to an issue in rmarkdown, the default value of a parameter in
+# the header cannot be `NULL`, so I used a default of `NA` for the default value
+# of `n`.
+```
+
+
+# Implantatfraktur
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+```{r implant, message=FALSE, echo=FALSE, fig.cap="FIG 1: Implantat sortert etter hvor stor andel av implantatene som er fjernet pga. implantatfraktur",fig.width=12, fig.height=8}
+print(
+  implantPlot(
+    params$removals,
+    c("Implantatfraktur"),
+    NULL,
+    FALSE
+  )
+)
+```
+
+# `r paste0(params$clinic)`
+
+```{r clinic, echo=FALSE,message=FALSE}
+print(exploreDataPlot(
+       params$removals,
+       TRUE,
+       FALSE,
+       params$clinic,
+       NULL,
+       "Clinic",
+       "RemovalReason",
+       c("Feil implantatposisjon", "Implantatfraktur"),
+       params$clinic,
+       "DaysSinceInsertion",
+       "Clinic",
+       TRUE
+     ))
+```
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+

@@ -27,18 +27,19 @@ exploreDataPlot <- function(data,
   } else {
     if (showMean & !numericXAxis) {
       MeanData <- data
+      
       # Filter Facets
-      if (!(isTruthy(specificFacetRow) & isTruthy(facetRow)) | isTRUE(facetRow == "None")) {
+      if (isTruthy(specificFacetRow) & isTruthy(facetRow) & isFALSE(facetRow == "None")) {
         MeanData <- MeanData %>% filter(
           vectorContainsAnyElement(., specificFacetRow, facetRow)
         )
       }
 
-      MeanData %>%
+      MeanData <- MeanData %>%
         group_by(across(any_of(
           c(
-            if (isTruthy(fillColor) & isFALSE(fillColor == "None") & combineAll) fillColor else NULL,
-            if (isTruthy(facetRow) & isFALSE(facetRow == "None")) facetRow else NULL
+            if (isTruthy(fillColor) & isTRUE(fillColor != "None" & fillColor != selectedXAxis) & isTRUE(as.logical(combineAll))) fillColor else NULL,
+            if (isTruthy(facetRow) & isTRUE(facetRow != "None")) facetRow else NULL
           )
         ))) %>%
         summarize(
@@ -58,11 +59,11 @@ exploreDataPlot <- function(data,
         ) %>%
         mutate(!!sym(selectedXAxis) := "Mean")
     }
-
+    
     ClinicData <- data
     
     #If in Clinic tab, use this filter to select current clinics
-    if(isFALSE(combineAll)){
+    if(isFALSE(as.logical(combineAll))){
       ClinicData <- ClinicData %>% filter(
         selectedClinic == Clinic |
           vectorContainsAnyElement(., compareClinic, "Clinic", FALSE)
@@ -80,7 +81,7 @@ exploreDataPlot <- function(data,
     }
 
     # Filter facet rows if facet row and specific facet row is present
-    if (!(isTruthy(specificFacetRow) & isTruthy(facetRow)) | isTRUE(facetRow == "None")) {
+    if ((isTruthy(specificFacetRow) & isTruthy(facetRow)) | isTRUE(facetRow != "None")) {
       ClinicData <- ClinicData %>% filter(
         vectorContainsAnyElement(., specificFacetRow, facetRow)
       )
@@ -100,7 +101,7 @@ exploreDataPlot <- function(data,
             as.double(n())
           } else {
             if_else(numericYAxis,
-              mean(!!sym(selectedYAxis)),
+              mean(!!sym(selectedYAxis), na.rm = TRUE),
               sum(!!sym(selectedYAxis), na.rm = TRUE) / n() * 100
             )
           },
@@ -111,7 +112,7 @@ exploreDataPlot <- function(data,
           },
         )
     }
-
+    
     if ("x" %in% colnames(ClinicData)) {
       ClinicData <- ClinicData %>% rename(!!sym(selectedXAxis) := x)
     }
@@ -139,7 +140,9 @@ exploreDataPlot <- function(data,
       ggplot(aes(
         x = if (!isTruthy(selectedXAxis)) Clinic else !!sym(selectedXAxis),
         y = if (numericXAxis) !!sym(selectedYAxis) else value,
-        fill = if (!numericXAxis) {
+        fill = if (isTRUE(fillColor == selectedXAxis)) {
+           !!sym(selectedXAxis)
+        } else if (!numericXAxis) {
           if (!isTruthy(fillColor) | isTRUE(fillColor == "None")) NULL else !!sym(fillColor)
         },
         color = if (numericXAxis) {
