@@ -59,26 +59,25 @@ exploreDataPlot <- function(data,
         mutate(!!sym(selectedXAxis) := "Mean")
     }
 
-    ClinicData <- data %>%
-      # Filter to only show selected clinics
-      filter(
-        if (isTRUE(as.logical(combineAll))) {
-          TRUE
-        } else {
-          selectedClinic == Clinic |
-            vectorContainsAnyElement(., compareClinic, "Clinic", FALSE)
-        }
-      ) %>%
-      # Filter X-axis to only show selected levels
-      filter(
-        # All clinics are select-able when returning to the Clinic tab, even if
-        # selecting some of them while in "Combine all".
-        if (isFALSE(as.logical(combineAll)) & selectedXAxis == "Clinic") {
-          TRUE
-        } else {
-          vectorContainsAnyElement(., factorLevels, selectedXAxis)
-        }
+    ClinicData <- data
+    
+    #If in Clinic tab, use this filter to select current clinics
+    if(isFALSE(combineAll)){
+      ClinicData <- ClinicData %>% filter(
+        selectedClinic == Clinic |
+          vectorContainsAnyElement(., compareClinic, "Clinic", FALSE)
       )
+    }
+    
+    # If in Combine all tab, use filter to select levels of factor. However, if
+    # in Clinic tab, hide this filter if clinic is selected. Since clinics have 
+    # already been filtered.
+    if((isTRUE(as.logical(combineAll)) | selectedXAxis != "Clinic") &
+       isTruthy(factorLevels)) {
+      ClinicData <- ClinicData %>% filter(
+        vectorContainsAnyElement(., factorLevels, selectedXAxis)
+      )
+    }
 
     # Filter facet rows if facet row and specific facet row is present
     if (!(isTruthy(specificFacetRow) & isTruthy(facetRow)) | isTRUE(facetRow == "None")) {
