@@ -1,8 +1,8 @@
 library(forcats)
 
-implantPlot <- function(removalsWithImplants, removalReason, implantNames, showLotNr) {
+implantPlot <- function(removalsWithImplants, clinics, removalReasons, implantNames, showLotNr) {
   showLotNr <- isTRUE(as.logical(showLotNr))
-  
+
   if (showLotNr & (is.null(implantNames) | length(implantNames) > 8)) {
     return(
       ggplot() +
@@ -12,18 +12,41 @@ implantPlot <- function(removalsWithImplants, removalReason, implantNames, showL
     )
   }
 
-  tot <- removalsWithImplants %>%
-    group_by(ImplantName) %>%
+  filteredData <- removalsWithImplants
+
+  if (isTruthy(clinics)) {
+    filteredData <- filteredData %>% filter(
+      vectorContainsAnyElement(., clinics, "Clinic")
+    )
+  }
+
+  if (isTruthy(implantNames)) {
+    filteredData <- filteredData %>% filter(
+      vectorContainsAnyElement(., implantNames, "ImplantName")
+    )
+  }
+
+  tot <- filteredData %>%
+    group_by(
+      across(
+        any_of(c(
+          if (isTruthy(clinics)) "Clinic" else NULL,
+          if (isTruthy(implantNames)) "ImplantName" else NULL
+        ))
+      )
+    ) %>%
     summarise(tot = n())
 
-  removalsWithImplants %>%
-    filter(
-      vectorContainsAnyElement(., removalReason, "RemovalReason")
-    ) %>%
-    filter(
-      vectorContainsAnyElement(., implantNames, "ImplantName")
-    ) %>%
+
+  if (isTruthy(removalReasons)) {
+    filteredData <- filteredData %>% filter(
+      vectorContainsAnyElement(., removalReasons, "RemovalReason")
+    )
+  }
+
+  filteredData <- filteredData %>%
     select(
+      Clinic,
       RemovalReason,
       ImplantName,
       ImplantLengthMillimeter,
@@ -32,7 +55,8 @@ implantPlot <- function(removalsWithImplants, removalReason, implantNames, showL
       Brand
     ) %>%
     group_by_at(c(
-      "ImplantName",
+      if (isTruthy(clinics)) "Clinic" else NULL,
+      if (isTruthy(implantNames)) "ImplantName" else NULL,
       if (showLotNr) "LotNr" else NULL,
       "RemovalReason"
     )) %>%
@@ -40,21 +64,43 @@ implantPlot <- function(removalsWithImplants, removalReason, implantNames, showL
       ImplantLengthMillimeter = first(ImplantLengthMillimeter),
       ImplantDiameterMillimeter = first(ImplantDiameterMillimeter),
       n = n()
-    ) %>%
-    left_join(tot) %>%
-    mutate(percentage = n / tot) %>%
+    )
+
+  if (isTruthy(clinics) | isTruthy(implantNames)) {
+    filteredData <- filteredData %>%
+      left_join(tot) %>%
+      mutate(percentage = n / tot)
+  } else {
+    filteredData <- cbind(filteredData, tot) %>%
+      mutate(percentage = n / tot)
+  }
+
+  filteredData %>%
     ggplot(aes(
-      x = fct_reorder(ImplantName, percentage),
+      x = fct_reorder(RemovalReason, percentage), # fct_reorder(ImplantName, percentage),
       y = percentage,
       fill = if (showLotNr) LotNr else NULL
     )) +
     geom_col(width = 0.5) +
-    facet_grid(RemovalReason ~ .) +
-    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
-    xlab("Implant Name") +
+    {
+      if (isTruthy(implantNames) & isTruthy(clinics)) {
+        facet_grid(rows = vars(ImplantName), cols = vars(Clinic))
+      } else if (isTruthy(implantNames)) {
+        facet_grid(rows = vars(ImplantName))
+      } else if (isTruthy(clinics)) {
+        facet_grid(cols = vars(Clinic))
+      }
+    } +
+    xlab("Removal Reason") +
     {
       if (showLotNr) {
         labs(fill = "LotNr")
       }
-    }
+    } +
+    theme_minimal() +
+    theme(
+      strip.background = element_rect(fill = "grey40", color = "grey80", size = 1),
+      strip.text = element_text(colour = "white")
+    ) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 }

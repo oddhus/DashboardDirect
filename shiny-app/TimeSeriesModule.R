@@ -1,28 +1,28 @@
-source("shiny-app/ImplantPlot.R")
+source("shiny-app/TimeSeriesPlot.R")
 
-implantInputUI <- function(id) {
+timeSeriesInputUI <- function(id) {
   ns <- NS(id)
   tagList(
     htmlOutput(ns("selectRemovalReason")),
     htmlOutput(ns("selectImplantName")),
     htmlOutput(ns("selectClinic")),
-    checkboxGroupButtons(
-      inputId = ns("implantPlotOptions"),
-      label = "Show",
-      choices = c("LotNr"),
-      status = "info",
-      selected = NULL
+    radioGroupButtons(
+      inputId = ns("timeScale"),
+      label = "Select timescale", 
+      choices = c("month", "year"),
+      status = "primary",
+      selected = "year"
     ),
     actionBttn(ns("add"), "Add to report", style = "bordered", color = "warning")
   )
 }
 
-implantPlotUI <- function(id) {
+timeSeriesPlotUI <- function(id) {
   ns <- NS(id)
-  plotOutput(ns("removalsImplantPlot"), height = 600) %>% withSpinner()
+  plotOutput(ns("timeSeriesPlot"), height = 600) %>% withSpinner()
 }
 
-implantServer <- function(id, data, plotInReport) {
+timeSeriesServer <- function(id, data, plotInReport) {
   moduleServer(
     id,
     function(input, output, session) {
@@ -56,8 +56,8 @@ implantServer <- function(id, data, plotInReport) {
                                   list(c("Clinic" = isolate(paste(input$selectClinic, collapse = ";")),
                                          "RemovalReason" = isolate(paste(input$selectRemovalReason, collapse = ";")),
                                          "ImplantName" = isolate(paste(input$selectImplantName, collapse = ";")),
-                                         "showLotNr" = isolate("LotNr" %in% input$implantPlotOptions),
-                                         "tab" = "Implant")))
+                                         "TimeScale" =  isolate(input$timeScale),
+                                         "tab" = "timeSeries")))
         }
       })
       
@@ -79,40 +79,43 @@ implantServer <- function(id, data, plotInReport) {
       
       output$selectRemovalReason <- renderUI({
         pickerInput(ns("selectRemovalReason"),
-          "Select Removal Reason(s)",
-          choices = as.character(
-            sort(unique(data[["RemovalReason"]]))
-          ),
-          multiple = T,
-          options = list(
-            `actions-box` = TRUE, size = 10,
-            `selected-text-format` = "count > 2"
-          )
+                    "Select Removal Reason(s)",
+                    choices = as.character(
+                      sort(unique(data[["RemovalReason"]]))
+                    ),
+                    multiple = T,
+                    options = list(
+                      `actions-box` = TRUE, size = 10,
+                      `selected-text-format` = "count > 2"
+                    )
         )
       })
-
+      
       output$selectImplantName <- renderUI({
         pickerInput(ns("selectImplantName"),
-          "Select Implant Name(s)",
-          choices = as.character(
-            sort(unique(data[["ImplantName"]]))
-          ),
-          multiple = T,
-          options = list(
-            `actions-box` = TRUE, size = 10,
-            `selected-text-format` = "count > 2"
-          )
+                    "Select Implant Name(s)",
+                    choices = as.character(
+                      sort(unique(data[["ImplantName"]]))
+                    ),
+                    multiple = T,
+                    options = list(
+                      `actions-box` = TRUE, size = 10,
+                      `selected-text-format` = "count > 2"
+                    )
         )
       })
-
+      
       ## Plots --------------------------------------------------------------------
-      output$removalsImplantPlot <- renderPlot({
-        implantPlot(
+      output$timeSeriesPlot <- renderPlot({
+        print(input$timeScale,)
+        req(isTruthy(input$timeScale))
+        
+        timeSeriesPlot(
           data,
+          input$timeScale,
           input$selectClinic,
           input$selectRemovalReason,
-          input$selectImplantName,
-          "LotNr" %in% input$implantPlotOptions
+          input$selectImplantName
         )
       })
     }

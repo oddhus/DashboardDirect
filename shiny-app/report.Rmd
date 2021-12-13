@@ -62,9 +62,20 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor i
        print(
        implantPlot(
           params$removals,
+          strsplit(params$plotArgs[[i]]["Clinic"], ";")[[1]],
           strsplit(params$plotArgs[[i]]["RemovalReason"], ";")[[1]],
           strsplit(params$plotArgs[[i]]["ImplantName"], ";")[[1]],
           params$plotArgs[[i]]["ShowLotNr"]
+        )
+       )
+     } else if (params$plotArgs[[i]]["tab"] == "timeSeries") {
+       print(
+       timeSeriesPlot(
+          params$removals,
+          params$plotArgs[[i]]["TimeScale"],
+          strsplit(params$plotArgs[[i]]["Clinic"], ";")[[1]],
+          strsplit(params$plotArgs[[i]]["RemovalReason"], ";")[[1]],
+          strsplit(params$plotArgs[[i]]["ImplantName"], ";")[[1]]
         )
        )
      }

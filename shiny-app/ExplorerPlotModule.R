@@ -16,7 +16,7 @@ explorePlotOptionsUI <- function(id) {
       status = "info",
       selected = "x-lab"
     ),
-    actionBttn(ns("add"), "Add to report", style = "stretch", color = "warning")
+    actionBttn(ns("add"), "Add to report", style = "bordered", color = "warning")
   )
 }
 

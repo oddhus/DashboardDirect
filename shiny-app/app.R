@@ -17,11 +17,17 @@ source("shiny-app/AnalyzePlotModule.R")
 source("shiny-app/ClinicSelectModule.R")
 source("shiny-app/ReportModule.R")
 source("shiny-app/StdReportModule.R")
+source("shiny-app/TimeSeriesModule.R")
 
 ui <- dashboardPage(
   dashboardHeader(title = "Tooth implants"),
   dashboardSidebar(
     sidebarMenu(
+
+        tags$style(type = "text/css",
+                   "#sidebarTitle { padding-left: 16px; } "),
+        div(id = "sidebarTitle", h3("Options")),
+
       conditionalPanel(
         condition = "input.tabs == 'Explorer' | input.tabs == 'Analyses'",
         radioGroupButtons(
@@ -63,6 +69,10 @@ ui <- dashboardPage(
       conditionalPanel(
         condition = "input.tabs == 'Implants'",
         implantInputUI("RemovalReason")
+      ),
+      conditionalPanel(
+        condition = "input.tabs == 'Time series'",
+        timeSeriesInputUI("Time")
       )
     )
   ),
@@ -78,6 +88,11 @@ ui <- dashboardPage(
           implantPlotUI("RemovalReason"),
           width = 12
         )
+      ),
+      tabPanel(
+        "Time series",
+        h4("Implants over time"),
+        timeSeriesPlotUI("Time")
       ),
       tabPanel(
         "Explorer",
@@ -241,6 +256,12 @@ server <- function(input, output, session) {
   stdReportServer("StdReport",
                   insertionsWithImplants,
                   removalsWithImplants)
+  
+  #----------------------------------------------------------------------------
+  # TimeSeries
+  #----------------------------------------------------------------------------
+  
+  timeSeriesServer("Time", data = removalsWithImplants, plotInReport = plotsInReport)
 }
 
 shinyApp(ui, server)

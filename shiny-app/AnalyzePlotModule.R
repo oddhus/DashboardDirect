@@ -15,7 +15,7 @@ analyzePlotInputUI <- function(id) {
     htmlOutput(ns("numericIndependent")),
     htmlOutput(ns("factorIndependent")),
     htmlOutput(ns("logicalIndependent")),
-    actionBttn(ns("add"), "Add to report", style = "stretch", color = "warning")
+    actionBttn(ns("add"), "Add to report", style = "bordered", color = "warning")
   )
 }
 
