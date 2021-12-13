@@ -27,7 +27,7 @@ exploreDataPlot <- function(data,
   } else {
     if (showMean & !numericXAxis) {
       MeanData <- data
-      
+
       # Filter Facets
       if (isTruthy(specificFacetRow) & isTruthy(facetRow) & isFALSE(facetRow == "None")) {
         MeanData <- MeanData %>% filter(
@@ -59,22 +59,22 @@ exploreDataPlot <- function(data,
         ) %>%
         mutate(!!sym(selectedXAxis) := "Mean")
     }
-    
+
     ClinicData <- data
-    
-    #If in Clinic tab, use this filter to select current clinics
-    if(isFALSE(as.logical(combineAll))){
+
+    # If in Clinic tab, use this filter to select current clinics
+    if (isFALSE(as.logical(combineAll))) {
       ClinicData <- ClinicData %>% filter(
         selectedClinic == Clinic |
           vectorContainsAnyElement(., compareClinic, "Clinic", FALSE)
       )
     }
-    
+
     # If in Combine all tab, use filter to select levels of factor. However, if
-    # in Clinic tab, hide this filter if clinic is selected. Since clinics have 
+    # in Clinic tab, hide this filter if clinic is selected. Since clinics have
     # already been filtered.
-    if((isTRUE(as.logical(combineAll)) | selectedXAxis != "Clinic") &
-       isTruthy(factorLevels)) {
+    if ((isTRUE(as.logical(combineAll)) | selectedXAxis != "Clinic") &
+      isTruthy(factorLevels)) {
       ClinicData <- ClinicData %>% filter(
         vectorContainsAnyElement(., factorLevels, selectedXAxis)
       )
@@ -112,36 +112,36 @@ exploreDataPlot <- function(data,
           },
         )
     }
-    
+
     if ("x" %in% colnames(ClinicData)) {
       ClinicData <- ClinicData %>% rename(!!sym(selectedXAxis) := x)
     }
-    
+
     if ("factorLevels" %in% colnames(ClinicData)) {
       ClinicData <- ClinicData %>% rename(!!sym(factorLevels) := factorLevels)
     }
-    
-    
+
+
     if ("fillColor" %in% colnames(ClinicData)) {
       ClinicData <- ClinicData %>% rename(!!sym(fillColor) := fillColor)
     }
-    
+
     if ("facetRow" %in% colnames(ClinicData)) {
       ClinicData <- ClinicData %>% rename(!!sym(facetRow) := facetRow)
     }
-    
+
     if ("specificFacetRow" %in% colnames(ClinicData)) {
       ClinicData <- ClinicData %>% rename(!!sym(specificFacetRow) := specificFacetRow)
     }
-    
-    
+
+
 
     bind_rows(ClinicData, MeanData) %>%
       ggplot(aes(
         x = if (!isTruthy(selectedXAxis)) Clinic else !!sym(selectedXAxis),
         y = if (numericXAxis) !!sym(selectedYAxis) else value,
         fill = if (isTRUE(fillColor == selectedXAxis)) {
-           !!sym(selectedXAxis)
+          !!sym(selectedXAxis)
         } else if (!numericXAxis) {
           if (!isTruthy(fillColor) | isTRUE(fillColor == "None")) NULL else !!sym(fillColor)
         },
@@ -178,11 +178,15 @@ exploreDataPlot <- function(data,
           facet_grid(cols = vars(!!sym(facetRow)))
         }
       } +
+      theme_minimal() +
       theme(
+        text = element_text(size = 16),
+        strip.background = element_rect(fill = "grey20", color = "grey80", size = 1),
+        strip.text = element_text(colour = "white"),
         axis.text.x = if (hideXLab) element_blank() else element_text(),
         axis.ticks.x = if (hideXLab) element_blank() else element_line()
       ) +
-      xlab(if (hideXLab) "" else selectedXAxis) +
+      xlab(if (hideXLab) "" else paste0("\n", selectedXAxis)) +
       {
         if (numericXAxis) {
           ylab(selectedYAxis)

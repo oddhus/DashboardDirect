@@ -1,6 +1,6 @@
 timeSeriesPlot <- function(data, timeScale = "year", clinics, removalReasons, implantNames){
   
-  filteredData <- removalsWithImplants
+  filteredData <- data
   
   if(isTruthy(clinics)){
     filteredData <- filteredData %>% filter(
@@ -53,7 +53,14 @@ timeSeriesPlot <- function(data, timeScale = "year", clinics, removalReasons, im
       } else if (isTruthy(clinics)) {
         facet_grid(cols = vars(Clinic))
       }
-    } 
+    }+
+    theme_minimal() +
+    theme(
+      text = element_text(size=18),
+      strip.background = element_rect(fill = "grey20", color = "grey80", size = 1),
+      strip.text = element_text(colour = "white")
+    ) +
+    xlab(paste0("\n", timeScale))
 }
 
 

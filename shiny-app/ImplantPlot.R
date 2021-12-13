@@ -91,7 +91,7 @@ implantPlot <- function(removalsWithImplants, clinics, removalReasons, implantNa
         facet_grid(cols = vars(Clinic))
       }
     } +
-    xlab("Removal Reason") +
+    xlab("\nRemoval Reason") +
     {
       if (showLotNr) {
         labs(fill = "LotNr")
@@ -99,8 +99,9 @@ implantPlot <- function(removalsWithImplants, clinics, removalReasons, implantNa
     } +
     theme_minimal() +
     theme(
-      strip.background = element_rect(fill = "grey40", color = "grey80", size = 1),
+      text = element_text(size=18),
+      strip.background = element_rect(fill = "grey20", color = "grey80", size = 1),
       strip.text = element_text(colour = "white")
-    ) +
-    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+    )
+    #theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 }

@@ -55,6 +55,12 @@ analyzePlot <- function(data, dependent, numeric, factors, booleans, highlight, 
         rows = if (isTruthy(factors) & length(factors) > 1) vars(!!sym(factors[2])) else NULL,
         cols = if (isTruthy(booleans)) vars(!!sym(booleans[1])) else NULL
       ) +
-      labs(title = dependent)
+      labs(title = dependent) +
+      theme_minimal() +
+      theme(
+        text = element_text(size=18),
+        strip.background = element_rect(fill = "grey20", color = "grey80", size = 1),
+        strip.text = element_text(colour = "white")
+      )
   }
 }
