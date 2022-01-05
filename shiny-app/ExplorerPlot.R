@@ -134,8 +134,6 @@ exploreDataPlot <- function(data,
       ClinicData <- ClinicData %>% rename(!!sym(specificFacetRow) := specificFacetRow)
     }
 
-
-
     bind_rows(ClinicData, MeanData) %>%
       ggplot(aes(
         x = if (!isTruthy(selectedXAxis)) Clinic else !!sym(selectedXAxis),
@@ -180,21 +178,33 @@ exploreDataPlot <- function(data,
       } +
       theme_minimal() +
       theme(
-        text = element_text(size = 16),
-        strip.background = element_rect(fill = "grey20", color = "grey80", size = 1),
-        strip.text = element_text(colour = "white"),
+        text = element_text(size = 18),
+        strip.text = element_text(colour = "grey20"),
+        strip.background = element_rect(color = "grey40", size = 1),
         axis.text.x = if (hideXLab) element_blank() else element_text(),
         axis.ticks.x = if (hideXLab) element_blank() else element_line()
       ) +
+      {
+        if (isTruthy(facetRow) & isFALSE(facetRow == "None")) {
+          theme(panel.border = element_rect(color = "grey40", fill = NA, size = 0.9),)
+        }
+      } +
       xlab(if (hideXLab) "" else paste0("\n", selectedXAxis)) +
       {
         if (numericXAxis) {
-          ylab(selectedYAxis)
+          ylab(paste0(selectedYAxis, "\n"))
         } else {
           ylab(if_else(selectedYAxis == "Antall" | numericYAxis,
             selectedYAxis,
-            paste(selectedYAxis, "Percentage", sep = " ")
+            paste(selectedYAxis, "Percentage\n", sep = " ")
           ))
+        }
+      } +
+      theme(panel.grid.minor.x=element_blank(),
+            panel.grid.major.x=element_blank()) + 
+      {
+        if (isTRUE(selectedXAxis == fillColor)) {
+          guides(fill = FALSE)
         }
       }
   }

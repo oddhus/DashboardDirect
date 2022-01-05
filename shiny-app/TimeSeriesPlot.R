@@ -43,8 +43,8 @@ timeSeriesPlot <- function(data, timeScale = "year", clinics, removalReasons, im
     mutate(percentage = n / total)
   
   filteredData %>%
-    ggplot(aes(x = month, y = percentage, fill = RemovalReason)) +
-    geom_col()+
+    ggplot(aes(x = month, y = percentage, color = RemovalReason)) +
+    geom_line(size =1.5)+
     {
       if (isTruthy(implantNames) & isTruthy(clinics)) {
         facet_grid(rows = vars(ImplantName), cols = vars(Clinic))
@@ -55,12 +55,23 @@ timeSeriesPlot <- function(data, timeScale = "year", clinics, removalReasons, im
       }
     }+
     theme_minimal() +
+    xlab(paste0("\n", timeScale)) +
+    ylab("Percentage\n") +
     theme(
       text = element_text(size=18),
-      strip.background = element_rect(fill = "grey20", color = "grey80", size = 1),
-      strip.text = element_text(colour = "white")
+      strip.text = element_text(colour = "grey20"),
     ) +
-    xlab(paste0("\n", timeScale))
+    {
+      if ((isTruthy(implantNames) & length(implantNames) > 1) | (isTruthy(clinics) & length(clinics) > 1)) {
+        theme(
+          strip.background = element_rect(color = "grey40", size = 1),
+          panel.border = element_rect(color = "grey40", fill = NA, size = 0.9)
+        )
+      }
+    } +
+    guides(color=guide_legend(title="Removal reason"))+
+    scale_y_continuous(expand = c(0, 0), limits = c(0, NA))+
+    theme(panel.spacing = unit(2, "lines"))
 }
 
 

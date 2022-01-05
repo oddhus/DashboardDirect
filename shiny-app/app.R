@@ -26,7 +26,7 @@ ui <- dashboardPage(
 
         tags$style(type = "text/css",
                    "#sidebarTitle { padding-left: 16px; } "),
-        div(id = "sidebarTitle", h3("Options")),
+        div(id = "sidebarTitle", h3("Graph options")),
 
       conditionalPanel(
         condition = "input.tabs == 'Explorer' | input.tabs == 'Analyses'",

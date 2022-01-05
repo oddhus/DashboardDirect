@@ -87,7 +87,8 @@ timeSeriesServer <- function(id, data, plotInReport) {
                     options = list(
                       `actions-box` = TRUE, size = 10,
                       `selected-text-format` = "count > 2"
-                    )
+                    ),
+                    selected = unique(data[["RemovalReason"]][1])
         )
       })
       

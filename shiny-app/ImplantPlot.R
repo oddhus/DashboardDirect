@@ -69,16 +69,18 @@ implantPlot <- function(removalsWithImplants, clinics, removalReasons, implantNa
   if (isTruthy(clinics) | isTruthy(implantNames)) {
     filteredData <- filteredData %>%
       left_join(tot) %>%
-      mutate(percentage = n / tot)
+      mutate(Percentage = n / tot)
   } else {
     filteredData <- cbind(filteredData, tot) %>%
-      mutate(percentage = n / tot)
+      mutate(Percentage = n / tot)
   }
+  
+  filteredData$RemovalReason <- str_wrap(filteredData$RemovalReason, width = 30)
 
   filteredData %>%
     ggplot(aes(
-      x = fct_reorder(RemovalReason, percentage), # fct_reorder(ImplantName, percentage),
-      y = percentage,
+      x = fct_reorder(RemovalReason, Percentage), # fct_reorder(ImplantName, percentage),
+      y = Percentage,
       fill = if (showLotNr) LotNr else NULL
     )) +
     geom_col(width = 0.5) +
@@ -91,17 +93,32 @@ implantPlot <- function(removalsWithImplants, clinics, removalReasons, implantNa
         facet_grid(cols = vars(Clinic))
       }
     } +
-    xlab("\nRemoval Reason") +
+    xlab("Removal Reason\n") +
     {
       if (showLotNr) {
         labs(fill = "LotNr")
       }
     } +
+    ylab("\nPercentage") +
     theme_minimal() +
     theme(
       text = element_text(size=18),
-      strip.background = element_rect(fill = "grey20", color = "grey80", size = 1),
-      strip.text = element_text(colour = "white")
-    )
-    #theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+      strip.text = element_text(colour = "grey20"),
+    ) +
+    {
+      if (isTruthy(implantNames) & length(implantNames) > 1 | isTruthy(clinics) & length(clinics) > 1) {
+        theme(
+          strip.background = element_rect(color = "grey40", size = 1),
+          panel.border = element_rect(color = "grey40", fill = NA, size = 1)
+          )
+      }
+    } +
+    coord_flip() +
+    theme(panel.grid.minor.y=element_blank(),
+          panel.grid.major.y=element_blank())
+  # {
+  #     if (!isTruthy(removalReasons) | isTruthy(implantNames) | isTruthy(clinics)) {
+  #       theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust = 1))
+  #     }
+  #   }
 }
