@@ -24,24 +24,28 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor i
 ```{r plot, echo=FALSE, message=FALSE, fig.height=8, fig.width=12}
    for (i in 1:length(params$plotArgs)) {
      if(params$plotArgs[[i]]["tab"] == "Explorer"){
+       'print(paste(params$plotArgs[[i]]["dataset"] == "Insertions",
+             params$plotArgs[[i]]["selectedClinic"],
+             params$plotArgs[[i]]["facetRow"],
+             strsplit(params$plotArgs[[i]]["specificFacetRow"], ";")[[1]], sep = ";;;"))'
         print(exploreDataPlot(
-       if(params$plotArgs[[i]]["dataset"] == "Insertions") {
-          params$insertions
-       } else {
-         params$removals
-       },
-       FALSE,
-       FALSE,
-       params$plotArgs[[i]]["selectedClinic"],
-       strsplit(params$plotArgs[[i]]["clinicCompare"], ";")[[1]],
-       if (params$plotArgs[[i]]["allCombined"]) params$plotArgs[[i]]["fillColor"] else "Clinic",
-       params$plotArgs[[i]]["facetRow"],
-       strsplit(params$plotArgs[[i]]["specificFacetRow"], ";")[[1]],
-       strsplit(params$plotArgs[[i]]["factorLevels"], ";")[[1]],
-       params$plotArgs[[i]]["y"],
-       params$plotArgs[[i]]["x"],
-       params$plotArgs[[i]]["allCombined"]
-     ))
+           if(params$plotArgs[[i]]["dataset"] == "Insertions") {
+              params$insertions
+           } else {
+             params$removals
+           },
+           FALSE,
+           FALSE,
+           params$plotArgs[[i]]["selectedClinic"],
+           strsplit(params$plotArgs[[i]]["clinicCompare"], ";")[[1]],
+           if (params$plotArgs[[i]]["allCombined"]) params$plotArgs[[i]]["fillColor"] else "Clinic",
+           params$plotArgs[[i]]["facetRow"],
+           strsplit(params$plotArgs[[i]]["specificFacetRow"], ";")[[1]],
+           strsplit(params$plotArgs[[i]]["factorLevels"], ";")[[1]],
+           params$plotArgs[[i]]["y"],
+           params$plotArgs[[i]]["x"],
+           params$plotArgs[[i]]["allCombined"]
+         ))
      } else if (params$plotArgs[[i]]["tab"] == "Analyze") {
        print(
        analyzePlot(
@@ -59,15 +63,29 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor i
         )
        )
      } else if (params$plotArgs[[i]]["tab"] == "Implant") {
-       print(
-       implantPlot(
-          params$removals,
-          strsplit(params$plotArgs[[i]]["Clinic"], ";")[[1]],
-          strsplit(params$plotArgs[[i]]["RemovalReason"], ";")[[1]],
-          strsplit(params$plotArgs[[i]]["ImplantName"], ";")[[1]],
-          params$plotArgs[[i]]["ShowLotNr"]
-        )
-       )
+       if("Removals" == params$plotArgs[[i]]["SelectXAxis"]){
+         print(
+          implantPlot(
+            params$removals,
+            strsplit(params$plotArgs[[i]]["Clinic"], ";")[[1]],
+            strsplit(params$plotArgs[[i]]["RemovalReason"], ";")[[1]],
+            strsplit(params$plotArgs[[i]]["ImplantName"], ";")[[1]],
+            params$plotArgs[[i]]["ShowLotNr"],
+            params$plotArgs[[i]]["ShowMean"]
+          )
+         )
+        } else {
+          print(
+            compareImplantsPlot(
+              params$removals,
+              strsplit(params$plotArgs[[i]]["Clinic"], ";")[[1]],
+              params$plotArgs[[i]]["RemovalReason"],
+              strsplit(params$plotArgs[[i]]["ImplantName"], ";")[[1]],
+              params$plotArgs[[i]]["ShowLotNr"],
+              params$plotArgs[[i]]["ShowMean"]
+            )
+          )
+        }
      } else if (params$plotArgs[[i]]["tab"] == "timeSeries") {
        print(
        timeSeriesPlot(

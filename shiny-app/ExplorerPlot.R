@@ -173,7 +173,7 @@ exploreDataPlot <- function(data,
       } +
       {
         if (isTruthy(facetRow) & isFALSE(facetRow == "None")) {
-          facet_grid(cols = vars(!!sym(facetRow)))
+          facet_grid(as.formula(paste0(".~", facetRow)))
         }
       } +
       theme_minimal() +

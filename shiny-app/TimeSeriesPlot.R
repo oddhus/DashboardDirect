@@ -1,7 +1,7 @@
 timeSeriesPlot <- function(data, timeScale = "year", clinics, removalReasons, implantNames){
   
   filteredData <- data
-  
+
   if(isTruthy(clinics)){
     filteredData <- filteredData %>% filter(
       vectorContainsAnyElement(., clinics, "Clinic")
