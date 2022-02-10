@@ -73,12 +73,12 @@ getRemovalsWithImplants <- function() {
 
   return(removalsWithImplants %>%
     mutate(across(where(is.character), as.factor)) %>%
-    mutate(DaysSinceInsertion = time_length(
+    mutate(YearsSinceInsertion = time_length(
       interval(
         parse_date_time(InsertionDate, orders = "Ymd HMS", truncated = 3),
         parse_date_time(RemovalDate, orders = "Ymd HMS", truncated = 3)
       ),
-      "days"
+      "years"
     )))
 }
 

@@ -1,7 +1,28 @@
-timeSeriesPlot <- function(data, timeScale = "year", clinics, removalReasons, implantNames){
+timeSeriesPlot <- function(data, timeScale = "year", clinics, removalReasons, implantNames, showMean = TRUE){
+  showMean <- isTRUE(as.logical(showMean))
   
   filteredData <- data
+  MeanData <- NULL
+  meanLine <- c("Mean" = "dashed")
   
+  
+  if(showMean){
+    totalMean <- data %>%
+      group_by(
+        month = lubridate::floor_date(RemovalDate, timeScale),
+      ) %>%
+      summarise(total = n())
+    
+    MeanData <- data %>%
+      group_by(
+        month = lubridate::floor_date(RemovalDate, timeScale),
+        RemovalReason
+      ) %>%
+      summarise(n = n()) %>%
+      left_join(totalMean) %>%
+      mutate(mean_percentage = n / total)
+  }
+
   if(isTruthy(clinics)){
     filteredData <- filteredData %>% filter(
       vectorContainsAnyElement(., clinics, "Clinic")
@@ -42,6 +63,11 @@ timeSeriesPlot <- function(data, timeScale = "year", clinics, removalReasons, im
     left_join(total) %>%
     mutate(percentage = n / total)
   
+  if(showMean){
+    filteredData <- filteredData %>%
+      left_join(MeanData, by = c("month", "RemovalReason"))
+  }
+  
   filteredData %>%
     ggplot(aes(x = month, y = percentage, color = RemovalReason)) +
     geom_line(size =1.5)+
@@ -54,6 +80,11 @@ timeSeriesPlot <- function(data, timeScale = "year", clinics, removalReasons, im
         facet_grid(cols = vars(Clinic))
       }
     }+
+    {
+      if(showMean){
+        geom_line(aes(x = month, y = mean_percentage, linetype = "Mean"), color = "grey40", , size =1.5)
+      }
+    } +
     theme_minimal() +
     xlab(paste0("\n", timeScale)) +
     ylab("Percentage\n") +
@@ -70,8 +101,14 @@ timeSeriesPlot <- function(data, timeScale = "year", clinics, removalReasons, im
       }
     } +
     guides(color=guide_legend(title="Removal reason"))+
-    scale_y_continuous(expand = c(0, 0), limits = c(0, NA))+
-    theme(panel.spacing = unit(2, "lines"))
+    scale_y_continuous(expand = expansion(mult = .05), limits = c(0, NA))+
+    theme(panel.spacing = unit(2, "lines")) + 
+    {
+      if (isTruthy(showMean)) {
+        labs(linetype = "")
+      }
+    }+
+    scale_linetype_manual(values = meanLine)
 }
 
 

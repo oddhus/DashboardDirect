@@ -1,15 +1,22 @@
 source("shiny-app/ImplantPlot.R")
+source("shiny-app/ImplantPlotCompare.R")
 
 implantInputUI <- function(id) {
   ns <- NS(id)
   tagList(
+    radioGroupButtons(
+      inputId = ns("selectXAxis"),
+      label = "X-axis",
+      choices = c("Removals", "Implants"),
+      status = "primary"
+    ),
     htmlOutput(ns("selectRemovalReason")),
     htmlOutput(ns("selectImplantName")),
     htmlOutput(ns("selectClinic")),
     checkboxGroupButtons(
       inputId = ns("implantPlotOptions"),
       label = "Show",
-      choices = c("LotNr"),
+      choices = c("LotNr", "Mean"),
       status = "info",
       selected = NULL
     ),
@@ -56,7 +63,9 @@ implantServer <- function(id, data, plotInReport) {
                                   list(c("Clinic" = isolate(paste(input$selectClinic, collapse = ";")),
                                          "RemovalReason" = isolate(paste(input$selectRemovalReason, collapse = ";")),
                                          "ImplantName" = isolate(paste(input$selectImplantName, collapse = ";")),
-                                         "showLotNr" = isolate("LotNr" %in% input$implantPlotOptions),
+                                         "ShowLotNr" = isolate("LotNr" %in% input$implantPlotOptions),
+                                         "ShowMean" = isolate("Mean" %in% input$implantPlotOptions),
+                                         "SelectXAxis" = isolate(input$selectXAxis),
                                          "tab" = "Implant")))
         }
       })
@@ -79,11 +88,11 @@ implantServer <- function(id, data, plotInReport) {
       
       output$selectRemovalReason <- renderUI({
         pickerInput(ns("selectRemovalReason"),
-          "Select Removal Reason(s)",
+          paste0("Select Removal Reason", if("Removals" %in% input$selectXAxis) "(s)" else ""),
           choices = as.character(
             sort(unique(data[["RemovalReason"]]))
           ),
-          multiple = T,
+          multiple = "Removals" %in% input$selectXAxis,
           options = list(
             `actions-box` = TRUE, size = 10,
             `selected-text-format` = "count > 2"
@@ -107,14 +116,30 @@ implantServer <- function(id, data, plotInReport) {
 
       ## Plots --------------------------------------------------------------------
       output$removalsImplantPlot <- renderPlot({
-        implantPlot(
-          data,
-          input$selectClinic,
-          input$selectRemovalReason,
-          input$selectImplantName,
-          "LotNr" %in% input$implantPlotOptions
-        )
+        req(input$selectXAxis)
+        if("Removals" %in% input$selectXAxis){
+          implantPlot(
+            data,
+            input$selectClinic,
+            input$selectRemovalReason,
+            input$selectImplantName,
+            "LotNr" %in% input$implantPlotOptions,
+            "Mean" %in% input$implantPlotOptions
+          )
+        } else {
+          compareImplantsPlot(
+            data,
+            input$selectClinic,
+            input$selectRemovalReason,
+            input$selectImplantName,
+            "LotNr" %in% input$implantPlotOptions,
+            "Mean" %in% input$implantPlotOptions
+          )
+        }
+        
       })
+      
+      
     }
   )
 }
