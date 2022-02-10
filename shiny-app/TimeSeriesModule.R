@@ -13,6 +13,13 @@ timeSeriesInputUI <- function(id) {
       status = "primary",
       selected = "year"
     ),
+    checkboxGroupButtons(
+      inputId = ns("implantPlotOptions"),
+      label = "Show",
+      choices = c("Mean"),
+      status = "info",
+      selected = NULL
+    ),
     actionBttn(ns("add"), "Add to report", style = "bordered", color = "warning")
   )
 }
@@ -57,6 +64,7 @@ timeSeriesServer <- function(id, data, plotInReport) {
                                          "RemovalReason" = isolate(paste(input$selectRemovalReason, collapse = ";")),
                                          "ImplantName" = isolate(paste(input$selectImplantName, collapse = ";")),
                                          "TimeScale" =  isolate(input$timeScale),
+                                         "ShowMean" = isolate("Mean" %in% input$implantPlotOptions),
                                          "tab" = "timeSeries")))
         }
       })
@@ -116,7 +124,8 @@ timeSeriesServer <- function(id, data, plotInReport) {
           input$timeScale,
           input$selectClinic,
           input$selectRemovalReason,
-          input$selectImplantName
+          input$selectImplantName,
+          "Mean" %in% input$implantPlotOptions
         )
       })
     }

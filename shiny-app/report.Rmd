@@ -93,7 +93,8 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor i
           params$plotArgs[[i]]["TimeScale"],
           strsplit(params$plotArgs[[i]]["Clinic"], ";")[[1]],
           strsplit(params$plotArgs[[i]]["RemovalReason"], ";")[[1]],
-          strsplit(params$plotArgs[[i]]["ImplantName"], ";")[[1]]
+          strsplit(params$plotArgs[[i]]["ImplantName"], ";")[[1]],
+          params$plotArgs[[i]]["ShowMean"]
         )
        )
      }

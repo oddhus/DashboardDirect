@@ -46,9 +46,6 @@ compareImplantsPlot <- function(removalsWithImplants, clinics, removalReason, im
     ) %>%
     summarise(tot = n())
   
-  print(tot)
-  
-  
   if (isTruthy(removalReason)) {
     filteredData <- filteredData %>% filter(
       vectorContainsAnyElement(., removalReason, "RemovalReason")
