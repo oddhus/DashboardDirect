@@ -34,8 +34,31 @@ getLocalCon <- function() {
   return(con)
 }
 
+getInsertionsAndRemovals <- function() {
+  con <- getLocalCon()
+  insertions <- getInsertions(con)
+  removals <- getRemovals(con)
+  implants <- getImplants(con)
+  
+  insertionsWithImplants <- insertions %>%
+    left_join(implants, by = c("Id" = "InsertionId")) %>%
+    rename(Id = Id.x) %>%
+    select(-(ends_with("Id") & (!starts_with("Id")))) %>%
+    select(-c("Id.y"))
+  
+  removalsWithImplants <- removals %>%
+    left_join(implants, by = c("Id" = "RemovalId")) %>%
+    rename(Id = Id.x) %>%
+    select(-(ends_with("Id") & !starts_with("Id"))) %>%
+    select(-(starts_with("Name"))) %>%
+    select(-c(
+      "HelfoRefund", "Membrane", "Resorbable", "Boneaugmentation", "Complications", "ComplicationsComment",
+      "PositionFrom", "PositionTo", "IsPlateProsthetics", "ExtractionTime", "Position"
+    ))
+}
+
 getInsertionsWithImplants <- function() {
-  con <- getCon()
+  con <- getLocalCon()
   insertions <- getInsertions(con)
   implants <- getImplants(con)
 
@@ -54,7 +77,7 @@ getInsertionsWithImplants <- function() {
 }
 
 getRemovalsWithImplants <- function() {
-  con <- getCon()
+  con <- getLocalCon()
   removals <- getRemovals(con)
   implants <- getImplants(con)
 
@@ -86,10 +109,13 @@ getRemovals <- function(con) {
   removal <- tbl(con, "Removal")
   removalReason <- tbl(con, "RemovalReason")
   clinic <- tbl(con, "Clinic")
+  patients <- tbl(con, "Patient")
 
   removalData <- removal %>%
     left_join(removalReason, by = c("ReasonId" = "Id")) %>%
     left_join(clinic, by = c("ClinicId" = "Id")) %>%
+    left_join(patients, by = c("PatientId" = "Id")) %>%
+    select(-IdNumber) %>%
     rename(
       RemovalReason = Name.x,
       Clinic = Name.y
@@ -104,7 +130,7 @@ getInsertions <- function(con) {
   lekholmZarbDensity <- tbl(con, "LekholmZarbDensity")
   method <- tbl(con, "Method")
   clinic <- tbl(con, "Clinic")
-
+  patients <- tbl(con, "Patient")
 
   insertion %>%
     left_join(antibioticsRelation, by = c("Id" = "InsertionId")) %>%
@@ -113,6 +139,8 @@ getInsertions <- function(con) {
     left_join(lekholmZarbDensity, by = c("LekholmZarbDensityId" = "Id")) %>%
     left_join(method, by = c("MethodId" = "Id")) %>%
     left_join(clinic, by = c("ClinicId" = "Id")) %>%
+    left_join(patients, by = c("PatientId" = "Id")) %>%
+    select(-IdNumber) %>%
     rename(
       AntibioticsName = Name.x,
       LekholmZarbVolume = Name.y,
