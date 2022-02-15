@@ -93,13 +93,15 @@ test <- function() {
   insertionData <- patients %>%
     inner_join(insertion, by = c("Id" = "PatientId")) %>%
     rename(PatientId = Id.x, InsertionId = Id.y) %>%
-    inner_join(implant, bys)
+    inner_join(implant, by=c("InsertionId"))
   removalData <- patients %>% 
     inner_join(removal, by = c("Id" = "PatientId")) %>%
-    rename(PatientId = Id.x, RemovalId = Id.y)
+    rename(PatientId = Id.x, RemovalId = Id.y) %>%
+    inner_join(implant, by=c("RemovalId"))
   
-  
-  
+  df1 <- insertionData %>% collect() %>% select(PatientId, InsertionId, Position, ImplantsId)
+  df2 <- removalData %>% collect() %>% select(PatientId, RemovalId, Position, ImplantsId)
+  df1 %>% inner_join(df2, by = c("PatientId", "Position"))
 }
 
 getRemovalsWithImplants <- function() {
