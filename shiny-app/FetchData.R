@@ -36,6 +36,8 @@ getLocalCon <- function() {
 
 getInsertionsAndRemovals <- function() {
   con <- getLocalCon()
+  
+  
   insertions <- getInsertions(con)
   removals <- getRemovals(con)
   implants <- getImplants(con)
@@ -43,19 +45,24 @@ getInsertionsAndRemovals <- function() {
   insertionsWithImplants <- insertions %>%
     left_join(implants, by = c("Id" = "InsertionId")) %>%
     rename(Id = Id.x) %>%
-    select(-(ends_with("Id") & (!starts_with("Id")))) %>%
+    select(-(ends_with("Id") & !starts_with("Id") & !starts_with("Patient"))) %>%
     select(-c("Id.y"))
   
   removalsWithImplants <- removals %>%
     left_join(implants, by = c("Id" = "RemovalId")) %>%
     rename(Id = Id.x) %>%
-    select(-(ends_with("Id") & !starts_with("Id"))) %>%
+    select(-(ends_with("Id") & !starts_with("Id") & !starts_with("Patient"))) %>%
     select(-(starts_with("Name"))) %>%
     select(-c(
       "HelfoRefund", "Membrane", "Resorbable", "Boneaugmentation", "Complications", "ComplicationsComment",
-      "PositionFrom", "PositionTo", "IsPlateProsthetics", "ExtractionTime", "Position"
+      "PositionFrom", "PositionTo", "IsPlateProsthetics", "ExtractionTime", "Material",
+      "ExtractionReason", "Stability", "MissingReason", "BoneAugmentationMethod", "TimeUntilLoad",
+      "BoneaugmentationBefore","Id.y", "RefNr"
     ))
+  
+  completeTable <- insertionsWithImplants %>% inner_join(removalsWithImplants, by = c("PatientId", "Position")) %>% collect()
 }
+  
 
 getInsertionsWithImplants <- function() {
   con <- getLocalCon()
@@ -74,6 +81,25 @@ getInsertionsWithImplants <- function() {
   return(insertionsWithImplants %>%
     mutate(across(where(is.character), as.factor)) %>%
     mutate(across(starts_with("Position"), as.factor)))
+}
+
+test <- function() {
+  con <- getLocalCon()
+  implant <- tbl(con, "Implant")
+  removal <- tbl(con, "Removal")
+  insertion <- tbl(con, "Insertion")
+  patients <- tbl(con, "Patient")
+  
+  insertionData <- patients %>%
+    inner_join(insertion, by = c("Id" = "PatientId")) %>%
+    rename(PatientId = Id.x, InsertionId = Id.y) %>%
+    inner_join(implant, bys)
+  removalData <- patients %>% 
+    inner_join(removal, by = c("Id" = "PatientId")) %>%
+    rename(PatientId = Id.x, RemovalId = Id.y)
+  
+  
+  
 }
 
 getRemovalsWithImplants <- function() {
@@ -185,4 +211,41 @@ getImplants <- function(con) {
       BoneAugmentationMethod = Name.x.x.x.x,
       TimeUntilLoad = Name.y.y.y.y
     ))
+}
+
+getImplantTable <- function(con) {
+  implant <- tbl(con, "Implant")
+  extractionReason <- tbl(con, "ExtractionReason")
+  implantType <- tbl(con, "Implants")
+  vendor <- tbl(con, "Vendor")
+  material <- tbl(con, "Material")
+  stability <- tbl(con, "Stability")
+  missingReason <- tbl(con, "MissingReason")
+  boneAugmentationMethod <- tbl(con, "BoneAugmentationMethod")
+  prostheticConstruction <- tbl(con, "ProstheticConstruction")
+  timeUntilLoad <- tbl(con, "TimeOption")
+  
+  # First join subtable
+  implantType <- implantType %>% left_join(vendor, by = c("VendorId" = "Id"))
+  
+  # Join all tables
+  return(implant %>%
+           left_join(implantType, by = c("ImplantsId" = "Id")) %>%
+           left_join(material, by = c("MaterialId" = "Id")) %>%
+           left_join(extractionReason, by = c("ExtractionReasonId" = "Id")) %>%
+           left_join(stability, by = c("StabilityId" = "Id")) %>%
+           left_join(missingReason, by = c("MissingReasonId" = "Id")) %>%
+           left_join(boneAugmentationMethod, by = c("BoneAugmentationMethodId" = "Id")) %>%
+           left_join(prostheticConstruction, by = c("ProstheticConstructionId" = "Id")) %>%
+           left_join(timeUntilLoad, by = c("TimeUntilLoadId" = "Id")) %>%
+           rename(
+             ImplantName = Name.x,
+             Brand = Name.y,
+             Material = Name.x.x,
+             ExtractionReason = Name.y.y,
+             Stability = Name.x.x.x,
+             MissingReason = Name.y.y.y,
+             BoneAugmentationMethod = Name.x.x.x.x,
+             TimeUntilLoad = Name.y.y.y.y
+           ))
 }

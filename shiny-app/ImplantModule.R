@@ -6,8 +6,8 @@ implantInputUI <- function(id) {
   tagList(
     radioGroupButtons(
       inputId = ns("selectXAxis"),
-      label = "X-axis",
-      choices = c("Removals", "Implants"),
+      label = NULL,
+      choices = c("Removal Reason", "Implants"),
       status = "primary"
     ),
     htmlOutput(ns("selectRemovalReason")),
@@ -88,11 +88,11 @@ implantServer <- function(id, data, plotInReport) {
       
       output$selectRemovalReason <- renderUI({
         pickerInput(ns("selectRemovalReason"),
-          paste0("Select Removal Reason", if("Removals" %in% input$selectXAxis) "(s)" else ""),
+          paste0("Select Removal Reason", if("Removal Reason" %in% input$selectXAxis) "(s)" else ""),
           choices = as.character(
             sort(unique(data[["RemovalReason"]]))
           ),
-          multiple = "Removals" %in% input$selectXAxis,
+          multiple = "Removal Reason" %in% input$selectXAxis,
           options = list(
             `actions-box` = TRUE, size = 10,
             `selected-text-format` = "count > 2"
@@ -117,7 +117,7 @@ implantServer <- function(id, data, plotInReport) {
       ## Plots --------------------------------------------------------------------
       output$removalsImplantPlot <- renderPlot({
         req(input$selectXAxis)
-        if("Removals" %in% input$selectXAxis){
+        if("Removal Reason" %in% input$selectXAxis){
           implantPlot(
             data,
             input$selectClinic,
