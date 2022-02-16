@@ -83,7 +83,7 @@ getInsertionsWithImplants <- function() {
     mutate(across(starts_with("Position"), as.factor)))
 }
 
-completeTable <- function() {
+getCompleteTable <- function() {
   con <- getLocalCon()
   implant <- tbl(con, "Implant")
   removal <- tbl(con, "Removal")
@@ -169,19 +169,26 @@ completeTable <- function() {
   data <- data %>%
     mutate(ImplantLengthMillimeter = coalesce(ImplantLengthMillimeter.x, ImplantLengthMillimeter.y),
            ImplantDiameterMillimeter = coalesce(ImplantDiameterMillimeter.x, ImplantDiameterMillimeter.y),
+           Clinic = coalesce(Clinic.x, Clinic.y),
+           Vendor = coalesce(Vendor.x, Vendor.y),
+           ImplantName = coalesce(ImplantName.x, ImplantName.y),
            LotNr = coalesce(LotNr.x, LotNr.y),
            InsertionDate = coalesce(InsertionDate.x, InsertionDate.y)) %>%
     select(-(ends_with(".x") | ends_with(".y") | ends_with("Comment") | starts_with("RefNr") | starts_with("IdNumber"))) %>%
     mutate(across(where(is.character), as.factor)) %>%
-    mutate(DaysSinceInsertion = time_length(
-      interval(
-        parse_date_time(InsertionDate, orders = "Ymd HMS", truncated = 3),
-        parse_date_time(RemovalDate, orders = "Ymd HMS", truncated = 3)
-      ),
-      "days"
-    ))
-  
-  
+    mutate(
+      YearsSinceInsertion = time_length(
+        interval(
+          parse_date_time(InsertionDate, orders = "Ymd HMS", truncated = 3),
+          parse_date_time(RemovalDate, orders = "Ymd HMS", truncated = 3)
+        ),"years"),
+      survt = time_length(
+        interval(
+          parse_date_time(InsertionDate, orders = "Ymd HMS", truncated = 3),
+          parse_date_time(if_else(is.na(RemovalDate), as.POSIXct(Sys.Date()), RemovalDate), orders = "Ymd HMS", truncated = 3)
+        ),"days"),
+      survStatus = if_else(is.na(RemovalId), 1, 2)
+    )
 }
 
 getRemovalsWithImplants <- function() {

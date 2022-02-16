@@ -8,6 +8,9 @@ library(tidyr)
 library(lubridate)
 library(patchwork)
 library(shinyWidgets)
+library(survminer)
+library(survival)
+library(ggpubr)
 source("shiny-app/Utils.R")
 source("shiny-app/FetchData.R")
 source("shiny-app/ImplantModule.R")
@@ -18,6 +21,7 @@ source("shiny-app/ClinicSelectModule.R")
 source("shiny-app/ReportModule.R")
 source("shiny-app/StdReportModule.R")
 source("shiny-app/TimeSeriesModule.R")
+source("shiny-app/SurvivalModule.R")
 
 ui <- dashboardPage(
   dashboardHeader(title = "Tooth implants"),
@@ -73,6 +77,10 @@ ui <- dashboardPage(
       conditionalPanel(
         condition = "input.tabs == 'Time series'",
         timeSeriesInputUI("Time")
+      ),
+      conditionalPanel(
+        condition = "input.tabs == 'Implant Survival'",
+        survivalPlotInputUI("SurvivalPlot")
       )
     )
   ),
@@ -86,6 +94,14 @@ ui <- dashboardPage(
         h4("Overview of removed Implants"),
         column(
           implantPlotUI("RemovalReason"),
+          width = 12
+        )
+      ),
+      tabPanel(
+        "Implant Survival",
+        h4("Survival plot"),
+        column(
+          survivalPlotUI("SurvivalPlot"),
           width = 12
         )
       ),
@@ -146,8 +162,8 @@ server <- function(input, output, session) {
 
   # ---------------------------------------------------------------------------
   # Data
-  # ---------------------------------------------------------------------------
-
+  # ------------------------------s---------------------------------------------
+  completeTable <- getCompleteTable()
   insertionsWithImplants <- getInsertionsWithImplants()
   removalsWithImplants <- getRemovalsWithImplants()
 
@@ -262,6 +278,11 @@ server <- function(input, output, session) {
   #----------------------------------------------------------------------------
   
   timeSeriesServer("Time", data = removalsWithImplants, plotInReport = plotsInReport)
+  
+  #----------------------------------------------------------------------------
+  # Survival
+  #----------------------------------------------------------------------------
+  survivalPlotServer("SurvivalPlot", data = completeTable, plotInReport = plotsInReport)
 }
 
 shinyApp(ui, server)
