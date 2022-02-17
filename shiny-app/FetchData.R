@@ -188,7 +188,17 @@ getCompleteTable <- function() {
           parse_date_time(if_else(is.na(RemovalDate), as.POSIXct(Sys.Date()), RemovalDate), orders = "Ymd HMS", truncated = 3)
         ),"days"),
       survStatus = if_else(is.na(RemovalId), 1, 2)
+    ) %>%
+    mutate(RemovalBeforeNYear = case_when(
+      ceiling(YearsSinceInsertion) == 1 ~ "Year 1",
+      ceiling(YearsSinceInsertion) <= 4 ~ "Year 2-4",
+      ceiling(YearsSinceInsertion) <= 9 ~ "Year 5-9",
+      TRUE ~ "Year 10+")
     )
+  
+  data$RemovalBeforeNYear <- factor(data$RemovalBeforeNYear, levels = c("Year 1", "Year 2-4", "Year 5-9", "Year 10+"))
+  
+  return(data)
 }
 
 getRemovalsWithImplants <- function() {

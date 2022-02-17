@@ -60,7 +60,8 @@ survivalPlotServer <- function(id, data, plotInReport) {
       output$selectFactor <- renderUI({
         pickerInput(ns("selectFactor"),
                     "Select Factor",
-                    choices = data %>% select_if( ~ is.factor(.) |  is.logical(.)) %>% names()
+                    choices = c(data %>% select_if( ~ is.factor(.) |  is.logical(.)) %>% names(), "None"),
+                    selected = "None"
         )
       })
       
@@ -108,6 +109,7 @@ survivalPlotServer <- function(id, data, plotInReport) {
       
       ## Plots --------------------------------------------------------------------
       output$survivalPlot <- renderPlot({
+        req(isTruthy(input$selectFactor))
         survivalPlot(data = data,
                      factor = input$selectFactor,
                      levels = input$selectLevels,

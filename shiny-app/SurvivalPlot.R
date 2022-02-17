@@ -1,7 +1,7 @@
 survivalPlot <- function(data, factor, levels, additionalFactor, additionalLevels){
   filteredData <- data
   
-  if (isTruthy(factor) & isTruthy(levels)) {
+  if (isTruthy(factor) & isTruthy(levels) & isTRUE(additionalFactor != "None")) {
     filteredData <- filteredData %>% filter(
       vectorContainsAnyElement(., levels, factor)
     )
@@ -15,6 +15,10 @@ survivalPlot <- function(data, factor, levels, additionalFactor, additionalLevel
   
   if(isTRUE(additionalFactor == "None")){
     additionalFactor <- NULL
+  }
+
+  if(isTRUE(factor == "None")){
+    factor <- NULL
   }
   
   form <- as.formula(paste0("Surv(survt, survStatus) ~ ", if(isTruthy(factor)) paste0(c(factor,additionalFactor),collapse = "+") else 1))

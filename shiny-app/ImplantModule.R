@@ -4,19 +4,14 @@ source("shiny-app/ImplantPlotCompare.R")
 implantInputUI <- function(id) {
   ns <- NS(id)
   tagList(
-    radioGroupButtons(
-      inputId = ns("selectXAxis"),
-      label = NULL,
-      choices = c("Removal Reason", "Implants"),
-      status = "primary"
-    ),
+    htmlOutput(ns("selectYears")),
     htmlOutput(ns("selectRemovalReason")),
-    htmlOutput(ns("selectImplantName")),
-    htmlOutput(ns("selectClinic")),
+    htmlOutput(ns("selectFactor")),
+    htmlOutput(ns("selectLevels")),
     checkboxGroupButtons(
       inputId = ns("implantPlotOptions"),
       label = "Show",
-      choices = c("LotNr", "Mean"),
+      choices = c("Mean"),
       status = "info",
       selected = NULL
     ),
@@ -34,13 +29,13 @@ implantServer <- function(id, data, plotInReport) {
     id,
     function(input, output, session) {
       ns <- session$ns
-      
+
       observeEvent(input$add, {
         # Show a modal when the button is pressed
         shinyalert::shinyalert(
           title = "Confirm",
           text = "Do you want to add this graph to the report?",
-          size = "s", 
+          size = "s",
           closeOnEsc = TRUE,
           closeOnClickOutside = FALSE,
           html = FALSE,
@@ -56,43 +51,31 @@ implantServer <- function(id, data, plotInReport) {
           inputId = "confirm"
         )
       })
-      
+
       observeEvent(input$confirm, {
-        if(input$confirm){
-          plotInReport$dList <- c(isolate(plotInReport$dList),
-                                  list(c("Clinic" = isolate(paste(input$selectClinic, collapse = ";")),
-                                         "RemovalReason" = isolate(paste(input$selectRemovalReason, collapse = ";")),
-                                         "ImplantName" = isolate(paste(input$selectImplantName, collapse = ";")),
-                                         "ShowLotNr" = isolate("LotNr" %in% input$implantPlotOptions),
-                                         "ShowMean" = isolate("Mean" %in% input$implantPlotOptions),
-                                         "SelectXAxis" = isolate(input$selectXAxis),
-                                         "tab" = "Implant")))
+        if (input$confirm) {
+          plotInReport$dList <- c(
+            isolate(plotInReport$dList),
+            list(c(
+              "Clinic" = isolate(paste(input$selectClinic, collapse = ";")),
+              "RemovalReason" = isolate(paste(input$selectRemovalReason, collapse = ";")),
+              "ImplantName" = isolate(paste(input$selectImplantName, collapse = ";")),
+              "ShowLotNr" = isolate("LotNr" %in% input$implantPlotOptions),
+              "ShowMean" = isolate("Mean" %in% input$implantPlotOptions),
+              "SelectXAxis" = isolate(input$selectXAxis),
+              "tab" = "Implant"
+            ))
+          )
         }
       })
-      
-      
+
+
       ## Inputs -------------------------------------------------------------------
-      output$selectClinic <- renderUI({
-        pickerInput(ns("selectClinic"),
-                    "Select Clinic",
-                    choices = as.character(
-                      sort(unique(data[["Clinic"]]))
-                    ),
-                    multiple = T,
-                    options = list(
-                      `actions-box` = TRUE, size = 10,
-                      `selected-text-format` = "count > 2"
-                    )
-        )
-      })
-      
-      output$selectRemovalReason <- renderUI({
-        pickerInput(ns("selectRemovalReason"),
-          paste0("Select Removal Reason", if("Removal Reason" %in% input$selectXAxis) "(s)" else ""),
-          choices = as.character(
-            sort(unique(data[["RemovalReason"]]))
-          ),
-          multiple = "Removal Reason" %in% input$selectXAxis,
+      output$selectYears <- renderUI({
+        pickerInput(ns("selectYears"),
+          "Select interval(s)",
+          choices = as.character(unique(data[["RemovalBeforeNYear"]])),
+          multiple = T,
           options = list(
             `actions-box` = TRUE, size = 10,
             `selected-text-format` = "count > 2"
@@ -100,11 +83,35 @@ implantServer <- function(id, data, plotInReport) {
         )
       })
 
-      output$selectImplantName <- renderUI({
-        pickerInput(ns("selectImplantName"),
-          "Select Implant Name(s)",
+      output$selectRemovalReason <- renderUI({
+        pickerInput(ns("selectRemovalReason"),
+          paste0("Select Removal Reason (s)"),
           choices = as.character(
-            sort(unique(data[["ImplantName"]]))
+            sort(unique(data[["RemovalReason"]]))
+          ),
+          multiple = T,
+          options = list(
+            `actions-box` = TRUE, size = 10,
+            `selected-text-format` = "count > 2"
+          )
+        )
+      })
+
+      output$selectFactor <- renderUI({
+        pickerInput(ns("selectFactor"),
+          "Select Factor",
+          choices = c(data %>% select_if(~ is.factor(.) | is.logical(.)) %>% names(), "None"),
+          selected = "None"
+        )
+      })
+
+      output$selectLevels <- renderUI({
+        req(input$selectFactor)
+        req(input$selectFactor != "None")
+        pickerInput(ns("selectLevels"),
+          paste0("Filter ", input$selectFactor),
+          choices = as.character(
+            sort(unique(data[[input$selectFactor]]))
           ),
           multiple = T,
           options = list(
@@ -116,30 +123,15 @@ implantServer <- function(id, data, plotInReport) {
 
       ## Plots --------------------------------------------------------------------
       output$removalsImplantPlot <- renderPlot({
-        req(input$selectXAxis)
-        if("Removal Reason" %in% input$selectXAxis){
-          implantPlot(
-            data,
-            input$selectClinic,
-            input$selectRemovalReason,
-            input$selectImplantName,
-            "LotNr" %in% input$implantPlotOptions,
-            "Mean" %in% input$implantPlotOptions
-          )
-        } else {
-          compareImplantsPlot(
-            data,
-            input$selectClinic,
-            input$selectRemovalReason,
-            input$selectImplantName,
-            "LotNr" %in% input$implantPlotOptions,
-            "Mean" %in% input$implantPlotOptions
-          )
-        }
-        
+        overviewRemovalReasonPlot(
+          data = data,
+          removalReasons = input$selectRemovalReason,
+          years = input$selectYears,
+          factor = input$selectFactor,
+          levels = input$selectLevels,
+          showMean = "Mean" %in% input$implantPlotOptions
+        )
       })
-      
-      
     }
   )
 }

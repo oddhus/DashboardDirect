@@ -71,7 +71,7 @@ ui <- dashboardPage(
         analyzePlotInputUI("RemovalsAnalyze")
       ),
       conditionalPanel(
-        condition = "input.tabs == 'Implants'",
+        condition = "input.tabs == 'Overview Removals'",
         implantInputUI("RemovalReason")
       ),
       conditionalPanel(
@@ -90,12 +90,15 @@ ui <- dashboardPage(
     tabsetPanel(
       id = "tabs",
       tabPanel(
-        "Implants",
-        h4("Overview of removed Implants"),
-        column(
-          implantPlotUI("RemovalReason"),
-          width = 12
+        "Overview Removals",
+        fluidRow(
+          column(
+            implantPlotUI("RemovalReason"),
+            width = 12,
+            style='margin-top:10px;'
+          )
         )
+        
       ),
       tabPanel(
         "Implant Survival",
@@ -192,7 +195,7 @@ server <- function(input, output, session) {
   # Removals Plot
   # ---------------------------------------------------------------------------
 
-  implantServer("RemovalReason", removalsWithImplants, plotsInReport)
+  implantServer("RemovalReason", completeTable %>% filter(!is.na(RemovalId)), plotsInReport)
 
   #----------------------------------------------------------------------------
   # Explorer plot

@@ -1,166 +1,76 @@
-library(forcats)
-
-implantPlot <- function(removalsWithImplants,
-                        clinics,
-                        removalReasons,
-                        implantNames,
-                        showLotNr,
-                        showMean = TRUE) {
-  showLotNr <- isTRUE(as.logical(showLotNr))
+overviewRemovalReasonPlot <- function(data, removalReasons, years, factor, levels, showMean){
   showMean <- isTRUE(as.logical(showMean))
-
-  if (showLotNr & (is.null(implantNames) | length(implantNames) > 8)) {
-    return(
-      ggplot() +
-        theme_void() +
-        geom_text(aes(0, 0, label = "Cannot show LotNr for >8 implants. Select fewer implants.")) +
-        xlab(NULL)
-    )
-  }
-
-  filteredData <- removalsWithImplants
-
-  MeanData <- NULL
-  meanColor <- c("Mean" = "red")
-
-  if (showMean) {
-    totRemovals <- removalsWithImplants %>% summarise(tot = n())
-
-    MeanData <- removalsWithImplants %>%
-      group_by(RemovalReason) %>%
-      summarise(Mean_Percentage = n() / totRemovals$tot)
-  }
-
-  if (isTruthy(clinics)) {
+  filteredData <- data
+  
+  meanData <- data %>%
+    group_by(RemovalReason) %>%
+    summarise(Percentage = n() / nrow(data))
+    
+  if (isTruthy(years)) {
     filteredData <- filteredData %>% filter(
-      vectorContainsAnyElement(., clinics, "Clinic")
+      vectorContainsAnyElement(., years, "RemovalBeforeNYear")
     )
   }
-
-  if (isTruthy(implantNames)) {
-    filteredData <- filteredData %>% filter(
-      vectorContainsAnyElement(., implantNames, "ImplantName")
-    )
-  }
-
-  tot <- filteredData %>%
-    group_by(
-      across(
-        any_of(c(
-          if (isTruthy(clinics)) "Clinic" else NULL,
-          if (isTruthy(implantNames)) "ImplantName" else NULL
-        ))
-      )
-    ) %>%
-    summarise(tot = n())
-
-
+  
   if (isTruthy(removalReasons)) {
     filteredData <- filteredData %>% filter(
       vectorContainsAnyElement(., removalReasons, "RemovalReason")
     )
   }
+  
+  if ((isTruthy(factor) & isTruthy(levels)) | isTRUE(factor != "None")) {
+    filteredData <- filteredData %>% filter(
+      vectorContainsAnyElement(., levels, factor)
+    )
+  }
+  
+  tot <- filteredData %>%
+    group_by(across(
+      any_of(c(
+        "RemovalBeforeNYear",
+        if (isTruthy(factor) & isTRUE(factor != "None")) factor else NULL
+      ))
+    )) %>%
+    summarise(tot = n())
+
 
   filteredData <- filteredData %>%
-    select(
-      Clinic,
-      RemovalReason,
-      ImplantName,
-      ImplantLengthMillimeter,
-      ImplantDiameterMillimeter,
-      LotNr,
-      Brand
-    ) %>%
-    group_by_at(c(
-      if (isTruthy(clinics)) "Clinic" else NULL,
-      if (isTruthy(implantNames)) "ImplantName" else NULL,
-      if (showLotNr) "LotNr" else NULL,
-      "RemovalReason"
+    group_by(across(
+      any_of(c(
+        "RemovalBeforeNYear",
+        if (isTruthy(factor) & isTRUE(factor != "None")) factor else NULL,
+        "RemovalReason"
+      ))
     )) %>%
-    summarise(
-      ImplantLengthMillimeter = first(ImplantLengthMillimeter),
-      ImplantDiameterMillimeter = first(ImplantDiameterMillimeter),
-      n = n()
-    )
-
-
-
-  if (isTruthy(clinics) | isTruthy(implantNames)) {
-    filteredData <- filteredData %>%
-      left_join(tot) %>%
-      mutate(Percentage = n / tot)
-  } else {
-    filteredData <- cbind(filteredData, tot) %>%
-      mutate(Percentage = n / tot)
-  }
-
-  if (showMean) {
-    filteredData <- filteredData %>%
-      left_join(MeanData)
-  }
-
-  filteredData$RemovalReason <- str_wrap(filteredData$RemovalReason, width = 30)
-
-  filteredData %>%
-    ggplot(aes(
-      x = fct_reorder(RemovalReason, Percentage), # fct_reorder(ImplantName, percentage),
-      y = Percentage,
-      fill = if (showLotNr) LotNr else NULL
-    )) +
-    geom_col(width = 0.5) +
-    {
-      if (isTruthy(implantNames) & isTruthy(clinics)) {
-        facet_grid(rows = vars(ImplantName), cols = vars(Clinic))
-      } else if (isTruthy(implantNames)) {
-        facet_grid(rows = vars(ImplantName))
-      } else if (isTruthy(clinics)) {
-        facet_grid(cols = vars(Clinic))
-      }
-    } +
-    {
-      if (showMean) {
-        geom_errorbar(aes(ymin = Mean_Percentage, ymax = Mean_Percentage, color = "Mean"), width = 0.5, size = 1.5)
-      }
-    } +
-    xlab("Removal Reason\n") +
-    {
-      if (showLotNr) {
-        labs(fill = "LotNr")
-      }
-    } +
-    ylab("\nPercentage") +
-    theme_minimal() +
-    theme(
-      text = element_text(size = 18),
-      strip.text = element_text(colour = "grey20"),
-    ) +
-    {
-      if (isTruthy(implantNames) & length(implantNames) > 1 | isTruthy(clinics) & length(clinics) > 1) {
-        theme(
-          strip.background = element_rect(color = "grey40", size = 1),
-          panel.border = element_rect(color = "grey40", fill = NA, size = 1)
-        )
-      }
-    } +
-    coord_flip() +
-    theme(
-      panel.grid.minor.y = element_blank(),
-      panel.grid.major.y = element_blank()
-    ) +
-    {
-      if (isTruthy(showMean)) {
-        labs(color = "")
-      }
-    } +
-    {
-      if (isTruthy(showMean)) {
-        scale_color_manual(values = meanColor)
-      }
+    summarise(n = n()) %>%
+    left_join(tot, by = c("RemovalBeforeNYear",
+                          if (isTruthy(factor) & isTRUE(factor != "None")) factor else NULL)) %>%
+    mutate(Percentage = n/tot,
+           RemovalBeforeNYear = as.factor(RemovalBeforeNYear))
+  
+  p <- ggbarplot(filteredData, x = "RemovalReason", y = "Percentage",
+            #fill = "steelblue",
+            fill = "RemovalReason",               # change fill color by cyl
+            color = "white",            # Set bar border colors to white
+            #palette = "aaas",            # jco journal color palett. see ?ggpar
+            #sort.val = "asc",           # Sort the value in dscending order
+            #sort.by.groups = TRUE,      # Sort inside each group
+            #x.text.angle = 90           # Rotate vertically x axis texts,
+            title = "Tooth Implants Removal Reasons",
+            xlab = "Removal Reason",
+            rotate = TRUE,
+            position = position_dodge(0.9),
+            facet.by = c("RemovalBeforeNYear", if(isTruthy(factor) & isTRUE(factor != "None")) factor else NULL)
+  ) + {
+    if (showMean) {
+      stat_mean(data = meanData,aes(fill = RemovalReason), size = 2, color = "grey20", geom = "point")
     }
-
-  # {
-  #     if (!isTruthy(removalReasons) | isTruthy(implantNames) | isTruthy(clinics)) {
-  #       theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust = 1))
-  #     }
-  #   }
+  } + 
+    labs(fill = "Removal Reason") +
+    font("title", size = 18) +
+    font("xlab", size = 14) +
+    font("ylab", size = 14) +
+    font("xy.text", size = 14)
+  
+  return(p)
 }
