@@ -18,6 +18,10 @@ sumInfo <- function(data, type, color, selectedClinic, allCombined) {
   ))
 }
 
+antibioticsInfo <- function(data, selectedClinic) {
+  
+}
+
 infoBoxesUI <- function(id) {
   ns <- NS(id)
   tagList(

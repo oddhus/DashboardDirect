@@ -1,7 +1,7 @@
 survivalPlot <- function(data, factor, levels, additionalFactor, additionalLevels){
   filteredData <- data
   
-  if (isTruthy(factor) & isTruthy(levels) & isTRUE(additionalFactor != "None")) {
+  if (isTruthy(factor) & isTruthy(levels) & isTRUE(factor != "None")) {
     filteredData <- filteredData %>% filter(
       vectorContainsAnyElement(., levels, factor)
     )

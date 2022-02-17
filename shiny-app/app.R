@@ -22,6 +22,7 @@ source("shiny-app/ReportModule.R")
 source("shiny-app/StdReportModule.R")
 source("shiny-app/TimeSeriesModule.R")
 source("shiny-app/SurvivalModule.R")
+source("shiny-app/ClinicModule.R")
 
 ui <- dashboardPage(
   dashboardHeader(title = "Tooth implants"),
@@ -81,6 +82,10 @@ ui <- dashboardPage(
       conditionalPanel(
         condition = "input.tabs == 'Implant Survival'",
         survivalPlotInputUI("SurvivalPlot")
+      ),
+      conditionalPanel(
+        condition = "input.tabs == 'Clinic'",
+        clinicInputUI("ClinicInfo")
       )
     )
   ),
@@ -107,6 +112,11 @@ ui <- dashboardPage(
           survivalPlotUI("SurvivalPlot"),
           width = 12
         )
+      ),
+      tabPanel(
+        "Clinic",
+        h4("Clinic Information"),
+        clinicSuccessRatePlotUI("ClinicInfo")
       ),
       tabPanel(
         "Time series",
@@ -286,6 +296,11 @@ server <- function(input, output, session) {
   # Survival
   #----------------------------------------------------------------------------
   survivalPlotServer("SurvivalPlot", data = completeTable, plotInReport = plotsInReport)
+  
+  #----------------------------------------------------------------------------
+  # Survival
+  #----------------------------------------------------------------------------
+  clinicServer("ClinicInfo", data = completeTable, plotInReport = plotsInReport)
 }
 
 shinyApp(ui, server)
