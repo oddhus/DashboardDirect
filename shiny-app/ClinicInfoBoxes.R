@@ -19,6 +19,11 @@ sumInfo <- function(data, type, color, selectedClinic, allCombined) {
 }
 
 antibioticsInfo <- function(data, selectedClinic) {
+  totalData <- data %>%
+    filter(!is.na(InsertionId) & Clinic == selectedClinic) %>%
+    group_by(Clinic) %>%
+    summarise(n = n())
+  
   
 }
 

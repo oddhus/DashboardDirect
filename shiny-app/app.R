@@ -116,7 +116,34 @@ ui <- dashboardPage(
       tabPanel(
         "Clinic",
         h4("Clinic Information"),
-        clinicSuccessRatePlotUI("ClinicInfo")
+        fluidRow(
+          box(
+            width = 3
+          ),
+          box(
+            width = 3
+          ),
+          box(
+            title = "Implant survival by clinic",
+            column(clinicSuccessRatePlotUI("ClinicInfo"), width = 12),
+            width = 6
+          )
+        ),
+        fluidRow(
+          box(
+            tabsetPanel(
+              tabPanel(
+                "Antibiotics Usage",
+                column(clinicAntibioticUsagePlotUI("ClinicInfo"), width = 12)
+              ),
+              tabPanel(
+                "First Year Infections",
+                column(clinicInfectionPlotUI("ClinicInfo"), width = 12)
+              )
+            ),
+            width = 12
+          )
+        )
       ),
       tabPanel(
         "Time series",

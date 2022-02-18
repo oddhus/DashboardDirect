@@ -164,12 +164,12 @@ getCompleteTable <- function() {
   
   data <- insertionData %>%
     full_join(removalData , by = c("PatientId", "Position")) %>% 
+    rename(InsertionClinic = Clinic.x, RemovalClinic = Clinic.y) %>%
     collect()
   
   data <- data %>%
     mutate(ImplantLengthMillimeter = coalesce(ImplantLengthMillimeter.x, ImplantLengthMillimeter.y),
            ImplantDiameterMillimeter = coalesce(ImplantDiameterMillimeter.x, ImplantDiameterMillimeter.y),
-           Clinic = coalesce(Clinic.x, Clinic.y),
            Vendor = coalesce(Vendor.x, Vendor.y),
            ImplantName = coalesce(ImplantName.x, ImplantName.y),
            LotNr = coalesce(LotNr.x, LotNr.y),
