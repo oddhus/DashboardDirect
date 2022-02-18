@@ -1,4 +1,8 @@
 source("shiny-app/ClinicSuccessRatePlot.R")
+source("shiny-app/ClinicTimeSeries.R")
+source("shiny-app/ClinicInfoBoxes.R")
+source("shiny-app/ClinicToothImplantPlot.R")
+
 
 clinicInputUI <- function(id) {
   ns <- NS(id)
@@ -22,6 +26,28 @@ clinicInfectionPlotUI <- function(id) {
   ns <- NS(id)
   plotOutput(ns("infectionPlot"), height = 200) %>% withSpinner()
 }
+
+clincToothImplantPlotUI <- function(id) {
+  ns <- NS(id)
+  plotOutput(ns("toothImplants"), height = 350) %>% withSpinner()
+}
+
+clinicAntibioticInfoUI <- function(id) {
+  ns <- NS(id)
+  infoBoxOutput(ns("antibioticsInfo"), width = 12) %>% withSpinner()
+}
+
+complicationsInfoUI <- function(id) {
+  ns <- NS(id)
+  infoBoxOutput(ns("complicationsInfo"), width = 12) %>% withSpinner()
+}
+
+guiderailInfoUI <- function(id) {
+  ns <- NS(id)
+  infoBoxOutput(ns("guiderailInfo"), width = 12) %>% withSpinner()
+}
+
+
 
 clinicServer <- function(id, data, plotInReport) {
   moduleServer(
@@ -76,6 +102,18 @@ clinicServer <- function(id, data, plotInReport) {
       
       
       ## Plots --------------------------------------------------------------------
+      output$antibioticsInfo <- renderValueBox({
+        antibioticsInfo(data, input$selectClinic)
+      })
+      
+      output$complicationsInfo <- renderValueBox({
+        complicationsInfo(data, input$selectClinic)
+      })
+      
+      output$guiderailInfo <- renderValueBox({
+        guiderailInfo(data, input$selectClinic)
+      })
+      
       output$successRatePlot <- renderPlot({
         clinicSuccesRatePlot(data = data, selectedClinic = input$selectClinic)
       })
@@ -104,6 +142,10 @@ clinicServer <- function(id, data, plotInReport) {
                              predicate = rrPredicate,
                              xlab = "Year",
                              ylab = "% of first year removals\n due to infection")
+      })
+      
+      output$toothImplants <- renderPlot({
+        clincToothImplantPlot(data, input$selectClinic)
       })
     }
   )

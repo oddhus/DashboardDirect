@@ -20,7 +20,6 @@ source("shiny-app/AnalyzePlotModule.R")
 source("shiny-app/ClinicSelectModule.R")
 source("shiny-app/ReportModule.R")
 source("shiny-app/StdReportModule.R")
-source("shiny-app/TimeSeriesModule.R")
 source("shiny-app/SurvivalModule.R")
 source("shiny-app/ClinicModule.R")
 
@@ -76,10 +75,6 @@ ui <- dashboardPage(
         implantInputUI("RemovalReason")
       ),
       conditionalPanel(
-        condition = "input.tabs == 'Time series'",
-        timeSeriesInputUI("Time")
-      ),
-      conditionalPanel(
         condition = "input.tabs == 'Implant Survival'",
         survivalPlotInputUI("SurvivalPlot")
       ),
@@ -115,22 +110,33 @@ ui <- dashboardPage(
       ),
       tabPanel(
         "Clinic",
-        h4("Clinic Information"),
         fluidRow(
           box(
-            width = 3
+            title = "Operations statistics",
+            fluidRow(            
+              clinicAntibioticInfoUI("ClinicInfo"),
+              complicationsInfoUI("ClinicInfo"),
+              guiderailInfoUI("ClinicInfo"),
+              width = 12
+            ),
+            width = 3,
+            height = 400
           ),
           box(
+            title = "The 20 most recent operated implants",
+            clincToothImplantPlotUI("ClinicInfo"),
             width = 3
           ),
           box(
             title = "Implant survival by clinic",
             column(clinicSuccessRatePlotUI("ClinicInfo"), width = 12),
             width = 6
-          )
+          ),
+          style='margin-top:10px;'
         ),
         fluidRow(
           box(
+            title = "Change in statistics over time",
             tabsetPanel(
               tabPanel(
                 "Antibiotics Usage",
@@ -144,11 +150,6 @@ ui <- dashboardPage(
             width = 12
           )
         )
-      ),
-      tabPanel(
-        "Time series",
-        h4("Implants over time"),
-        timeSeriesPlotUI("Time")
       ),
       tabPanel(
         "Explorer",
@@ -313,12 +314,7 @@ server <- function(input, output, session) {
                   insertionsWithImplants,
                   removalsWithImplants)
   
-  #----------------------------------------------------------------------------
-  # TimeSeries
-  #----------------------------------------------------------------------------
-  
-  timeSeriesServer("Time", data = removalsWithImplants, plotInReport = plotsInReport)
-  
+
   #----------------------------------------------------------------------------
   # Survival
   #----------------------------------------------------------------------------

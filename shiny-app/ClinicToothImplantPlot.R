@@ -1,0 +1,24 @@
+clincToothImplantPlot <- function(data, selectedClinic) {
+  filteredData <- data %>%
+    mutate(OperationDate = coalesce(RemovalDate, InsertionDate),
+           Operation = if_else(is.na(RemovalDate), "Insertion", "Removal"))
+  
+  filteredData <- filteredData %>%
+    arrange(desc(filteredData$OperationDate))  %>%
+    filter(InsertionClinic == "Klinikk 1")
+  
+  
+  filteredData <- filteredData[seq(1,20),] %>%
+    group_by(ImplantName, Operation) %>%
+    summarise(n = n())
+  
+  ggbarplot(filteredData, x = "ImplantName", y = "n",
+            fill = "Operation",               # change fill color by cyl
+            color = "white",            # Set bar border colors to white
+            sort.by.groups = FALSE,     # Don't sort inside each group
+            x.text.angle = 90,           # Rotate vertically x axis texts
+            xlab = "Implant Name",
+            ylab = "Number of Operations last",
+            palette = c("#00AFBB", "#FC4E07")
+  )
+}
