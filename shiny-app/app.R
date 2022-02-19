@@ -21,6 +21,7 @@ source("shiny-app/ClinicSelectModule.R")
 source("shiny-app/ReportModule.R")
 source("shiny-app/StdReportModule.R")
 source("shiny-app/SurvivalModule.R")
+source("shiny-app/ImplantSurvivalModule.R")
 source("shiny-app/ClinicModule.R")
 
 ui <- dashboardPage(
@@ -75,12 +76,16 @@ ui <- dashboardPage(
         implantInputUI("RemovalReason")
       ),
       conditionalPanel(
-        condition = "input.tabs == 'Implant Survival'",
+        condition = "input.tabs == 'Survival analysis'",
         survivalPlotInputUI("SurvivalPlot")
       ),
       conditionalPanel(
         condition = "input.tabs == 'Clinic'",
         clinicInputUI("ClinicInfo")
+      ),
+      conditionalPanel(
+        condition = "input.tabs == 'Implant Survival'",
+        implantSurvivalPlotInputUI("ImplantSurvival")
       )
     )
   ),
@@ -101,12 +106,42 @@ ui <- dashboardPage(
         
       ),
       tabPanel(
+        "Survival analysis",
+        fluidRow(
+          box(
+            title = "Implant Survival",
+            survivalPlotUI("SurvivalPlot"),
+            width = 12
+          ),
+          style='margin-top:10px;'
+        ),
+        
+      ),
+      tabPanel(
         "Implant Survival",
-        h4("Survival plot"),
-        column(
-          survivalPlotUI("SurvivalPlot"),
-          width = 12
-        )
+        fluidRow(
+          box(
+            title = "Implant Survival",
+            implantSurvivalPlotUI("ImplantSurvival"),
+            width = 6
+          ),
+          column(
+            box(
+              title = "Drilldown options",
+              implantLotNrSurvivalPlotInputUI("ImplantSurvival"),
+              width = 12
+            ),
+            box(
+              title = "Drilldown LotNr Survival",
+              implantLotNrSurvivalPlotUI("ImplantSurvival"),
+              width = 12
+            ),
+            width = 6
+          ),
+          
+          style='margin-top:10px;'
+        ),
+        
       ),
       tabPanel(
         "Clinic",
@@ -320,8 +355,10 @@ server <- function(input, output, session) {
   #----------------------------------------------------------------------------
   survivalPlotServer("SurvivalPlot", data = completeTable, plotInReport = plotsInReport)
   
+  implantSurvivalServer("ImplantSurvival", data = completeTable, plotInReport = plotsInReport)
+  
   #----------------------------------------------------------------------------
-  # Survival
+  # Clinic
   #----------------------------------------------------------------------------
   clinicServer("ClinicInfo", data = completeTable, plotInReport = plotsInReport)
 }

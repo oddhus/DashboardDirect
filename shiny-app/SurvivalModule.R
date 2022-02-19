@@ -1,4 +1,5 @@
 source("shiny-app/SurvivalPlot.R")
+source("shiny-app/SurvivalImplantPlot.R")
 
 survivalPlotInputUI <- function(id) {
   ns <- NS(id)
@@ -14,6 +15,11 @@ survivalPlotInputUI <- function(id) {
 survivalPlotUI <- function(id) {
   ns <- NS(id)
   plotOutput(ns("survivalPlot"), height = 600) %>% withSpinner()
+}
+
+survivalImplantPlotUI <- function(id){
+  ns <- NS(id)
+  plotOutput(ns("survivalImplantPlot"), height = 600) %>% withSpinner()
 }
 
 survivalPlotServer <- function(id, data, plotInReport) {
@@ -115,6 +121,10 @@ survivalPlotServer <- function(id, data, plotInReport) {
                      levels = input$selectLevels,
                      additionalFactor = input$selectAdditionalFactor,
                      additionalLevels = input$selectAdditionalLevels)
+      })
+      
+      output$survivalImplantPlot <- renderPlot({
+        survivalImplantPlot(data = data)
       })
       
       
