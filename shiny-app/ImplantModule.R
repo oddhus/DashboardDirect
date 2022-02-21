@@ -1,5 +1,4 @@
 source("shiny-app/ImplantPlot.R")
-source("shiny-app/ImplantPlotCompare.R")
 
 implantInputUI <- function(id) {
   ns <- NS(id)
@@ -98,7 +97,11 @@ implantServer <- function(id, data, plotInReport) {
       output$selectFactor <- renderUI({
         pickerInput(ns("selectFactor"),
           "Select Factor",
-          choices = c(data %>% select_if(~ is.factor(.) | is.logical(.)) %>% names(), "None"),
+          choices = list(
+            None = c("None"),
+            Factors = data %>% select(where(is.factor) & -ends_with("Id")) %>% names(),
+            Logical = data %>% select(where(is.logical) & -ends_with("Id")) %>% names()
+          ),
           selected = "None"
         )
       })

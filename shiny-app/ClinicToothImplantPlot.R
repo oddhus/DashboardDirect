@@ -5,7 +5,7 @@ clincToothImplantPlot <- function(data, selectedClinic) {
   
   filteredData <- filteredData %>%
     arrange(desc(filteredData$OperationDate))  %>%
-    filter(InsertionClinic == "Klinikk 1")
+    filter(InsertionClinic == selectedClinic)
   
   
   filteredData <- filteredData[seq(1,20),] %>%
@@ -19,6 +19,6 @@ clincToothImplantPlot <- function(data, selectedClinic) {
             x.text.angle = 90,           # Rotate vertically x axis texts
             xlab = "Implant Name",
             ylab = "Number of Operations last",
-            palette = c("#00AFBB", "#FC4E07")
+            palette = if("Insertion" %in% filteredData$Operation) c("#00AFBB", "#FC4E07") else c("#FC4E07")
   )
 }
