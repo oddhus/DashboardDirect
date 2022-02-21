@@ -144,7 +144,9 @@ getCompleteTable <- function() {
     left_join(implantTypeData, by = c("ImplantsId" = "Id")) %>%
     select(-(ends_with("Id") &
                !starts_with("PatientId") &
-               !starts_with("InsertionId")))
+               !starts_with("InsertionId"))) %>%
+    collect() %>%
+    mutate(InsertionYear = year(InsertionDate))
     
     
   removalReason <- tbl(con, "RemovalReason")
@@ -160,14 +162,13 @@ getCompleteTable <- function() {
     left_join(implantTypeData, by = c("ImplantsId" = "Id")) %>%
     select(PatientId, Position, RemovalId, InsertionDate, RemovalDate, RemovalReason,
            Clinic, ImplantName, Vendor, Position, ImplantLengthMillimeter, ImplantDiameterMillimeter,
-           LotNr, -InsertionId)
+           LotNr, -InsertionId) %>%
+    collect() %>%
+    mutate(InsertionYear = year(InsertionDate))
   
   data <- insertionData %>%
-    full_join(removalData , by = c("PatientId", "Position")) %>% 
+    full_join(removalData , by = c("PatientId", "Position", "InsertionYear")) %>% 
     rename(InsertionClinic = Clinic.x, RemovalClinic = Clinic.y) %>%
-    collect()
-  
-  data <- data %>%
     mutate(ImplantLengthMillimeter = coalesce(ImplantLengthMillimeter.x, ImplantLengthMillimeter.y),
            ImplantDiameterMillimeter = coalesce(ImplantDiameterMillimeter.x, ImplantDiameterMillimeter.y),
            Vendor = coalesce(Vendor.x, Vendor.y),
@@ -185,7 +186,7 @@ getCompleteTable <- function() {
       survt = time_length(
         interval(
           parse_date_time(InsertionDate, orders = "Ymd HMS", truncated = 3),
-          parse_date_time(if_else(is.na(RemovalDate), as.POSIXct(Sys.Date()), RemovalDate), orders = "Ymd HMS", truncated = 3)
+          parse_date_time(if_else(is.na(RemovalDate), as.POSIXct(today()), RemovalDate), orders = "Ymd HMS", truncated = 3)
         ),"days"),
       survStatus = if_else(is.na(RemovalId), 1, 2)
     ) %>%

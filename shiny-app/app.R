@@ -17,7 +17,6 @@ source("shiny-app/ImplantModule.R")
 source("shiny-app/ExplorerPlotModule.R")
 source("shiny-app/ClinicInfoBoxes.R")
 source("shiny-app/AnalyzePlotModule.R")
-source("shiny-app/ClinicSelectModule.R")
 source("shiny-app/ReportModule.R")
 source("shiny-app/StdReportModule.R")
 source("shiny-app/SurvivalModule.R")
@@ -32,37 +31,6 @@ ui <- dashboardPage(
         tags$style(type = "text/css",
                    "#sidebarTitle { padding-left: 16px; } "),
         div(id = "sidebarTitle", h3("Graph options")),
-
-      conditionalPanel(
-        condition = "input.tabs == 'Explorer' | input.tabs == 'Analyses'",
-        radioGroupButtons(
-          inputId = "insertionsOrRemovals",
-          label = "Type",
-          choices = c("Insertions", "Removals"),
-          status = "primary"
-        )
-      ),
-      conditionalPanel(
-        condition = "input.tabs == 'Explorer'",
-        radioGroupButtons(
-          inputId = "clinicOrAllcombined",
-          label = "Grouping",
-          choices = c("Clinic", "All combined"),
-          status = "primary"
-        )
-      ),
-      conditionalPanel(
-        condition = "input.tabs == 'Explorer' & input.clinicOrAllcombined == 'Clinic'",
-        clinicSelectUI("Clinic")
-      ),
-      conditionalPanel(
-        condition = "input.tabs == 'Explorer' & input.insertionsOrRemovals == 'Insertions'",
-        explorePlotOptionsUI("Insertions"),
-      ),
-      conditionalPanel(
-        condition = "input.tabs == 'Explorer' & input.insertionsOrRemovals == 'Removals'",
-        explorePlotOptionsUI("Removals")
-      ),
       conditionalPanel(
         condition = "input.tabs == 'Analyses' & input.insertionsOrRemovals == 'Insertions'",
         analyzePlotInputUI("InsertionsAnalyze")
@@ -86,6 +54,10 @@ ui <- dashboardPage(
       conditionalPanel(
         condition = "input.tabs == 'Implant Survival'",
         implantSurvivalPlotInputUI("ImplantSurvival")
+      ),
+      conditionalPanel(
+        condition = "input.tabs == 'Explorer'",
+        explorePlotOptionsUI("Explorer")
       )
     )
   ),
@@ -190,16 +162,9 @@ ui <- dashboardPage(
         "Explorer",
         fluidRow(
           column(
-            explorerPlot("Insertions"),
-            explorerPlot("Removals"),
+            explorerPlotUI("Explorer"),
             width = 12
           ),
-        ),
-        fluidRow(
-          column(
-            infoBoxesUI("InfoBoxes"),
-            width = 12
-          )
         ),
       ),
       tabPanel(
@@ -291,32 +256,7 @@ server <- function(input, output, session) {
 
   ## Server logic ------------------------------------------------------------
 
-  clinicValues <- clinicSelectServer("Clinic", insertionsWithImplants)
-
-  explorerPlotServer("Insertions", insertionsWithImplants, columnsToRemove,
-    allCombined,
-    selectedClinic = clinicValues[[1]],
-    clinicCompare = clinicValues[[2]],
-    isVisible = showInsertions,
-    plotInReport = plotsInReport
-  )
-
-  explorerPlotServer("Removals", removalsWithImplants, columnsToRemove,
-    allCombined,
-    selectedClinic = clinicValues[[1]],
-    clinicCompare = clinicValues[[2]],
-    isVisible = showRemovals,
-    plotInReport = plotsInReport
-  )
-
-  # 3 Info-boxes --------------------------------------------------------------
-  infoBoxesModule(
-    "InfoBoxes",
-    insertionsWithImplants,
-    removalsWithImplants,
-    allCombined,
-    clinicValues[[1]]
-  )
+  explorerPlotServer("Explorer", data = completeTable, plotInReport = plotsInReport )
 
   #----------------------------------------------------------------------------
   # Analyses

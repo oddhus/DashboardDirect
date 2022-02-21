@@ -1,5 +1,4 @@
 source("shiny-app/SurvivalPlot.R")
-source("shiny-app/SurvivalImplantPlot.R")
 
 survivalPlotInputUI <- function(id) {
   ns <- NS(id)

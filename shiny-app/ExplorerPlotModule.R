@@ -3,19 +3,21 @@ source("shiny-app/ExplorerPlot.R")
 explorePlotOptionsUI <- function(id) {
   ns <- NS(id)
   tagList(
-    htmlOutput(ns("selectYAxis"), width = 12),
-    htmlOutput(ns("selectXAxis"), width = 12),
-    htmlOutput(ns("selectFactorLevels"), width = 12),
-    htmlOutput(ns("selectFillColor"), width = 12),
-    htmlOutput(ns("selectFacetRow"), width = 12),
-    htmlOutput(ns("selectSpecificFacetRow"), width = 12),
-    checkboxGroupButtons(
-      inputId = ns("graphOptions"),
-      label = "Show",
-      choices = c("x-lab", "Mean"),
-      status = "info",
-      selected = "x-lab"
+    radioGroupButtons(
+      inputId = ns("insertionsOrRemovals"),
+      label = "Choose dataset",
+      choices = c("Insertions", 
+                  "Removals"),
+      justified = TRUE
     ),
+    htmlOutput(ns("x"), width = 12),
+    htmlOutput(ns("y"), width = 12),
+    htmlOutput(ns("factor1"), width = 12),
+    htmlOutput(ns("factor1Levels"), width = 12),
+    htmlOutput(ns("factor2"), width = 12),
+    htmlOutput(ns("factor2Levels"), width = 12),
+    htmlOutput(ns("factorColor"), width = 12),
+    htmlOutput(ns("factorColorLevels"), width = 12),
     actionBttn(ns("add"), "Add to report", style = "bordered", color = "warning")
   )
 }
@@ -23,18 +25,12 @@ explorePlotOptionsUI <- function(id) {
 explorerPlot <- function(id) {
   ns <- NS(id)
   tagList(
-    h4(textOutput(ns("plotName"))),
-    plotOutput(ns("plot"), height = 500) %>% withSpinner(id = ns("plotSpinner"))
+    plotOutput(ns("plot"), height = 500) %>% withSpinner()
   )
 }
 
 explorerPlotServer <- function(id,
                                data,
-                               optionsToRemove,
-                               allCombined,
-                               selectedClinic,
-                               clinicCompare,
-                               isVisible,
                                plotInReport) {
   moduleServer(
     id,
@@ -42,43 +38,14 @@ explorerPlotServer <- function(id,
       ns <- session$ns
 
       factorOptions <- data %>%
-        select(where(is.factor) & !any_of(optionsToRemove)) %>%
+        select(where(is.factor)) %>%
         names()
       logicalOptions <- data %>%
-        select(where(is.logical) & !any_of(optionsToRemove)) %>%
+        select(where(is.logical)) %>%
         names()
       numericOptions <- data %>%
-        select(where(is.numeric) & !any_of(optionsToRemove)) %>%
+        select(where(is.numeric)) %>%
         names()
-
-      observeEvent(isVisible(), {
-        if (isVisible()) {
-          shinyjs::show("plotName")
-          shinyjs::show("plotSpinner")
-          shinyjs::show("plot")
-        } else {
-          shinyjs::hide("plotName")
-          shinyjs::hide("plotSpinner")
-          shinyjs::hide("plot")
-        }
-      })
-
-      observeEvent(input$selectXAxis,
-        {
-          if (isTruthy(input$selectXAxis)) {
-            updateCheckboxGroupButtons(
-              session,
-              inputId = "graphOptions",
-              disabledChoices = if (is.numeric(data[[input$selectXAxis]])) {
-                c("Mean")
-              } else {
-                NULL
-              }
-            )
-          }
-        },
-        ignoreInit = TRUE
-      )
       
         observeEvent(input$add, {
           # Show a modal when the button is pressed
@@ -119,57 +86,69 @@ explorerPlotServer <- function(id,
       })
 
       ### Y-axis
-      output$selectYAxis <- renderUI({
-        pickerInput(ns("selectYAxis"),
+      output$y <- renderUI({
+        pickerInput(ns("y"),
           "Select Y-axis",
-          choices = c(numericOptions, logicalOptions, "Antall"),
+          choices = c(numericOptions, logicalOptions),
           selected = "Complications"
         )
       })
 
       ### X-axis
-      output$selectXAxis <- renderUI({
-        pickerInput(ns("selectXAxis"),
+      output$x <- renderUI({
+        pickerInput(ns("x"),
           "Select X-axis",
-          choices = c(factorOptions, numericOptions),
-          selected = "Clinic"
+          choices = c(factorOptions, numericOptions, logicalOptions),
         )
+      })
+      
+      output$xLevels <- renderUI({
+        req(input$x)
+        
+        if (!is.numeric(data[[input$x]])) {
+          pickerInput(ns("selectFactorLevels"),
+                      label = paste0("Filter ", input$x),
+                      choices = as.character(
+                        sort(unique(data[[input$x]]))
+                      ),
+                      multiple = TRUE,
+                      options = list(
+                        `actions-box` = TRUE, size = 10,
+                        `selected-text-format` = "count > 2"
+                      )
+          )
+        }
       })
 
       ### Fill color
-      output$selectFillColor <- renderUI({
-        if (allCombined()) {
-          pickerInput(ns("selectFillColor"),
+      output$factorColor <- renderUI({
+          pickerInput(ns("factorColor"),
             "Select Fill Color",
             choices = c(factorOptions, logicalOptions, "None"),
             selected = "None"
           )
-        }
       })
-
-      ### X-axis levels
-      output$selectFactorLevels <- renderUI({
-        req(input$selectXAxis)
-
-        if (is.factor(data[[input$selectXAxis]]) &
-          (isTruthy(input$selectXAxis != "Clinic") | allCombined())) {
-          pickerInput(ns("selectFactorLevels"),
-            label = paste0("Select ", input$selectXAxis),
-            choices = as.character(
-              sort(unique(data[[input$selectXAxis]]))
-            ),
-            multiple = TRUE,
-            options = list(
-              `actions-box` = TRUE, size = 10,
-              `selected-text-format` = "count > 2"
-            )
-          )
-        }
+      
+      output$factorColorLevels <- renderUI({
+        req(input$factorColor)
+        req(input$factorColor != "None")
+        
+        pickerInput(ns("selectSpecificFacetRow"),
+                    label = paste0("Filter ", input$factorColor),
+                    choices = as.character(
+                      sort(unique(data[[input$factorColor]]))
+                    ),
+                    multiple = TRUE,
+                    options = list(
+                      `actions-box` = TRUE, size = 10,
+                      `selected-text-format` = "count > 2"
+                    )
+        )
       })
 
       ### Facet row
-      output$selectFacetRow <- renderUI({
-        pickerInput(ns("selectFacetRow"),
+      output$factor1 <- renderUI({
+        pickerInput(ns("factor1"),
           "Select Facet Row",
           choices = c(factorOptions, logicalOptions, "None"),
           selected = "None"
@@ -177,14 +156,14 @@ explorerPlotServer <- function(id,
       })
 
       ### Specific facet row
-      output$selectSpecificFacetRow <- renderUI({
-        req(input$selectFacetRow)
+      output$factor1Levels <- renderUI({
+        req(input$factor1)
+        req(input$factor1 != "None")
 
-        if (isTRUE(input$selectFacetRow != "None")) {
-          pickerInput(ns("selectSpecificFacetRow"),
-            label = paste0("Select ", input$selectFacetRow),
+          pickerInput(ns("factor1Levels"),
+            label = paste0("Filter ", input$factor1),
             choices = as.character(
-              sort(unique(data[[input$selectFacetRow]]))
+              sort(unique(data[[input$factor1]]))
             ),
             multiple = TRUE,
             options = list(
@@ -192,38 +171,58 @@ explorerPlotServer <- function(id,
               `selected-text-format` = "count > 2"
             )
           )
-        }
+      })
+      
+      ### Facet row
+      output$factor2 <- renderUI({
+        pickerInput(ns("factor2"),
+                    "Select Facet Row",
+                    choices = c(factorOptions, logicalOptions, "None"),
+                    selected = "None"
+        )
+      })
+      
+      ### Specific facet row
+      output$factor2Levels <- renderUI({
+        req(input$factor2)
+        req(input$factor2 != "None")
+        
+        pickerInput(ns("factor2Levels"),
+                    label = paste0("Filter ", input$factor2),
+                    choices = as.character(
+                      sort(unique(data[[input$factor2]]))
+                    ),
+                    multiple = TRUE,
+                    options = list(
+                      `actions-box` = TRUE, size = 10,
+                      `selected-text-format` = "count > 2"
+                    )
+        )
       })
 
       ## Plots -------------------------------------------------------------------
 
-      # Render Insertions or removals depending on the plot viewed by user
-      output$plotName <- renderText({
-        paste0("Explore ", id)
-      })
-
       output$plot <- renderPlot({
         req(
           isTruthy(data),
-          isTruthy(input$selectYAxis),
-          isTruthy(input$selectXAxis)
+          isTruthy(input$y),
+          isTruthy(input$x)
         )
-
-        exploreDataPlot(
-          data,
-          "Mean" %in% input$graphOptions,
-          !("x-lab" %in% input$graphOptions),
-          selectedClinic(),
-          clinicCompare(),
-          if (allCombined()) input$selectFillColor else "Clinic",
-          input$selectFacetRow,
-          input$selectSpecificFacetRow,
-          input$selectFactorLevels,
-          input$selectYAxis,
-          input$selectXAxis,
-          allCombined()
+        
+        explorerPlot(
+          data = data,
+          y = input$y,
+          x = input$x,
+          factor1 = input$factor1,
+          factor1Levels = input$factor1Levels,
+          factor2 = input$factor2,
+          factor2Levels = input$factor2Levels,
+          factorColor = input$factorColor,
+          factorColorLevels = input$factorColorLevels,
+          InsertionsOrRemovals = input$insertionsOrRemovals
         )
       })
     }
   )
 }
+
