@@ -1,8 +1,8 @@
 overviewRemovalReasonPlot <- function(data, removalReasons, years, factor, levels, showMean){
   showMean <- isTRUE(as.logical(showMean))
-  filteredData <- data
+  filteredData <- data %>% filter(!is.na(RemovalId))
   
-  meanData <- data %>%
+  meanData <- filteredData %>%
     group_by(RemovalReason) %>%
     summarise(Percentage = n() / nrow(data))
     
@@ -33,6 +33,10 @@ overviewRemovalReasonPlot <- function(data, removalReasons, years, factor, level
     )) %>%
     summarise(tot = n())
 
+  #Must do this or the report generating function will not work
+  if ("factor" %in% colnames(tot)) {
+    tot <- tot %>% rename(!!sym(factor) := factor)
+  }
 
   filteredData <- filteredData %>%
     group_by(across(
@@ -42,11 +46,19 @@ overviewRemovalReasonPlot <- function(data, removalReasons, years, factor, level
         "RemovalReason"
       ))
     )) %>%
-    summarise(n = n()) %>%
+    summarise(n = n())
+  
+  #Must do this or the report generating function will not work
+  if ("factor" %in% colnames(filteredData)) {
+    filteredData <- filteredData %>% rename(!!sym(factor) := factor)
+  }
+  
+  filteredData <- filteredData %>%
     left_join(tot, by = c("RemovalBeforeNYear",
-                          if (isTruthy(factor) & isTRUE(factor != "None")) factor else NULL)) %>%
+                          if (isTruthy(factor) & isTRUE(factor != "None")) as.character(factor) else NULL)) %>%
     mutate(Percentage = n/tot,
            RemovalBeforeNYear = as.factor(RemovalBeforeNYear))
+  
   
   p <- ggbarplot(filteredData, x = "RemovalReason", y = "Percentage",
             #fill = "steelblue",

@@ -71,14 +71,13 @@ implantSurvivalServer <- function(id, data, plotInReport) {
       observeEvent(input$confirm, {
         if(input$confirm){
           plotInReport$dList <- c(isolate(plotInReport$dList),
-                                  list(c("Factor" = isolate(input$selectFactor),
-                                         "Levels" = isolate(paste(input$selectLevels, collapse = ";")),
-                                         "AdditionalFactor" = isolate(input$selectAdditionalFactor),
-                                         "AdditionalLevels" = isolate(paste(input$selectAdditionalLevels, collapse = ";")),
+                                  list(c("selectedImplants" = isolate(paste(input$selectedImplants, collapse = ";")),
+                                         "firstYear" = isolate(input$selectFirst),
+                                         "secondYear" = isolate(input$selectSecond),
+                                         "selectedLotNrImplants" = isolate(paste(input$selectLotNrImplants, collapse = ";")),
                                          "tab" = "Implant Survival")))
         }
       })
-      
       
       ## Inputs -------------------------------------------------------------------
       output$selectImplants <- renderUI({

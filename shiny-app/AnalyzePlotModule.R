@@ -3,6 +3,14 @@ source("shiny-app/AnalyzePlot.R")
 analyzePlotInputUI <- function(id) {
   ns <- NS(id)
   tagList(
+    radioGroupButtons(
+      inputId = ns("insertionsOrRemovals"),
+      label = "Choose dataset",
+      choices = c("Insertions", 
+                  "Removals"),
+      justified = TRUE,
+      status = "primary"
+    ),
     pickerInput(ns("analyzeMethod"),
       label = "Select analysis",
       choices = c(
@@ -22,8 +30,7 @@ analyzePlotInputUI <- function(id) {
 analyzePlotUI <- function(id) {
   ns <- NS(id)
   tagList(
-    plotOutput(ns("plotAnalyze"), height = 550) %>% withSpinner(id = ns("analyzeSpinner")),
-    htmlOutput(ns("highlight"))
+    plotOutput(ns("plotAnalyze"), height = 700) %>% withSpinner(),
   )
 }
 
@@ -32,36 +39,21 @@ analyzePrintUI <- function(id) {
   verbatimTextOutput(ns("printAnalyze"))
 }
 
-analyzePlotServer <- function(id, data, optionsToRemove, isVisible, plotInReport) {
+analyzePlotServer <- function(id, data, plotInReport) {
   moduleServer(
     id,
     function(input, output, session) {
       ns <- session$ns
 
       factorOptions <- data %>%
-        select(where(is.factor) & !any_of(optionsToRemove)) %>%
+        select(where(is.factor) & !ends_with("Id")) %>%
         names()
       logicalOptions <- data %>%
-        select(where(is.logical) & !any_of(optionsToRemove)) %>%
+        select(where(is.logical) & !ends_with("Id")) %>%
         names()
       numericOptions <- data %>%
-        select(where(is.numeric) & !any_of(optionsToRemove)) %>%
+        select(where(is.numeric) & !ends_with("Id")) %>%
         names()
-
-
-      observeEvent(isVisible(), {
-        if (isVisible()) {
-          shinyjs::show("analyzeSpinner")
-          shinyjs::show("printAnalyze")
-          shinyjs::show("plotAnalyze")
-          shinyjs::show("highlight")
-        } else {
-          shinyjs::hide("analyzeSpinner")
-          shinyjs::hide("printAnalyze")
-          shinyjs::hide("plotAnalyze")
-          shinyjs::hide("highlight")
-        }
-      })
       
       observeEvent(input$add, {
         # Show a modal when the button is pressed
@@ -94,7 +86,7 @@ analyzePlotServer <- function(id, data, optionsToRemove, isVisible, plotInReport
                                          "logicalIndependent" = isolate(paste(input$logicalIndependent, collapse = ";")),
                                          "highlight" = isolate(paste(input$highlight, collapse = ";")),
                                          "analyzeMethod" =  isolate(input$analyzeMethod),
-                                         "dataset" = id,
+                                         "dataset" = isolate(input$insertionsOrRemovals),
                                          "tab" = "Analyze")))
         }
       })
@@ -168,10 +160,8 @@ analyzePlotServer <- function(id, data, optionsToRemove, isVisible, plotInReport
       ## Plots -------------------------------------------------------------------
 
       output$plotAnalyze <- renderPlot({
-        req(
-          isTruthy(input$dependent),
-          isTruthy(input$numericIndependent)
-        )
+        req(isTruthy(input$dependent))
+        req(isTruthy(input$numericIndependent))
 
         analyzePlot(
           data,
@@ -180,7 +170,8 @@ analyzePlotServer <- function(id, data, optionsToRemove, isVisible, plotInReport
           input$factorIndependent,
           input$logicalIndependent,
           input$highlight,
-          input$analyzeMethod
+          input$analyzeMethod,
+          insertionsOrRemovals = input$insertionsOrRemovals
         )
       })
 

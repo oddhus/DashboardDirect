@@ -5,8 +5,7 @@ date: "`r format(Sys.time(), '%d %B, %Y')`"
 author: "Tannimplantatregisteret"
 params:
   clinic: NA
-  insertions: NA
-  removals: NA
+  data: NA
 ---
 
 ```{r eval = FALSE, echo = FALSE}
@@ -22,35 +21,25 @@ params:
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
-```{r implant, message=FALSE, echo=FALSE, fig.cap="FIG 1: Implantat sortert etter hvor stor andel av implantatene som er fjernet pga. implantatfraktur",fig.width=12, fig.height=8}
+```{r implant, message=FALSE, echo=FALSE, fig.cap="FIG 1: Lorem ipsum dolor sit amet, consectetur adipiscing elit ",fig.width=12, fig.height=8}
+  abPredicate <- function (dat, col1 = "AntibioticsDoseMg"){
+      !is.na(dat[[col1]])
+    }
+
 print(
-  implantPlot(
-    params$removals,
-    params$clinic,
-    c("Implantatfraktur"),
-    NULL,
-    FALSE
-    )
+        clinicTimeSeriesPlot(data = params$data,
+                            selectedClinic = params$clinic,
+                            insertionsOrRemovals = "Insertions",
+                            predicate = abPredicate,
+                            xlab = "Year",
+                            ylab = "Patients recieved\n antibiotics %")
 )
 ```
 
 # `r paste0(params$clinic)`
 
 ```{r clinic, echo=FALSE,message=FALSE}
-print(exploreDataPlot(
-       params$removals,
-       TRUE,
-       FALSE,
-       params$clinic,
-       NULL,
-       "Clinic",
-       "RemovalReason",
-       c("Feil implantatposisjon", "Implantatfraktur"),
-       params$clinic,
-       "DaysSinceInsertion",
-       "Clinic",
-       TRUE
-     ))
+print(clinicSuccesRatePlot(data = params$data, selectedClinic = params$clinic))
 ```
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.

@@ -7,7 +7,7 @@ reportUI <- function(id) {
 }
 
 
-reportServer <- function(id, insertions, removals, myValues) {
+reportServer <- function(id, data, myValues) {
   moduleServer(
     id,
     function(input, output, session) {
@@ -36,7 +36,7 @@ reportServer <- function(id, insertions, removals, myValues) {
               # Set up parameters to pass to Rmd document
               params <- list(
                 plotArgs = myValues$dList,
-                insertions = insertions, removals = removals
+                data = data
               )
 
               shiny::incProgress(5 / 10)

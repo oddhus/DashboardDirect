@@ -56,14 +56,30 @@ explorerPlot <- function(data,
       summarise(
         value = sum(!!sym(y), na.rm = TRUE) / nrow(filteredData)
       )
+    
+    #Must do this for the report functionality to work
+    if ("factor1" %in% colnames(filteredData)) {
+      filteredData <- filteredData %>% rename(!!sym(factor1) := factor1)
+    }
+    if ("factor2" %in% colnames(filteredData)) {
+      filteredData <- filteredData %>% rename(!!sym(factor2) := factor2)
+    }
+    if ("factorColor" %in% colnames(filteredData)) {
+      filteredData <- filteredData %>% rename(!!sym(factorColor) := factorColor)
+    }
+    if ("x" %in% colnames(filteredData)) {
+      filteredData <- filteredData %>% rename(!!sym(x) := x)
+    }
+
     return(
-      ggbarplot(filteredData, x = x, y = "value",
-                fill = if (isTruthy(factorColor) & isTRUE(factorColor != "None")) factorColor else x,
-                facet.by = c(if (isTruthy(factor1) & isTRUE(factor1 != "None")) factor1 else NULL,
-                             if (isTruthy(factor2) & isTRUE(factor2 != "None")) factor2 else NULL),
+      ggbarplot(filteredData, x = as.character(x), y = "value",
+                fill = if (isTruthy(factorColor) & isTRUE(factorColor != "None")) as.character(factorColor) else as.character(x),
+                facet.by = c(if (isTruthy(factor1) & isTRUE(factor1 != "None")) as.character(factor1) else NULL,
+                             if (isTruthy(factor2) & isTRUE(factor2 != "None")) as.character(factor2) else NULL),
                 color = "white",            # Set bar border colors to white
                 ylab = paste0(y, " percentage of all ", InsertionsOrRemovals)
-      )
+      ) + 
+        scale_y_continuous(labels = scales::percent)
     )
   }
   
@@ -80,11 +96,30 @@ explorerPlot <- function(data,
   if(numericY & numericX) {
     return(
       ggscatter(filteredData, x = x, y = y,
-                shape = 2,
+                shape = 1,
                 color = if (isTruthy(factorColor) & isTRUE(factorColor != "None")) factorColor else "black",
                 facet.by = c(if (isTruthy(factor1) & isTRUE(factor1 != "None")) factor1 else NULL,
                              if (isTruthy(factor2) & isTRUE(factor2 != "None")) factor2 else NULL),
                 add = "loess", conf.int = TRUE)
+    )
+  }
+  
+  if(logicalY & numericX) {
+    return(
+      ggboxplot(filteredData, x = y, y = x,
+                fill = if (isTruthy(factorColor) & isTRUE(factorColor != "None")) factorColor else y,
+                facet.by = c(if (isTruthy(factor1) & isTRUE(factor1 != "None")) factor1 else NULL,
+                             if (isTruthy(factor2) & isTRUE(factor2 != "None")) factor2 else NULL),
+                orientation = "horizontal")
+    )
+  }
+  
+  if (logicalX & numericY) {
+    return(
+      ggboxplot(filteredData, x = x, y = y,
+                fill = if (isTruthy(factorColor) & isTRUE(factorColor != "None")) factorColor else x,
+                facet.by = c(if (isTruthy(factor1) & isTRUE(factor1 != "None")) factor1 else NULL,
+                             if (isTruthy(factor2) & isTRUE(factor2 != "None")) factor2 else NULL))
     )
   }
 }

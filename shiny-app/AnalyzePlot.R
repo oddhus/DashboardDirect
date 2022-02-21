@@ -1,4 +1,4 @@
-analyzePlot <- function(data, dependent, numeric, factors, booleans, highlight, type) {
+analyzePlot <- function(data, dependent, numeric, factors, booleans, highlight, type, insertionsOrRemovals = "Insertions") {
   isBinomial <- isTRUE("Binary Logistic Regression" == type)
   isLinear <- isTRUE("Linear Model" == type)
 
@@ -18,6 +18,12 @@ analyzePlot <- function(data, dependent, numeric, factors, booleans, highlight, 
       geom_text(aes(0, 0, label = "Plots with more than two booleans are not supported.")) +
       xlab(NULL)
   } else {
+    if(insertionsOrRemovals == "Insertions") {
+      data <- data %>% filter(!is.na(InsertionId))
+    } else {
+      data <- data %>% filter(!is.na(RemovalId))
+    }
+    
     data %>%
       mutate_if(is.logical, function(col) as.numeric(col, na.rm = TRUE)) %>%
       ggplot(aes_string(

@@ -57,14 +57,14 @@ implantSurvivalPlot <- function(data, selectedImplants, firstYear, secondYear){
              dot.size = 2,                                 # Large dot size
              ggtheme = theme_pubr(),
              ylab = paste0("Percentage of intact tooth implants after ",
-                           firstYear, " and ", secondYear, " years")
+                           firstYear, " and ", secondYear, " years"),
+             xlab = ""
     ) +
     theme_cleveland() + 
     geom_linerange(aes(ymin = lcl95, ymax = ucl95, color = Year)) +
     font("title", size = 18) +
-    font("xlab", size = 14) +
     font("ylab", size = 14) +
-    font("xy.text", size = 14)
+    font("y.text", size = 14)
 }
 
 

@@ -8,10 +8,12 @@ explorePlotOptionsUI <- function(id) {
       label = "Choose dataset",
       choices = c("Insertions", 
                   "Removals"),
-      justified = TRUE
+      justified = TRUE,
+      status = "primary"
     ),
-    htmlOutput(ns("x"), width = 12),
     htmlOutput(ns("y"), width = 12),
+    htmlOutput(ns("x"), width = 12),
+    htmlOutput(ns("xLevels"), width = 12),
     htmlOutput(ns("factor1"), width = 12),
     htmlOutput(ns("factor1Levels"), width = 12),
     htmlOutput(ns("factor2"), width = 12),
@@ -22,7 +24,7 @@ explorePlotOptionsUI <- function(id) {
   )
 }
 
-explorerPlot <- function(id) {
+explorerPlotUI <- function(id) {
   ns <- NS(id)
   tagList(
     plotOutput(ns("plot"), height = 500) %>% withSpinner()
@@ -38,13 +40,13 @@ explorerPlotServer <- function(id,
       ns <- session$ns
 
       factorOptions <- data %>%
-        select(where(is.factor)) %>%
+        select(where(is.factor) & -ends_with("Id")) %>%
         names()
       logicalOptions <- data %>%
-        select(where(is.logical)) %>%
+        select(where(is.logical) & -ends_with("Id")) %>%
         names()
       numericOptions <- data %>%
-        select(where(is.numeric)) %>%
+        select(where(is.numeric) & -ends_with("Id")) %>%
         names()
       
         observeEvent(input$add, {
@@ -71,16 +73,15 @@ explorerPlotServer <- function(id,
       observeEvent(input$shinyalert, {
         if(input$shinyalert){
           plotInReport$dList <- c(isolate(plotInReport$dList),
-                              list(c("y" = isolate(input$selectYAxis),
-                                     "x" = isolate(input$selectXAxis),
-                                     "allCombined" = isolate(allCombined()),
-                                     "selectedClinic" = isolate(selectedClinic()),
-                                     "clinicCompare" = isolate(paste(clinicCompare(), collapse = ";")),
-                                     "facetRow" =  isolate(input$selectFacetRow),
-                                     "specificFacetRow" =  isolate(paste(input$selectSpecificFacetRow, collapese = ";")),
-                                     "factorLevels" =  isolate(paste(input$selectFactorLevels, collapse = ";")),
-                                     "fillColor" = isolate(input$selectFillColor),
-                                     "dataset" = id,
+                              list(c("y" = isolate(input$y),
+                                     "x" = isolate(input$x),
+                                     "factor1" = isolate(input$factor1),
+                                     "factor1Levels" = isolate(paste(input$factor1Levels, collapse = ";")),
+                                     "factor2" = isolate(input$factor2),
+                                     "factor2Levels" = isolate(paste(input$factor2Levels, collapse = ";")),
+                                     "factorColor" = isolate(input$factorColor),
+                                     "factorColorLevels" = isolate(paste(input$factorColorLevels, collapse = ";")),
+                                     "insertionsOrRemovals" =  isolate(input$insertionsOrRemovals),
                                      "tab" = "Explorer")))
         }
       })
@@ -98,7 +99,10 @@ explorerPlotServer <- function(id,
       output$x <- renderUI({
         pickerInput(ns("x"),
           "Select X-axis",
-          choices = c(factorOptions, numericOptions, logicalOptions),
+          choices = list(
+            Factors = factorOptions,
+            Numeric = numericOptions,
+            Logical =logicalOptions)
         )
       })
       
@@ -124,7 +128,10 @@ explorerPlotServer <- function(id,
       output$factorColor <- renderUI({
           pickerInput(ns("factorColor"),
             "Select Fill Color",
-            choices = c(factorOptions, logicalOptions, "None"),
+            choices = list(
+              None = c("None"),
+              Factor = factorOptions,
+              Logical = logicalOptions),
             selected = "None"
           )
       })
@@ -150,7 +157,10 @@ explorerPlotServer <- function(id,
       output$factor1 <- renderUI({
         pickerInput(ns("factor1"),
           "Select Facet Row",
-          choices = c(factorOptions, logicalOptions, "None"),
+          choices = list(
+            None = c("None"),
+            Factor = factorOptions,
+            Logical = logicalOptions),
           selected = "None"
         )
       })
@@ -177,7 +187,10 @@ explorerPlotServer <- function(id,
       output$factor2 <- renderUI({
         pickerInput(ns("factor2"),
                     "Select Facet Row",
-                    choices = c(factorOptions, logicalOptions, "None"),
+                    choices = list(
+                      None = c("None"),
+                      Factor = factorOptions,
+                      Logical = logicalOptions),
                     selected = "None"
         )
       })

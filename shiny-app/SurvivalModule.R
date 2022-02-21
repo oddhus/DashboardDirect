@@ -52,14 +52,13 @@ survivalPlotServer <- function(id, data, plotInReport) {
       observeEvent(input$confirm, {
         if(input$confirm){
           plotInReport$dList <- c(isolate(plotInReport$dList),
-                                  list(c("Factor" = isolate(input$selectFactor),
-                                         "Levels" = isolate(paste(input$selectLevels, collapse = ";")),
-                                         "AdditionalFactor" = isolate(input$selectAdditionalFactor),
-                                         "AdditionalLevels" = isolate(paste(input$selectAdditionalLevels, collapse = ";")),
-                                         "tab" = "Implant Survival")))
+                                  list(c("factor" = isolate(input$selectFactor),
+                                         "levels" = isolate(paste(input$selectLevels, collapse = ";")),
+                                         "additionalFactor" = isolate(input$selectAdditionalFactor),
+                                         "additionalLevels" = isolate(paste(input$selectAdditionalLevels, collapse = ";")),
+                                         "tab" = "Survival")))
         }
       })
-      
       
       ## Inputs -------------------------------------------------------------------
       output$selectFactor <- renderUI({

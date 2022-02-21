@@ -32,12 +32,8 @@ ui <- dashboardPage(
                    "#sidebarTitle { padding-left: 16px; } "),
         div(id = "sidebarTitle", h3("Graph options")),
       conditionalPanel(
-        condition = "input.tabs == 'Analyses' & input.insertionsOrRemovals == 'Insertions'",
-        analyzePlotInputUI("InsertionsAnalyze")
-      ),
-      conditionalPanel(
-        condition = "input.tabs == 'Analyses' & input.insertionsOrRemovals == 'Removals'",
-        analyzePlotInputUI("RemovalsAnalyze")
+        condition = "input.tabs == 'Analyses'",
+        analyzePlotInputUI("Analyze")
       ),
       conditionalPanel(
         condition = "input.tabs == 'Overview Removals'",
@@ -73,7 +69,8 @@ ui <- dashboardPage(
             implantPlotUI("RemovalReason"),
             width = 12,
             style='margin-top:10px;'
-          )
+          ),
+          style='margin-top:10px;'
         )
         
       ),
@@ -165,22 +162,21 @@ ui <- dashboardPage(
             explorerPlotUI("Explorer"),
             width = 12
           ),
+          style='margin-top:10px;'
         ),
       ),
       tabPanel(
         "Analyses",
-        h4("Analyze data"),
         fluidRow(
           column(
-            analyzePlotUI("InsertionsAnalyze"),
-            analyzePlotUI("RemovalsAnalyze"),
+            analyzePlotUI("Analyze"),
             width = 6
           ),
           column(
-            analyzePrintUI("InsertionsAnalyze"),
-            analyzePrintUI("RemovalsAnalyze"),
+            analyzePrintUI("Analyze"),
             width = 6
-          )
+          ),
+          style='margin-top:10px;'
         )
       ),
       tabPanel(
@@ -198,63 +194,28 @@ ui <- dashboardPage(
 )
 
 server <- function(input, output, session) {
-  columnsToRemove <- c("RefNr", "Id.y", "Id", "ComplicationsComment", "AntibioticsType")
-  facetRowsColumnsToRemove <- c("LotNr")
 
   # ---------------------------------------------------------------------------
   # Data
   # ------------------------------s---------------------------------------------
   completeTable <- getCompleteTable()
-  insertionsWithImplants <- getInsertionsWithImplants()
-  removalsWithImplants <- getRemovalsWithImplants()
 
   # ---------------------------------------------------------------------------
   # Global events and variables
   # ---------------------------------------------------------------------------
 
-  showInsertions <- reactiveVal(TRUE)
-  showRemovals <- reactiveVal(FALSE)
   plotsInReport <- reactiveValues()
   
-
-  # Hides the plot not currently viewed by user, avoiding to generate the hidden
-  # plot again
-  observeEvent(input$insertionsOrRemovals, {
-    if (input$insertionsOrRemovals == "Insertions") {
-      showInsertions(TRUE)
-      showRemovals(FALSE)
-    } else if (input$insertionsOrRemovals == "Removals") {
-      showInsertions(FALSE)
-      showRemovals(TRUE)
-    }
-  })
 
   # ---------------------------------------------------------------------------
   # Removals Plot
   # ---------------------------------------------------------------------------
 
-  implantServer("RemovalReason", completeTable %>% filter(!is.na(RemovalId)), plotsInReport)
+  implantServer("RemovalReason", data, plotsInReport)
 
   #----------------------------------------------------------------------------
   # Explorer plot
   #----------------------------------------------------------------------------
-
-  ## Reactive values ----------------------------------------------------------
-
-  allCombined <- reactiveVal(FALSE)
-
-  ## Observe events -----------------------------------------------------------
-
-  ### Update relevant values when switching from clinic to all combined mode
-  observeEvent(input$clinicOrAllcombined, {
-    if ("Clinic" %in% input$clinicOrAllcombined) {
-      allCombined(FALSE)
-    } else {
-      allCombined(TRUE)
-    }
-  })
-
-  ## Server logic ------------------------------------------------------------
 
   explorerPlotServer("Explorer", data = completeTable, plotInReport = plotsInReport )
 
@@ -262,32 +223,15 @@ server <- function(input, output, session) {
   # Analyses
   #----------------------------------------------------------------------------
 
-  analyzePlotServer("InsertionsAnalyze",
-    insertionsWithImplants,
-    columnsToRemove,
-    isVisible = showInsertions,
-    plotInReport = plotsInReport
-  )
-
-  analyzePlotServer("RemovalsAnalyze",
-    removalsWithImplants,
-    columnsToRemove,
-    isVisible = showRemovals,
-    plotInReport = plotsInReport
-  )
+  analyzePlotServer("Analyze", completeTable, plotInReport = plotsInReport)
 
   #----------------------------------------------------------------------------
   # Report
   #----------------------------------------------------------------------------
   
-  reportServer("Report", 
-               insertionsWithImplants,
-               removalsWithImplants,
-               plotsInReport)
+  reportServer("Report", data, plotsInReport)
   
-  stdReportServer("StdReport",
-                  insertionsWithImplants,
-                  removalsWithImplants)
+  stdReportServer("StdReport",data)
   
 
   #----------------------------------------------------------------------------
@@ -302,6 +246,7 @@ server <- function(input, output, session) {
   #----------------------------------------------------------------------------
   clinicServer("ClinicInfo", data = completeTable, plotInReport = plotsInReport)
 }
+
 
 shinyApp(ui, server)
 

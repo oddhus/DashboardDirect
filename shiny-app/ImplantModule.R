@@ -57,18 +57,16 @@ implantServer <- function(id, data, plotInReport) {
           plotInReport$dList <- c(
             isolate(plotInReport$dList),
             list(c(
-              "Clinic" = isolate(paste(input$selectClinic, collapse = ";")),
-              "RemovalReason" = isolate(paste(input$selectRemovalReason, collapse = ";")),
-              "ImplantName" = isolate(paste(input$selectImplantName, collapse = ";")),
-              "ShowLotNr" = isolate("LotNr" %in% input$implantPlotOptions),
-              "ShowMean" = isolate("Mean" %in% input$implantPlotOptions),
-              "SelectXAxis" = isolate(input$selectXAxis),
+              "removalReasons" = isolate(paste(input$removalReasons, collapse = ";")),
+              "years" = isolate(paste(input$selectYears, collapse = ";")),
+              "factor" = isolate(input$selectFactor),
+              "levels" = isolate(paste(input$selectLevels, collapse = ";")),
+              "showMean" = isolate("Mean" %in% input$implantPlotOptions),
               "tab" = "Implant"
             ))
           )
         }
       })
-
 
       ## Inputs -------------------------------------------------------------------
       output$selectYears <- renderUI({

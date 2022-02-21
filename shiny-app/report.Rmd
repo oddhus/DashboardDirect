@@ -3,8 +3,7 @@ title: "Dynamic report"
 output: html_document
 params:
   plotArgs: NA
-  insertions: NA
-  removals: NA
+  data: NA
 ---
 
 ```{r eval = FALSE, echo = FALSE}
@@ -24,78 +23,72 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor i
 ```{r plot, echo=FALSE, message=FALSE, fig.height=8, fig.width=12}
    for (i in 1:length(params$plotArgs)) {
      if(params$plotArgs[[i]]["tab"] == "Explorer"){
-       'print(paste(params$plotArgs[[i]]["dataset"] == "Insertions",
-             params$plotArgs[[i]]["selectedClinic"],
-             params$plotArgs[[i]]["facetRow"],
-             strsplit(params$plotArgs[[i]]["specificFacetRow"], ";")[[1]], sep = ";;;"))'
-        print(exploreDataPlot(
-           if(params$plotArgs[[i]]["dataset"] == "Insertions") {
-              params$insertions
-           } else {
-             params$removals
-           },
-           FALSE,
-           FALSE,
-           params$plotArgs[[i]]["selectedClinic"],
-           strsplit(params$plotArgs[[i]]["clinicCompare"], ";")[[1]],
-           if (params$plotArgs[[i]]["allCombined"]) params$plotArgs[[i]]["fillColor"] else "Clinic",
-           params$plotArgs[[i]]["facetRow"],
-           strsplit(params$plotArgs[[i]]["specificFacetRow"], ";")[[1]],
-           strsplit(params$plotArgs[[i]]["factorLevels"], ";")[[1]],
-           params$plotArgs[[i]]["y"],
-           params$plotArgs[[i]]["x"],
-           params$plotArgs[[i]]["allCombined"]
+        print(explorerPlot(
+          data = params$data,
+          y = params$plotArgs[[i]]["y"],
+          x = params$plotArgs[[i]]["x"],
+          factor1 = strsplit(params$plotArgs[[i]]["factor1"], ";")[[1]],
+          factor1Levels = strsplit(params$plotArgs[[i]]["factor1Levels"], ";")[[1]],
+          factor2 = strsplit(params$plotArgs[[i]]["factor2"], ";")[[1]],
+          factor2Levels = strsplit(params$plotArgs[[i]]["factor2Levels"], ";")[[1]],
+          factorColor = strsplit(params$plotArgs[[i]]["factorColor"], ";")[[1]],
+          factorColorLevels = strsplit(params$plotArgs[[i]]["factorColorLevels"], ";")[[1]],
+          InsertionsOrRemovals = params$plotArgs[[i]]["insertionsOrRemovals"]
          ))
      } else if (params$plotArgs[[i]]["tab"] == "Analyze") {
        print(
-       analyzePlot(
-          if(params$plotArgs[[i]]["dataset"] == "InsertionsAnalyze") {
-          params$insertions
-           } else {
-             params$removals
-           },
-          params$plotArgs[[i]]["dependent"],
-          strsplit(params$plotArgs[[i]]["numericIndependent"], ";")[[1]],
-          strsplit(params$plotArgs[[i]]["factorIndependent"],";")[[1]],
-          strsplit(params$plotArgs[[i]]["logicalIndependent"], ";")[[1]],
-          strsplit(params$plotArgs[[i]]["highlight"], ";")[[1]],
-          params$plotArgs[[i]]["analyzeMethod"]
+         analyzePlot(
+           data = params$data,
+           dependent = params$plotArgs[[i]]["dependent"],
+           numeric = strsplit(params$plotArgs[[i]]["numericIndependent"], ";")[[1]],
+           factors = strsplit(params$plotArgs[[i]]["factorsIndependent"], ";")[[1]],
+           booleans = strsplit(params$plotArgs[[i]]["logicalIndependent"], ";")[[1]],
+           highlight = strsplit(params$plotArgs[[i]]["highlight"], ";")[[1]],
+           type = params$plotArgs[[i]]["analyzeMethod"],
+           insertionsOrRemovals = params$plotArgs[[i]]["insertionsOrRemovals"]
+         )
         )
-       )
      } else if (params$plotArgs[[i]]["tab"] == "Implant") {
-       if("Removals" == params$plotArgs[[i]]["SelectXAxis"]){
          print(
-          implantPlot(
-            params$removals,
-            strsplit(params$plotArgs[[i]]["Clinic"], ";")[[1]],
-            strsplit(params$plotArgs[[i]]["RemovalReason"], ";")[[1]],
-            strsplit(params$plotArgs[[i]]["ImplantName"], ";")[[1]],
-            params$plotArgs[[i]]["ShowLotNr"],
-            params$plotArgs[[i]]["ShowMean"]
+          overviewRemovalReasonPlot(
+            data = params$data,
+            removalReasons = strsplit(params$plotArgs[[i]]["removalReason"], ";")[[1]],
+            years = strsplit(params$plotArgs[[i]]["years"], ";")[[1]],
+            factor = params$plotArgs[[i]]["factor"],
+            levels = strsplit(params$plotArgs[[i]]["levels"], ";")[[1]],
+            showMean = params$plotArgs[[i]]["showMean"]
           )
          )
-        } else {
-          print(
-            compareImplantsPlot(
-              params$removals,
-              strsplit(params$plotArgs[[i]]["Clinic"], ";")[[1]],
-              params$plotArgs[[i]]["RemovalReason"],
-              strsplit(params$plotArgs[[i]]["ImplantName"], ";")[[1]],
-              params$plotArgs[[i]]["ShowLotNr"],
-              params$plotArgs[[i]]["ShowMean"]
-            )
-          )
-        }
-     } else if (params$plotArgs[[i]]["tab"] == "timeSeries") {
+        
+     } else if (params$plotArgs[[i]]["tab"] == "Implant Survival") {
        print(
-       timeSeriesPlot(
-          params$removals,
-          params$plotArgs[[i]]["TimeScale"],
-          strsplit(params$plotArgs[[i]]["Clinic"], ";")[[1]],
-          strsplit(params$plotArgs[[i]]["RemovalReason"], ";")[[1]],
-          strsplit(params$plotArgs[[i]]["ImplantName"], ";")[[1]],
-          params$plotArgs[[i]]["ShowMean"]
-        )
+         implantSurvivalPlot(
+           data = params$data,
+           selectedImplants = strsplit(params$plotArgs[[i]]["selectedImplants"], ";")[[1]],
+           firstYear = params$plotArgs[[i]]["firstYear"],
+           secondYear = params$plotArgs[[i]]["secondYear"])
+       )
+       if(!is.null(params$plotArgs[[i]]["selectedLotNrImplants"])){
+         print(
+           implantLotNrSurvivalPlot(
+             data = params$data,
+             firstYear = params$plotArgs[[i]]["firstYear"],
+             secondYear = params$plotArgs[[i]]["secondYear"],
+             selectedImplants = strsplit(params$plotArgs[[i]]["selectedLotNrImplants"], ";")[[1]]
+           )
+         )
+       }
+     } else if (params$plotArgs[[i]]["tab"] == "Clinic") {
+       print(
+        clinicSuccesRatePlot(data = params$data, selectedClinic = params$plotArgs[[i]]["clinic"])
+       )
+     } else if (params$plotArgs[[i]]["tab"] == "Survival"){
+       print(
+         survivalPlot(data = params$data,
+                      factor = params$plotArgs[[i]]["factor"],
+                      levels = strsplit(params$plotArgs[[i]]["levels"], ";")[[1]],
+                      additionalFactor = params$plotArgs[[i]]["additionalFactor"],
+                      additionalLevels = strsplit(params$plotArgs[[i]]["additionalLevels"], ";")[[1]])
        )
      }
     

@@ -7,23 +7,19 @@ stdReportUI <- function(id) {
 }
 
 
-stdReportServer <- function(id, insertions,
-                            removals,
-                            myValues) {
+stdReportServer <- function(id, data) {
   moduleServer(
     id,
     function(input, output, session) {
       ns <- session$ns
 
-      clinics <- removals %>%
-        distinct(Clinic) %>%
-        arrange(Clinic) %>%
-        mutate(Clinic = as.character(Clinic))
-
       output$selectClinic <- renderUI({
         pickerInput(ns("selectClinic"),
           "Select Clinic",
-          choices = clinics
+          choices = data %>%
+            distinct(InsertionClinic) %>%
+            arrange(InsertionClinic) %>%
+            mutate(InsertionClinic = as.character(InsertionClinic))
         )
       })
 
@@ -44,7 +40,7 @@ stdReportServer <- function(id, insertions,
 
               shiny::incProgress(2 / 10)
               # Set up parameters to pass to Rmd document
-              params <- list(clinic = input$selectClinic, insertions = insertions, removals = removals)
+              params <- list(clinic = input$selectClinic, data = data)
 
               shiny::incProgress(5 / 10)
               # Knit the document, passing in the `params` list, and eval it in a

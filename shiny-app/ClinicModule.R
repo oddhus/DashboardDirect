@@ -80,11 +80,8 @@ clinicServer <- function(id, data, plotInReport) {
       observeEvent(input$confirm, {
         if(input$confirm){
           plotInReport$dList <- c(isolate(plotInReport$dList),
-                                  list(c("Factor" = isolate(input$selectFactor),
-                                         "Levels" = isolate(paste(input$selectLevels, collapse = ";")),
-                                         "AdditionalFactor" = isolate(input$selectAdditionalFactor),
-                                         "AdditionalLevels" = isolate(paste(input$selectAdditionalLevels, collapse = ";")),
-                                         "tab" = "Implant Survival")))
+                                  list(c("clinic" = isolate(input$selectClinic),
+                                         "tab" = "Clinic")))
         }
       })
       

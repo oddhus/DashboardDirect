@@ -21,7 +21,7 @@ survivalPlot <- function(data, factor, levels, additionalFactor, additionalLevel
     factor <- NULL
   }
   
-  form <- as.formula(paste0("Surv(survt, survStatus) ~ ", if(isTruthy(factor)) paste0(c(factor,additionalFactor),collapse = "+") else 1))
+  form <- as.formula(paste0("Surv(survTimeCencored, survStatusCencored) ~ ", if(isTruthy(factor)) paste0(c(factor,additionalFactor),collapse = "+") else 1))
   
   fit <- do.call(survfit, args = list(formula = form, data = filteredData))
   ggsurvplot(fit, data = filteredData)

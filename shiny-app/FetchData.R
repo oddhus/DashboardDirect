@@ -176,7 +176,7 @@ getCompleteTable <- function() {
            LotNr = coalesce(LotNr.x, LotNr.y),
            InsertionDate = coalesce(InsertionDate.x, InsertionDate.y)) %>%
     select(-(ends_with(".x") | ends_with(".y") | ends_with("Comment") | starts_with("RefNr") | starts_with("IdNumber"))) %>%
-    mutate(across(where(is.character), as.factor)) %>%
+    mutate(across(where(is.character) | Position, as.factor)) %>%
     mutate(
       YearsSinceInsertion = time_length(
         interval(
@@ -188,7 +188,9 @@ getCompleteTable <- function() {
           parse_date_time(InsertionDate, orders = "Ymd HMS", truncated = 3),
           parse_date_time(if_else(is.na(RemovalDate), as.POSIXct(today()), RemovalDate), orders = "Ymd HMS", truncated = 3)
         ),"days"),
-      survStatus = if_else(is.na(RemovalId), 1, 2)
+      survStatus = if_else(is.na(RemovalId), 1, 2),
+      survStatusCencored = if_else(survt > 8000, 1, survStatus),
+      survTimeCencored = if_else(survt > 8000, 8000, survt)
     ) %>%
     mutate(RemovalBeforeNYear = case_when(
       ceiling(YearsSinceInsertion) == 1 ~ "Year 1",
