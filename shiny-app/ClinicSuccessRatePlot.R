@@ -27,7 +27,7 @@ clinicSuccesRatePlot <- function(data, selectedClinic) {
             color = "black", # Points color, shape and size
             label = "InsertionClinic", label.select = c(selectedClinic),
             xlab = "Number of Insertions",
-            ylab = "Implants survival rate after two years %"
+            ylab = "Implants survival rate after two years"
   ) +
   geom_smooth(aes(y =lcl95),se = FALSE,linetype ="solid",color = "steelblue", size = 1) + 
   geom_smooth(aes(y =ucl95),se = FALSE, linetype ="solid",color = "steelblue", size = 1) +

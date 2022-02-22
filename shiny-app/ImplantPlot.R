@@ -91,5 +91,5 @@ overviewRemovalReasonPlot <- function(data, removalReasons, years, factor, level
   facet(p, 
         facet.by = c("RemovalBeforeNYear",
                      if (isTruthy(factor) & isTRUE(factor != "None")) as.character(factor) else NULL),
-        short.panel.labs = FALSE)
+        short.panel.labs = TRUE)
 }

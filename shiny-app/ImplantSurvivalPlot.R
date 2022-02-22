@@ -64,7 +64,8 @@ implantSurvivalPlot <- function(data, selectedImplants, firstYear, secondYear){
     geom_linerange(aes(ymin = lcl95, ymax = ucl95, color = Year)) +
     font("title", size = 18) +
     font("ylab", size = 14) +
-    font("y.text", size = 14)
+    font("y.text", size = 14) +
+    scale_y_continuous(labels = scales::percent, limits = c(NA, 1))
 }
 
 

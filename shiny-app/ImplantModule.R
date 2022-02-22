@@ -76,7 +76,8 @@ implantServer <- function(id, data, plotInReport) {
           options = list(
             `actions-box` = TRUE, size = 10,
             `selected-text-format` = "count > 2"
-          )
+          ),
+          selected = c("Year 1", "Year 2-4")
         )
       })
 
@@ -124,7 +125,6 @@ implantServer <- function(id, data, plotInReport) {
 
       ## Plots --------------------------------------------------------------------
       output$removalsImplantPlot <- renderPlot({
-        print("hi")
         overviewRemovalReasonPlot(
           data = data,
           removalReasons = input$selectRemovalReason,
