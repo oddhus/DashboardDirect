@@ -3,25 +3,26 @@ FROM rocker/shiny-verse:latest
 # system libraries of general use
 ## install debian packages
 RUN apt-get update -qq && apt-get -y --no-install-recommends install \
-    libxml2-dev \
-    libcairo2-dev \
-    libsqlite3-dev \
-    libpq-dev \
-    libssh2-1-dev \
-    unixodbc-dev \
-    r-cran-v8 \
-    libv8-dev \
-    net-tools \
-    libprotobuf-dev \
-    protobuf-compiler \
-    libjq-dev \
-    libudunits2-0 \
-    libudunits2-dev \
-    libgdal-dev \
-    libssl-dev \
-	curl \
-	gnupg2 \
-	unixodbc
+  libnlopt-dev \
+  libxml2-dev \
+  libcairo2-dev \
+  libsqlite3-dev \
+  libpq-dev \
+  libssh2-1-dev \
+  unixodbc-dev \
+  r-cran-v8 \
+  libv8-dev \
+  net-tools \
+  libprotobuf-dev \
+  protobuf-compiler \
+  libjq-dev \
+  libudunits2-0 \
+  libudunits2-dev \
+  libgdal-dev \
+  libssl-dev \
+  curl \
+  gnupg2 \
+  unixodbc
 
 # Add SQL Server ODBC Driver 17 for Ubuntu 18.04
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
@@ -34,8 +35,8 @@ RUN echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
 
 ## update system libraries
 RUN apt-get update && \
-    apt-get upgrade -y && \
-    apt-get clean
+  apt-get upgrade -y && \
+  apt-get clean
 
 # copy necessary files
 ## renv.lock file
