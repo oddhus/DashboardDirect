@@ -1,6 +1,9 @@
+source("shiny-app/ExplorerFunnelPlot.R")
+
 explorerPlot <- function(data,
                             y,
                             x,
+                            xLevels = NULL,
                             factor1 = NULL,
                             factor1Levels = NULL,
                             factor2 = NULL,
@@ -41,45 +44,21 @@ explorerPlot <- function(data,
   }
 
   if((logicalY & factorX) | (logicalY & logicalX)){
-    filterFunc <- function(dat, col1) {!is.na(dat[[col1]])}
-    
-    filteredData <- filteredData %>%
-      filter(filterFunc(., x)) %>%
-      group_by(
-        across(any_of(
-          c(
-            if (isTruthy(factor1) & isTRUE(factor1 != "None")) factor1 else NULL,
-            if (isTruthy(factor2) & isTRUE(factor2 != "None")) factor2 else NULL,
-            if (isTruthy(factorColor) & isTRUE(factorColor != "None")) factorColor else NULL,
-            x
-          )))) %>%
-      summarise(
-        value = sum(!!sym(y), na.rm = TRUE) / nrow(filteredData)
-      )
-    
-    #Must do this for the report functionality to work
-    if ("factor1" %in% colnames(filteredData)) {
-      filteredData <- filteredData %>% rename(!!sym(factor1) := factor1)
-    }
-    if ("factor2" %in% colnames(filteredData)) {
-      filteredData <- filteredData %>% rename(!!sym(factor2) := factor2)
-    }
-    if ("factorColor" %in% colnames(filteredData)) {
-      filteredData <- filteredData %>% rename(!!sym(factorColor) := factorColor)
-    }
-    if ("x" %in% colnames(filteredData)) {
-      filteredData <- filteredData %>% rename(!!sym(x) := x)
-    }
-
     return(
-      ggbarplot(filteredData, x = as.character(x), y = "value",
-                fill = if (isTruthy(factorColor) & isTRUE(factorColor != "None")) as.character(factorColor) else as.character(x),
-                facet.by = c(if (isTruthy(factor1) & isTRUE(factor1 != "None")) as.character(factor1) else NULL,
-                             if (isTruthy(factor2) & isTRUE(factor2 != "None")) as.character(factor2) else NULL),
-                color = "white",            # Set bar border colors to white
-                ylab = paste0(y, " percentage of all ", InsertionsOrRemovals)
-      ) + 
-        scale_y_continuous(labels = scales::percent)
+      explorerFunnelPlot(data = filteredData,
+                         y = y,
+                         x = x,
+                         xLevels = xLevels,
+                         factor1 = factor1,
+                         factor2 = factor2,
+                         factorColor = factorColor)
+    )
+  }
+  
+  #Placed after explorer funnel plot because that function takes care of the filtering.
+  if (isTruthy(x) & isTruthy(xLevels) & isFALSE(xLevels == "None")) {
+    filteredData <- filteredData %>% filter(
+      vectorContainsAnyElement(., xLevels, x)
     )
   }
   

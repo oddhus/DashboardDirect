@@ -110,7 +110,7 @@ explorerPlotServer <- function(id,
         req(input$x)
         
         if (!is.numeric(data[[input$x]])) {
-          pickerInput(ns("selectFactorLevels"),
+          pickerInput(ns("xLevels"),
                       label = paste0("Filter ", input$x),
                       choices = as.character(
                         sort(unique(data[[input$x]]))
@@ -140,7 +140,7 @@ explorerPlotServer <- function(id,
         req(input$factorColor)
         req(input$factorColor != "None")
         
-        pickerInput(ns("selectSpecificFacetRow"),
+        pickerInput(ns("factorColorLevels"),
                     label = paste0("Filter ", input$factorColor),
                     choices = as.character(
                       sort(unique(data[[input$factorColor]]))
@@ -226,6 +226,7 @@ explorerPlotServer <- function(id,
           data = data,
           y = input$y,
           x = input$x,
+          xLevels = input$xLevels,
           factor1 = input$factor1,
           factor1Levels = input$factor1Levels,
           factor2 = input$factor2,

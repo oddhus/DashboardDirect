@@ -15,3 +15,4 @@ vectorContainsAnyElement <- function(data,
     )
   }
 }
+

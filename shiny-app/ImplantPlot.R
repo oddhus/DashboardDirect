@@ -4,7 +4,7 @@ overviewRemovalReasonPlot <- function(data, removalReasons, years, factor, level
   
   meanData <- filteredData %>%
     group_by(RemovalReason) %>%
-    summarise(Percentage = n() / nrow(data))
+    summarise(Percentage = n() / nrow(filteredData))
     
   if (isTruthy(years)) {
     filteredData <- filteredData %>% filter(
