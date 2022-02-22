@@ -141,7 +141,11 @@ getCompleteTable <- function() {
         ),"days"),
       survStatus = if_else(is.na(RemovalId), 1, 2),
       survStatusCencored = if_else(survt > 8000, 1, survStatus),
-      survTimeCencored = if_else(survt > 8000, 8000, survt)
+      survTimeCencored = if_else(survt > 8000, 8000, survt),
+      intactAfter1Year = if_else(YearsSinceInsertion > 1, TRUE, FALSE),
+      intactAfter3Year = if_else(YearsSinceInsertion > 3, TRUE, FALSE),
+      intactAfter5Year = if_else(YearsSinceInsertion > 5, TRUE, FALSE),
+      intactAfter7Year = if_else(YearsSinceInsertion > 7, TRUE, FALSE)
     ) %>%
     mutate(RemovalBeforeNYear = case_when(
       ceiling(YearsSinceInsertion) == 1 ~ "Year 1",
