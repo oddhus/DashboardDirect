@@ -91,7 +91,7 @@ explorerFunnelPlot <- function(data,
             label = x, repel = TRUE,
             label.select = if(isTruthy(xLevels)) as.vector(highlightData[[x]]) else NULL,
             color = if (isTruthy(factorColor) & isTRUE(factorColor != "None")) as.character(factorColor) else "black",
-            xlab = paste0("Number of operations with ", x),
+            xlab = paste0("Number of operations"),
             ylab = paste0(y, " rate %")
   ) +
     geom_smooth(aes(y =lcl95),se = FALSE,linetype ="solid",color = "steelblue", size = 1) + 

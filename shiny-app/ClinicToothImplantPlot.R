@@ -18,7 +18,7 @@ clincToothImplantPlot <- function(data, selectedClinic) {
             sort.by.groups = FALSE,     # Don't sort inside each group
             x.text.angle = 90,           # Rotate vertically x axis texts
             xlab = "Implant Name",
-            ylab = "Number of Operations last",
+            ylab = "Number of Operations last\n20 days",
             palette = if("Insertion" %in% filteredData$Operation) c("#00AFBB", "#FC4E07") else c("#FC4E07")
   )
 }

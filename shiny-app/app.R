@@ -65,10 +65,10 @@ ui <- dashboardPage(
       tabPanel(
         "Overview Removals",
         fluidRow(
-          column(
+          box(
+            title = "Removal reasons over time",
             implantPlotUI("RemovalReason"),
             width = 12,
-            style='margin-top:10px;'
           ),
           style='margin-top:10px;'
         )

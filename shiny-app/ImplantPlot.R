@@ -5,24 +5,6 @@ overviewRemovalReasonPlot <- function(data, removalReasons, years, factor, level
   meanData <- filteredData %>%
     group_by(RemovalReason) %>%
     summarise(Percentage = n() / nrow(filteredData))
-    
-  if (isTruthy(years)) {
-    filteredData <- filteredData %>% filter(
-      vectorContainsAnyElement(., years, "RemovalBeforeNYear")
-    )
-  }
-  
-  if (isTruthy(removalReasons)) {
-    filteredData <- filteredData %>% filter(
-      vectorContainsAnyElement(., removalReasons, "RemovalReason")
-    )
-  }
-  
-  if ((isTruthy(factor) & isTruthy(levels)) | isTRUE(factor != "None")) {
-    filteredData <- filteredData %>% filter(
-      vectorContainsAnyElement(., levels, factor)
-    )
-  }
   
   tot <- filteredData %>%
     group_by(across(
@@ -36,6 +18,32 @@ overviewRemovalReasonPlot <- function(data, removalReasons, years, factor, level
   #Must do this or the report generating function will not work
   if ("factor" %in% colnames(tot)) {
     tot <- tot %>% rename(!!sym(factor) := factor)
+  }
+  
+  if (isTruthy(years)) {
+    filteredData <- filteredData %>% filter(
+      vectorContainsAnyElement(., years, "RemovalBeforeNYear")
+    )
+    
+    meanData <- meanData %>% filter(
+      vectorContainsAnyElement(., years, "RemovalBeforeNYear")
+    )
+  }
+  
+  if (isTruthy(removalReasons)) {
+    filteredData <- filteredData %>% filter(
+      vectorContainsAnyElement(., removalReasons, "RemovalReason")
+    )
+    
+    meanData <- meanData %>% filter(
+      vectorContainsAnyElement(., removalReasons, "RemovalReason")
+    )
+  }
+  
+  if ((isTruthy(factor) & isTruthy(levels)) | isTRUE(factor != "None")) {
+    filteredData <- filteredData %>% filter(
+      vectorContainsAnyElement(., levels, factor)
+    )
   }
 
   filteredData <- filteredData %>%
@@ -71,8 +79,7 @@ overviewRemovalReasonPlot <- function(data, removalReasons, years, factor, level
             title = "Tooth Implants Removal Reasons",
             xlab = "Removal Reason",
             rotate = TRUE,
-            position = position_dodge(0.9),
-            facet.by = c("RemovalBeforeNYear", if(isTruthy(factor) & isTRUE(factor != "None")) factor else NULL)
+            position = position_dodge(0.9)
   ) + {
     if (showMean) {
       stat_mean(data = meanData,aes(fill = RemovalReason), size = 2, color = "grey20", geom = "point")
@@ -82,7 +89,11 @@ overviewRemovalReasonPlot <- function(data, removalReasons, years, factor, level
     font("title", size = 18) +
     font("xlab", size = 14) +
     font("ylab", size = 14) +
-    font("xy.text", size = 14)
+    font("xy.text", size = 14)+
+    scale_y_continuous(labels = scales::percent)
   
-  return(p)
+  facet(p, 
+        facet.by = c("RemovalBeforeNYear",
+                     if (isTruthy(factor) & isTRUE(factor != "None")) as.character(factor) else NULL),
+        short.panel.labs = FALSE)
 }

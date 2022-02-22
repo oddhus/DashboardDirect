@@ -20,7 +20,7 @@ implantInputUI <- function(id) {
 
 implantPlotUI <- function(id) {
   ns <- NS(id)
-  plotOutput(ns("removalsImplantPlot"), height = 600) %>% withSpinner()
+  plotOutput(ns("removalsImplantPlot"), height = 650) %>% withSpinner()
 }
 
 implantServer <- function(id, data, plotInReport) {

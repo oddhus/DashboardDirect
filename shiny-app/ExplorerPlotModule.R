@@ -27,7 +27,7 @@ explorePlotOptionsUI <- function(id) {
 explorerPlotUI <- function(id) {
   ns <- NS(id)
   tagList(
-    plotOutput(ns("plot"), height = 500) %>% withSpinner()
+    plotOutput(ns("plot"), height = 650) %>% withSpinner()
   )
 }
 
