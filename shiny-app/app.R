@@ -211,7 +211,7 @@ server <- function(input, output, session) {
   # Removals Plot
   # ---------------------------------------------------------------------------
 
-  implantServer("RemovalReason", data, plotsInReport)
+  implantServer("RemovalReason", data = completeTable, plotsInReport)
 
   #----------------------------------------------------------------------------
   # Explorer plot
@@ -229,9 +229,9 @@ server <- function(input, output, session) {
   # Report
   #----------------------------------------------------------------------------
   
-  reportServer("Report", data, plotsInReport)
+  reportServer("Report", data = completeTable, plotsInReport)
   
-  stdReportServer("StdReport",data)
+  stdReportServer("StdReport",data = completeTable)
   
 
   #----------------------------------------------------------------------------
@@ -246,7 +246,6 @@ server <- function(input, output, session) {
   #----------------------------------------------------------------------------
   clinicServer("ClinicInfo", data = completeTable, plotInReport = plotsInReport)
 }
-
 
 shinyApp(ui, server)
 

@@ -7,14 +7,14 @@ implantSurvivalPlotInputUI <- function(id) {
     htmlOutput(ns("selectImplants")),
     sliderTextInput(
       inputId = ns("selectFirst"),
-      label = "Choose first interval:", 
+      label = "Choose first year:", 
       choices = c(1, 2, 3, 4, 5),
       grid = TRUE,
       selected = 2
     ),
     sliderTextInput(
       inputId = ns("selectSecond"),
-      label = "Choose second interval:",
+      label = "Choose second year:",
       choices = c(4, 5, 6, 7, 8, 9),
       grid = TRUE,
       selected = 5
@@ -82,7 +82,7 @@ implantSurvivalServer <- function(id, data, plotInReport) {
       ## Inputs -------------------------------------------------------------------
       output$selectImplants <- renderUI({
         pickerInput(ns("selectImplants"),
-                    "Select Implant(s)",
+                    "Filter Implant(s)",
                     choices = as.character(
                       sort(unique(data[["ImplantName"]]))
                     ),
