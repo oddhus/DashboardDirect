@@ -70,8 +70,8 @@ implantServer <- function(id, data, plotInReport) {
       ## Inputs -------------------------------------------------------------------
       output$selectYears <- renderUI({
         pickerInput(ns("selectYears"),
-          "Select interval(s)",
-          choices = as.character(unique(data[["RemovalBeforeNYear"]])),
+          "Filter interval(s)",
+          choices = as.character(sort(unique(na.omit(data[["RemovalBeforeNYear"]])))),
           multiple = T,
           options = list(
             `actions-box` = TRUE, size = 10,
@@ -82,7 +82,7 @@ implantServer <- function(id, data, plotInReport) {
 
       output$selectRemovalReason <- renderUI({
         pickerInput(ns("selectRemovalReason"),
-          paste0("Select Removal Reason (s)"),
+          paste0("Filter Removal Reason(s)"),
           choices = as.character(
             sort(unique(data[["RemovalReason"]]))
           ),
@@ -124,6 +124,7 @@ implantServer <- function(id, data, plotInReport) {
 
       ## Plots --------------------------------------------------------------------
       output$removalsImplantPlot <- renderPlot({
+        print("hi")
         overviewRemovalReasonPlot(
           data = data,
           removalReasons = input$selectRemovalReason,

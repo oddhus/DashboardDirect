@@ -1,7 +1,7 @@
 overviewRemovalReasonPlot <- function(data, removalReasons, years, factor, levels, showMean){
   showMean <- isTRUE(as.logical(showMean))
   filteredData <- data %>% filter(!is.na(RemovalId))
-  
+
   meanData <- filteredData %>%
     group_by(RemovalReason) %>%
     summarise(Percentage = n() / nrow(filteredData))
@@ -22,10 +22,6 @@ overviewRemovalReasonPlot <- function(data, removalReasons, years, factor, level
   
   if (isTruthy(years)) {
     filteredData <- filteredData %>% filter(
-      vectorContainsAnyElement(., years, "RemovalBeforeNYear")
-    )
-    
-    meanData <- meanData %>% filter(
       vectorContainsAnyElement(., years, "RemovalBeforeNYear")
     )
   }

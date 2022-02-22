@@ -147,11 +147,11 @@ getCompleteTable <- function() {
       ceiling(YearsSinceInsertion) == 1 ~ "Year 1",
       ceiling(YearsSinceInsertion) <= 4 ~ "Year 2-4",
       ceiling(YearsSinceInsertion) <= 9 ~ "Year 5-9",
-      ceiling(YearsSinceInsertion) >= 10 ~ "Year 10+",
+      ceiling(YearsSinceInsertion) >= 10 ~ "Over 10",
       TRUE ~ as.character(NA)
     ))
   
-  data$RemovalBeforeNYear <- factor(data$RemovalBeforeNYear, levels = c("Year 1", "Year 2-4", "Year 5-9", "Year 10+"))
+  data$RemovalBeforeNYear <- factor(data$RemovalBeforeNYear, levels = c("Year 1", "Year 2-4", "Year 5-9", "Over 10"))
   
   return(data)
 }
