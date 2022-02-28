@@ -1,4 +1,10 @@
-clincToothImplantPlot <- function(data, selectedClinic) {
+clincToothImplantPlot <- function(data, selectedClinic, overallFilter, overallFilterLevels) {
+  if(isTruthy(overallFilter) & isTruthy(overallFilterLevels)) {
+    data <- data %>% filter(
+      vectorContainsAnyElement(., overallFilterLevels, overallFilter)
+    )
+  }
+  
   filteredData <- data %>%
     mutate(OperationDate = coalesce(RemovalDate, InsertionDate),
            Operation = if_else(is.na(RemovalDate), "Insertion", "Removal"))

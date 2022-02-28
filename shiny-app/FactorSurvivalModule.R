@@ -1,10 +1,11 @@
-source("shiny-app/ImplantSurvivalPlot.R")
-source("shiny-app/ImplantLotNrSurvival.R")
+source("shiny-app/FactorSurvivalPlot.R")
+source("shiny-app/FactorImplantSurvival.R")
 
-implantSurvivalPlotInputUI <- function(id) {
+factorSurvivalPlotBasicInputUI <- function(id) {
   ns <- NS(id)
   tagList(
-    htmlOutput(ns("selectImplants")),
+    htmlOutput(ns("selectFactor")),
+    htmlOutput(ns("selectLevels")),
     sliderTextInput(
       inputId = ns("selectFirst"),
       label = "Choose first year:", 
@@ -18,29 +19,35 @@ implantSurvivalPlotInputUI <- function(id) {
       choices = c(4, 5, 6, 7, 8, 9),
       grid = TRUE,
       selected = 5
-    ),
-    actionBttn(ns("add"), "Add to report", style = "bordered", color = "warning")
+    )
   )
 }
 
-implantLotNrSurvivalPlotInputUI <- function(id) {
+factorImplantSurvivalPlotInputUI <- function(id) {
   ns <- NS(id)
   tagList(
     htmlOutput(ns("selectLotNrImplants"))
     )
 }
 
-implantSurvivalPlotUI <- function(id){
+factorSurvivalPlotGeneralInputUI <- function(id) {
   ns <- NS(id)
-  plotOutput(ns("implantSurvivalPlot"), height = 650) %>% withSpinner()
+  tagList(
+    actionBttn(ns("add"), "Add to report", style = "bordered", color = "warning")
+  )
 }
 
-implantLotNrSurvivalPlotUI <- function(id){
+factorSurvivalPlotUI <- function(id){
   ns <- NS(id)
-  plotOutput(ns("implantLotNrSurvivalPlot"), height = 500) %>% withSpinner()
+  plotOutput(ns("factorSurvivalPlot"), height = 650) %>% withSpinner()
 }
 
-implantSurvivalServer <- function(id, data, plotInReport) {
+factorImplantSurvivalPlotUI <- function(id){
+  ns <- NS(id)
+  plotOutput(ns("factorImplantSurvivalPlot"), height = 500) %>% withSpinner()
+}
+
+factorSurvivalServer <- function(id, data, plotInReport, overallFilter, overallFilterLevels) {
   moduleServer(
     id,
     function(input, output, session) {
@@ -80,11 +87,21 @@ implantSurvivalServer <- function(id, data, plotInReport) {
       })
       
       ## Inputs -------------------------------------------------------------------
-      output$selectImplants <- renderUI({
-        pickerInput(ns("selectImplants"),
-                    "Filter Implant(s)",
+      
+      output$selectFactor <- renderUI({
+        pickerInput(ns("selectFactor"),
+                    "Select Factor",
+                    choices = c(data %>% select_if( ~ is.factor(.)) %>% names(), "None"),
+                    selected = "None"
+        )
+      })
+      
+      output$selectLevels <- renderUI({
+        req(isTruthy(input$selectFactor) & isTRUE(input$selectFactor != "None"))
+        pickerInput(ns("selectLevels"),
+                    paste0("Filter ", input$selectFactor),
                     choices = as.character(
-                      sort(unique(data[["ImplantName"]]))
+                      sort(unique(data[[input$selectFactor]]))
                     ),
                     multiple = T,
                     options = list(
@@ -97,11 +114,7 @@ implantSurvivalServer <- function(id, data, plotInReport) {
       output$selectLotNrImplants <- renderUI({
         pickerInput(ns("selectLotNrImplants"),
                     "Select Implant(s)",
-                    choices = if (isTruthy(input$selectImplants)) {
-                      input$selectImplants
-                    } else{
-                      as.character(sort(unique(data[["ImplantName"]])))
-                    } ,
+                    choices = as.character(sort(unique(data[["ImplantName"]]))),
                     multiple = T,
                     options = list(
                       `actions-box` = TRUE, size = 10,
@@ -113,24 +126,33 @@ implantSurvivalServer <- function(id, data, plotInReport) {
       ## Plots --------------------------------------------------------------------
       
       
-      output$implantSurvivalPlot <- renderPlot({
+      output$factorSurvivalPlot <- renderPlot({
         req(isTruthy(input$selectFirst))
         req(isTruthy(input$selectSecond))
+        req(isTruthy(input$selectFactor))
         
-        implantSurvivalPlot(data = data,
-                            selectedImplants = input$selectImplants,
+        factorSurvivalPlot(data = data,
+                            factor = input$selectFactor,
+                            levels = input$selectLevels,
                             firstYear = input$selectFirst,
-                            secondYear = input$selectSecond)
+                            secondYear = input$selectSecond,
+                            overallFilter = overallFilter(),
+                            overallFilterLevels = overallFilterLevels())
       })
       
-      output$implantLotNrSurvivalPlot <- renderPlot({
+      output$factorImplantSurvivalPlot <- renderPlot({
         req(isTruthy(input$selectFirst))
         req(isTruthy(input$selectSecond))
+        req(isTruthy(input$selectFactor))
         
-        implantLotNrSurvivalPlot(data = data,
+        factorImplantSurvivalPlot(data = data,
+                                 factor = input$selectFactor,
+                                 levels = input$selectLevels,
                                  selectedImplants = input$selectLotNrImplants,
                                  firstYear = input$selectFirst,
-                                 secondYear = input$selectSecond)
+                                 secondYear = input$selectSecond,
+                                 overallFilter = overallFilter(),
+                                 overallFilterLevels = overallFilterLevels())
       })
       
     }

@@ -1,4 +1,10 @@
-clinicSuccesRatePlot <- function(data, selectedClinic) {
+clinicSuccesRatePlot <- function(data, selectedClinic, overallFilter, overallFilterLevels) {
+  if(isTruthy(overallFilter) & isTruthy(overallFilterLevels)) {
+    data <- data %>% filter(
+      vectorContainsAnyElement(., overallFilterLevels, overallFilter)
+    )
+  }
+  
   allData <- data %>% filter(!is.na(InsertionId)) %>%
   group_by(InsertionClinic) %>%
   summarise(all = n())

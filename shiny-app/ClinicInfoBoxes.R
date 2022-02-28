@@ -1,4 +1,10 @@
-antibioticsInfo <- function(data, selectedClinic) {
+antibioticsInfo <- function(data, selectedClinic, overallFilter, overallFilterLevels) {
+  if(isTruthy(overallFilter) & isTruthy(overallFilterLevels)) {
+    data <- data %>% filter(
+      vectorContainsAnyElement(., overallFilterLevels, overallFilter)
+    )
+  }
+  
   filteredData <- data %>%
     arrange(desc(data$InsertionDate))  %>%
     filter(!is.na(InsertionId) & InsertionClinic == selectedClinic)
@@ -23,7 +29,13 @@ antibioticsInfo <- function(data, selectedClinic) {
           fill = TRUE)
 }
 
-complicationsInfo <- function(data, selectedClinic) {
+complicationsInfo <- function(data, selectedClinic, overallFilter, overallFilterLevels) {
+  if(isTruthy(overallFilter) & isTruthy(overallFilterLevels)) {
+    data <- data %>% filter(
+      vectorContainsAnyElement(., overallFilterLevels, overallFilter)
+    )
+  }
+  
   filteredData <- data %>%
     arrange(desc(data$InsertionDate))  %>%
     filter(!is.na(InsertionId) & InsertionClinic == selectedClinic)
@@ -48,7 +60,13 @@ complicationsInfo <- function(data, selectedClinic) {
           fill = TRUE)
 }
 
-guiderailInfo <- function(data, selectedClinic) {
+guiderailInfo <- function(data, selectedClinic,  overallFilter, overallFilterLevels) {
+  if(isTruthy(overallFilter) & isTruthy(overallFilterLevels)) {
+    data <- data %>% filter(
+      vectorContainsAnyElement(., overallFilterLevels, overallFilter)
+    )
+  }
+  
   filteredData <- data %>%
     arrange(desc(data$InsertionDate))  %>%
     filter(!is.na(InsertionId) & InsertionClinic == selectedClinic)

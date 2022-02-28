@@ -91,7 +91,7 @@ getCompleteTable <- function() {
     left_join(lekholmZarbDensity, by = c("LekholmZarbDensityId" = "Id")) %>%
     rename(LekholmZarbDensity = Name) %>% select(-LekholmZarbDensityId) %>%
     left_join(antibioticsData, by = c("InsertionId")) %>%
-    inner_join(implant, by=c("InsertionId")) %>%
+    inner_join(implantData, by=c("InsertionId")) %>%
     left_join(implantTypeData, by = c("ImplantsId" = "Id")) %>%
     select(-(ends_with("Id") &
                !starts_with("PatientId") &
@@ -109,7 +109,7 @@ getCompleteTable <- function() {
     rename(RemovalReason = Name) %>%
     left_join(clinic, by = c("ClinicId" = "Id")) %>%
     rename(Clinic = Name) %>%
-    inner_join(implant, by=c("RemovalId")) %>%
+    inner_join(implantData, by=c("RemovalId")) %>%
     left_join(implantTypeData, by = c("ImplantsId" = "Id")) %>%
     select(PatientId, Position, RemovalId, InsertionDate, RemovalDate, RemovalReason,
            Clinic, ImplantName, Vendor, Position, ImplantLengthMillimeter, ImplantDiameterMillimeter,

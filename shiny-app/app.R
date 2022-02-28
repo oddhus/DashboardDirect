@@ -20,36 +20,106 @@ source("shiny-app/AnalyzePlotModule.R")
 source("shiny-app/ReportModule.R")
 source("shiny-app/StdReportModule.R")
 source("shiny-app/SurvivalModule.R")
-source("shiny-app/ImplantSurvivalModule.R")
+source("shiny-app/FactorSurvivalModule.R")
 source("shiny-app/ClinicModule.R")
 
 ui <- dashboardPage(
   dashboardHeader(title = "Tooth implants"),
   dashboardSidebar(
     sidebarMenu(
-
-        tags$style(type = "text/css",
-                   "#sidebarTitle { padding-left: 16px; } "),
-        div(id = "sidebarTitle", h3("Graph options")),
+      id = "sidebarmenu",
+      tags$style(
+        type = "text/css",
+        "#sidebarTitle { padding-left: 16px; } "
+      ),
+      div(id = "sidebarTitle", h3("Options")),
+      conditionalPanel(
+        condition = "input.tabs == 'Overview Removals' |
+                      input.tabs == 'Survival analysis' |
+                      input.tabs == 'Implant Survival' |
+                      input.tabs == 'Clinic'",
+        sidebarMenu(menuItem("Filter",
+          tabName = "filter",
+          pickerInput("overallFilter",
+            "Select Overall Filter",
+            choices = c(
+              "LekholmZarbVolume",
+              "LekholmZarbDensity",
+              "TimeUntilLoad",
+              "Stability",
+              "BoneAugmentationMethod",
+              "None"
+            ),
+            selected = "None"
+          ),
+          htmlOutput("overallFilterLevels"),
+          style="padding-bottom:6px;"
+        ))
+      ),
+      conditionalPanel(
+        condition = "input.tabs == 'Overview Removals'",
+        sidebarMenu(menuItem("Basic options",
+          tabName = "basic",
+          implantInputBasicUI("RemovalReason"),
+          startExpanded = T,
+          style="padding-bottom:6px;"
+        ))
+      ),
+      conditionalPanel(
+        condition = "input.tabs == 'Overview Removals'",
+        sidebarMenu(
+          menuItem("Advanced options",
+            tabName = "advanced",
+            implantInputAdvancedUI("RemovalReason"),
+            style="padding-bottom:6px;"
+          )
+        )
+      ),
+      conditionalPanel(
+        condition = "input.tabs == 'Survival analysis'",
+        sidebarMenu(menuItem("Basic options",
+          tabName = "basic",
+          survivalPlotBasicInputUI("SurvivalPlot"),
+          startExpanded = T,
+          style="padding-bottom:6px;"
+        ))
+      ),
+      conditionalPanel(
+        condition = "input.tabs == 'Survival analysis'",
+        sidebarMenu(
+          menuItem("Advanced options",
+            tabName = "advanced",
+            survivalPlotAdvancedInputUI("SurvivalPlot"),
+            style="padding-bottom:6px;"
+          )
+        )
+      ),
+      conditionalPanel(
+        condition = "input.tabs == 'Survival analysis'",
+        survivalPlotGeneralInputUI("SurvivalPlot")
+      ),
+      conditionalPanel(
+        condition = "input.tabs == 'Implant Survival'",
+        sidebarMenu(menuItem("Basic options",
+                             tabName = "basic",
+                             factorSurvivalPlotBasicInputUI("FactorSurvival"),
+                             startExpanded = T,
+                             style="padding-bottom:6px;"
+        ))
+      ),
+      conditionalPanel(
+        condition = "input.tabs == 'Implant Survival'",
+        factorSurvivalPlotGeneralInputUI("FactorSurvival")
+      )
+    ),
+    sidebarMenu(
       conditionalPanel(
         condition = "input.tabs == 'Analyses'",
         analyzePlotInputUI("Analyze")
       ),
       conditionalPanel(
-        condition = "input.tabs == 'Overview Removals'",
-        implantInputUI("RemovalReason")
-      ),
-      conditionalPanel(
-        condition = "input.tabs == 'Survival analysis'",
-        survivalPlotInputUI("SurvivalPlot")
-      ),
-      conditionalPanel(
         condition = "input.tabs == 'Clinic'",
         clinicInputUI("ClinicInfo")
-      ),
-      conditionalPanel(
-        condition = "input.tabs == 'Implant Survival'",
-        implantSurvivalPlotInputUI("ImplantSurvival")
       ),
       conditionalPanel(
         condition = "input.tabs == 'Explorer'",
@@ -70,54 +140,50 @@ ui <- dashboardPage(
             implantPlotUI("RemovalReason"),
             width = 12,
           ),
-          style='margin-top:10px;'
+          style = "margin-top:10px;"
         )
-        
       ),
       tabPanel(
         "Survival analysis",
         fluidRow(
           box(
-            title = "Implant Survival",
+            title = "Survival Analysis",
             survivalPlotUI("SurvivalPlot"),
             width = 12
           ),
-          style='margin-top:10px;'
+          style = "margin-top:10px;"
         ),
-        
       ),
       tabPanel(
         "Implant Survival",
         fluidRow(
           box(
-            title = "Implant Survival",
-            implantSurvivalPlotUI("ImplantSurvival"),
+            title = "Survival by factor",
+            factorSurvivalPlotUI("FactorSurvival"),
             width = 6
           ),
           column(
             box(
               title = "Drilldown options",
-              implantLotNrSurvivalPlotInputUI("ImplantSurvival"),
+              factorImplantSurvivalPlotInputUI("FactorSurvival"),
               width = 12
             ),
             box(
-              title = "Drilldown LotNr Survival",
-              implantLotNrSurvivalPlotUI("ImplantSurvival"),
+              title = "Drilldown Implant",
+              factorImplantSurvivalPlotUI("FactorSurvival"),
               width = 12
             ),
             width = 6
           ),
-          
-          style='margin-top:10px;'
+          style = "margin-top:10px;"
         ),
-        
       ),
       tabPanel(
         "Clinic",
         fluidRow(
           box(
             title = "Operations statistics",
-            fluidRow(            
+            fluidRow(
               clinicAntibioticInfoUI("ClinicInfo"),
               complicationsInfoUI("ClinicInfo"),
               guiderailInfoUI("ClinicInfo"),
@@ -136,7 +202,7 @@ ui <- dashboardPage(
             column(clinicSuccessRatePlotUI("ClinicInfo"), width = 12),
             width = 6
           ),
-          style='margin-top:10px;'
+          style = "margin-top:10px;"
         ),
         fluidRow(
           box(
@@ -162,7 +228,7 @@ ui <- dashboardPage(
             explorerPlotUI("Explorer"),
             width = 12
           ),
-          style='margin-top:10px;'
+          style = "margin-top:10px;"
         ),
       ),
       tabPanel(
@@ -176,7 +242,7 @@ ui <- dashboardPage(
             analyzePrintUI("Analyze"),
             width = 6
           ),
-          style='margin-top:10px;'
+          style = "margin-top:10px;"
         )
       ),
       tabPanel(
@@ -199,25 +265,56 @@ server <- function(input, output, session) {
   # Data
   # ------------------------------s---------------------------------------------
   completeTable <- getCompleteTable()
+  overallFilter <- reactiveVal("None")
+  overallFilterLevels <- reactiveVal(NULL)
 
   # ---------------------------------------------------------------------------
   # Global events and variables
   # ---------------------------------------------------------------------------
 
   plotsInReport <- reactiveValues()
-  
+
+  output$overallFilterLevels <- renderUI({
+    req(isTruthy(input$overallFilter) & isTRUE(input$overallFilter != "None"))
+
+
+    pickerInput("overallFilterLevels",
+      paste("Filter ", input$overallFilter),
+      choices = as.character(
+        sort(unique(data[[input$overallFilter]]))
+      ),
+      multiple = T,
+      options = list(
+        `actions-box` = TRUE, size = 10,
+        `selected-text-format` = "count > 2"
+      )
+    )
+  })
+
+  observeEvent(input$overallFilter, ignoreNULL = F, {
+    overallFilter(input$overallFilter)
+  })
+
+  observeEvent(input$overallFilterLevels, ignoreNULL = F, {
+    overallFilterLevels(input$overallFilterLevels)
+  })
+
 
   # ---------------------------------------------------------------------------
   # Removals Plot
   # ---------------------------------------------------------------------------
 
-  implantServer("RemovalReason", data = completeTable, plotsInReport)
+  implantServer("RemovalReason",
+    data = completeTable, plotsInReport,
+    overallFilter = overallFilter,
+    overallFilterLevels = overallFilterLevels
+  )
 
   #----------------------------------------------------------------------------
   # Explorer plot
   #----------------------------------------------------------------------------
 
-  explorerPlotServer("Explorer", data = completeTable, plotInReport = plotsInReport )
+  explorerPlotServer("Explorer", data = completeTable, plotInReport = plotsInReport)
 
   #----------------------------------------------------------------------------
   # Analyses
@@ -228,24 +325,32 @@ server <- function(input, output, session) {
   #----------------------------------------------------------------------------
   # Report
   #----------------------------------------------------------------------------
-  
+
   reportServer("Report", data = completeTable, plotsInReport)
-  
-  stdReportServer("StdReport",data = completeTable)
-  
+
+  stdReportServer("StdReport", data = completeTable)
+
 
   #----------------------------------------------------------------------------
   # Survival
   #----------------------------------------------------------------------------
-  survivalPlotServer("SurvivalPlot", data = completeTable, plotInReport = plotsInReport)
-  
-  implantSurvivalServer("ImplantSurvival", data = completeTable, plotInReport = plotsInReport)
-  
+  survivalPlotServer("SurvivalPlot",
+    data = completeTable, plotInReport = plotsInReport,
+    overallFilter = overallFilter,
+    overallFilterLevels = overallFilterLevels
+  )
+
+  factorSurvivalServer("FactorSurvival", data = completeTable,
+                        plotInReport = plotsInReport,
+                        overallFilter = overallFilter,
+                        overallFilterLevels = overallFilterLevels)
+
   #----------------------------------------------------------------------------
   # Clinic
   #----------------------------------------------------------------------------
-  clinicServer("ClinicInfo", data = completeTable, plotInReport = plotsInReport)
+  clinicServer("ClinicInfo", data = completeTable, plotInReport = plotsInReport,
+               overallFilter = overallFilter,
+               overallFilterLevels = overallFilterLevels)
 }
 
 shinyApp(ui, server)
-

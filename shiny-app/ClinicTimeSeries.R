@@ -2,7 +2,15 @@ clinicTimeSeriesPlot <- function(data,
                            selectedClinic,
                            insertionsOrRemovals = "Insertions",
                            predicate,
-                           xlab = "nn", ylab = "nn"){
+                           xlab = "nn", ylab = "nn",
+                           overallFilter,
+                           overallFilterLevels){
+  
+  if(isTruthy(overallFilter) & isTruthy(overallFilterLevels)) {
+    data <- data %>% filter(
+      vectorContainsAnyElement(., overallFilterLevels, overallFilter)
+    )
+  }
   
   data <- data %>% mutate(year = as.character(
     format(lubridate::floor_date(InsertionDate, "year"),'%Y')))

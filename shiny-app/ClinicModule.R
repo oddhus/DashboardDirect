@@ -49,7 +49,7 @@ guiderailInfoUI <- function(id) {
 
 
 
-clinicServer <- function(id, data, plotInReport) {
+clinicServer <- function(id, data, plotInReport, overallFilter, overallFilterLevels) {
   moduleServer(
     id,
     function(input, output, session) {
@@ -100,19 +100,19 @@ clinicServer <- function(id, data, plotInReport) {
       
       ## Plots --------------------------------------------------------------------
       output$antibioticsInfo <- renderValueBox({
-        antibioticsInfo(data, input$selectClinic)
+        antibioticsInfo(data, input$selectClinic, overallFilter(), overallFilterLevels())
       })
       
       output$complicationsInfo <- renderValueBox({
-        complicationsInfo(data, input$selectClinic)
+        complicationsInfo(data, input$selectClinic, overallFilter(), overallFilterLevels())
       })
       
       output$guiderailInfo <- renderValueBox({
-        guiderailInfo(data, input$selectClinic)
+        guiderailInfo(data, input$selectClinic, overallFilter(), overallFilterLevels())
       })
       
       output$successRatePlot <- renderPlot({
-        clinicSuccesRatePlot(data = data, selectedClinic = input$selectClinic)
+        clinicSuccesRatePlot(data = data, selectedClinic = input$selectClinic, overallFilter(), overallFilterLevels())
       })
       
       output$antibioticUsagePlot <- renderPlot({
@@ -125,7 +125,8 @@ clinicServer <- function(id, data, plotInReport) {
                             insertionsOrRemovals = "Insertions",
                             predicate = abPredicate,
                             xlab = "Year",
-                            ylab = "Patients recieved\n antibiotics %")
+                            ylab = "Patients recieved\n antibiotics %",
+                            overallFilter(), overallFilterLevels())
       })
       
       output$infectionPlot <- renderPlot({
@@ -138,11 +139,13 @@ clinicServer <- function(id, data, plotInReport) {
                              insertionsOrRemovals = "Removals",
                              predicate = rrPredicate,
                              xlab = "Year",
-                             ylab = "% of first year removals\n due to infection")
+                             ylab = "% of first year removals\n due to infection",
+                             overallFilter(), overallFilterLevels())
       })
       
       output$toothImplants <- renderPlot({
-        clincToothImplantPlot(data, input$selectClinic)
+        clincToothImplantPlot(data, input$selectClinic,
+                              overallFilter(), overallFilterLevels())
       })
     }
   )

@@ -1,4 +1,10 @@
-overviewRemovalReasonPlot <- function(data, removalReasons, years, factor, levels, showMean){
+overviewRemovalReasonPlot <- function(data, removalReasons, years, factor, levels, showMean, overallFilter, overallFilterLevels){
+  if(isTruthy(overallFilter) & isTruthy(overallFilterLevels)) {
+    data <- data %>% filter(
+      vectorContainsAnyElement(., overallFilterLevels, overallFilter)
+    )
+  }
+  
   showMean <- isTRUE(as.logical(showMean))
   filteredData <- data %>% filter(!is.na(RemovalId))
 

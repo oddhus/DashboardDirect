@@ -1,4 +1,10 @@
-survivalPlot <- function(data, factor, levels, additionalFactor, additionalLevels){
+survivalPlot <- function(data, factor, levels, additionalFactor, additionalLevels, overallFilter, overallFilterLevels){
+  if(isTruthy(overallFilter) & isTruthy(overallFilterLevels)) {
+    data <- data %>% filter(
+      vectorContainsAnyElement(., overallFilterLevels, overallFilter)
+    )
+  }
+  
   filteredData <- data
   
   if (isTruthy(factor) & isTruthy(levels) & isTRUE(factor != "None")) {

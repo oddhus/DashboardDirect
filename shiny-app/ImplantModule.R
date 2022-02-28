@@ -1,12 +1,10 @@
 source("shiny-app/ImplantPlot.R")
 
-implantInputUI <- function(id) {
+implantInputBasicUI <- function(id) {
   ns <- NS(id)
   tagList(
     htmlOutput(ns("selectYears")),
     htmlOutput(ns("selectRemovalReason")),
-    htmlOutput(ns("selectFactor")),
-    htmlOutput(ns("selectLevels")),
     checkboxGroupButtons(
       inputId = ns("implantPlotOptions"),
       label = "Show",
@@ -14,16 +12,31 @@ implantInputUI <- function(id) {
       status = "info",
       selected = NULL
     ),
+  )
+}
+
+implantInputAdvancedUI <- function(id) {
+  ns <- NS(id)
+  tagList(
+    htmlOutput(ns("selectFactor")),
+    htmlOutput(ns("selectLevels")),
+  )
+}
+
+implantInputGeneralUI <- function(id) {
+  ns <- NS(id)
+  tagList(
     actionBttn(ns("add"), "Add to report", style = "bordered", color = "warning")
   )
 }
+
 
 implantPlotUI <- function(id) {
   ns <- NS(id)
   plotOutput(ns("removalsImplantPlot"), height = 650) %>% withSpinner()
 }
 
-implantServer <- function(id, data, plotInReport) {
+implantServer <- function(id, data, plotInReport, overallFilter, overallFilterLevels) {
   moduleServer(
     id,
     function(input, output, session) {
@@ -125,13 +138,16 @@ implantServer <- function(id, data, plotInReport) {
 
       ## Plots --------------------------------------------------------------------
       output$removalsImplantPlot <- renderPlot({
+        
         overviewRemovalReasonPlot(
           data = data,
           removalReasons = input$selectRemovalReason,
           years = input$selectYears,
           factor = input$selectFactor,
           levels = input$selectLevels,
-          showMean = "Mean" %in% input$implantPlotOptions
+          showMean = "Mean" %in% input$implantPlotOptions,
+          overallFilter = overallFilter(),
+          overallFilterLevels =overallFilterLevels()
         )
       })
     }
