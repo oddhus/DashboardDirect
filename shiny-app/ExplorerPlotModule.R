@@ -1,6 +1,8 @@
 source("shiny-app/ExplorerPlot.R")
+source("shiny-app/ExplorerSimplePlot.R")
 
-explorePlotOptionsUI <- function(id) {
+
+explorerPlotOptionsUI <- function(id) {
   ns <- NS(id)
   tagList(
     radioGroupButtons(
@@ -11,15 +13,23 @@ explorePlotOptionsUI <- function(id) {
       justified = TRUE,
       status = "primary"
     ),
-    htmlOutput(ns("y"), width = 12),
     htmlOutput(ns("x"), width = 12),
     htmlOutput(ns("xLevels"), width = 12),
+    htmlOutput(ns("y"), width = 12),
     htmlOutput(ns("factor1"), width = 12),
     htmlOutput(ns("factor1Levels"), width = 12),
     htmlOutput(ns("factor2"), width = 12),
     htmlOutput(ns("factor2Levels"), width = 12),
     htmlOutput(ns("factorColor"), width = 12),
-    htmlOutput(ns("factorColorLevels"), width = 12),
+    htmlOutput(ns("factorColorLevels"), width = 12)
+  )
+}
+
+
+
+explorerPlotGeneralOptionsUI <- function(id) {
+  ns <- NS(id)
+  tagList(
     actionBttn(ns("add"), "Add to report", style = "bordered", color = "warning")
   )
 }
@@ -33,7 +43,10 @@ explorerPlotUI <- function(id) {
 
 explorerPlotServer <- function(id,
                                data,
-                               plotInReport) {
+                               plotInReport,
+                               overallFilter,
+                               overallFilterLevels,
+                               useAdvanced) {
   moduleServer(
     id,
     function(input, output, session) {
@@ -75,6 +88,7 @@ explorerPlotServer <- function(id,
           plotInReport$dList <- c(isolate(plotInReport$dList),
                               list(c("y" = isolate(input$y),
                                      "x" = isolate(input$x),
+                                     "xLevels" = isolate(paste(input$xLevels, collapse = ";")),
                                      "factor1" = isolate(input$factor1),
                                      "factor1Levels" = isolate(paste(input$factor1Levels, collapse = ";")),
                                      "factor2" = isolate(input$factor2),
@@ -82,12 +96,17 @@ explorerPlotServer <- function(id,
                                      "factorColor" = isolate(input$factorColor),
                                      "factorColorLevels" = isolate(paste(input$factorColorLevels, collapse = ";")),
                                      "insertionsOrRemovals" =  isolate(input$insertionsOrRemovals),
+                                     "overallFilter" = isolate(overallFilter()),
+                                     "overallFilterLevels" = isolate(paste(overallFilterLevels(), collapse = ";")),
+                                     "useAdvanced" = isolate(useAdvanced()),
                                      "tab" = "Explorer")))
         }
       })
 
       ### Y-axis
       output$y <- renderUI({
+        if(!useAdvanced()){return(NULL)}
+        
         pickerInput(ns("y"),
           "Select Y-axis",
           choices = c(numericOptions, logicalOptions),
@@ -108,6 +127,7 @@ explorerPlotServer <- function(id,
       
       output$xLevels <- renderUI({
         req(input$x)
+        if(!useAdvanced()){return(NULL)}
         
         if (!is.numeric(data[[input$x]])) {
           pickerInput(ns("xLevels"),
@@ -126,6 +146,7 @@ explorerPlotServer <- function(id,
 
       ### Fill color
       output$factorColor <- renderUI({
+        if(!useAdvanced()){return(NULL)}
           pickerInput(ns("factorColor"),
             "Select Fill Color",
             choices = list(
@@ -139,6 +160,8 @@ explorerPlotServer <- function(id,
       output$factorColorLevels <- renderUI({
         req(input$factorColor)
         req(input$factorColor != "None")
+        
+        if(!useAdvanced()){return(NULL)}
         
         pickerInput(ns("factorColorLevels"),
                     label = paste0("Filter ", input$factorColor),
@@ -155,6 +178,7 @@ explorerPlotServer <- function(id,
 
       ### Facet row
       output$factor1 <- renderUI({
+        if(!useAdvanced()){return(NULL)}
         pickerInput(ns("factor1"),
           "Select Facet Row",
           choices = list(
@@ -169,6 +193,7 @@ explorerPlotServer <- function(id,
       output$factor1Levels <- renderUI({
         req(input$factor1)
         req(input$factor1 != "None")
+        if(!useAdvanced()){return(NULL)}
 
           pickerInput(ns("factor1Levels"),
             label = paste0("Filter ", input$factor1),
@@ -185,6 +210,7 @@ explorerPlotServer <- function(id,
       
       ### Facet row
       output$factor2 <- renderUI({
+        if(!useAdvanced()){return(NULL)}
         pickerInput(ns("factor2"),
                     "Select Facet Row",
                     choices = list(
@@ -199,6 +225,7 @@ explorerPlotServer <- function(id,
       output$factor2Levels <- renderUI({
         req(input$factor2)
         req(input$factor2 != "None")
+        if(!useAdvanced()){return(NULL)}
         
         pickerInput(ns("factor2Levels"),
                     label = paste0("Filter ", input$factor2),
@@ -218,23 +245,34 @@ explorerPlotServer <- function(id,
       output$plot <- renderPlot({
         req(
           isTruthy(data),
-          isTruthy(input$y),
           isTruthy(input$x)
         )
         
-        explorerPlot(
-          data = data,
-          y = input$y,
-          x = input$x,
-          xLevels = input$xLevels,
-          factor1 = input$factor1,
-          factor1Levels = input$factor1Levels,
-          factor2 = input$factor2,
-          factor2Levels = input$factor2Levels,
-          factorColor = input$factorColor,
-          factorColorLevels = input$factorColorLevels,
-          InsertionsOrRemovals = input$insertionsOrRemovals
-        )
+        if(useAdvanced()) {
+          explorerPlot(
+            data = data,
+            y = input$y,
+            x = input$x,
+            xLevels = input$xLevels,
+            factor1 = input$factor1,
+            factor1Levels = input$factor1Levels,
+            factor2 = input$factor2,
+            factor2Levels = input$factor2Levels,
+            factorColor = input$factorColor,
+            factorColorLevels = input$factorColorLevels,
+            InsertionsOrRemovals = input$insertionsOrRemovals,
+            overallFilter = overallFilter(),
+            overallFilterLevels = overallFilterLevels()
+          )
+        } else {
+          explorerPlotSimple(
+            data = data,
+            x = input$x,
+            InsertionsOrRemovals = input$insertionsOrRemovals,
+            overallFilter = overallFilter(),
+            overallFilterLevels = overallFilterLevels()
+          )
+        }
       })
     }
   )

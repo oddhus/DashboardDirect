@@ -74,6 +74,8 @@ implantServer <- function(id, data, plotInReport, overallFilter, overallFilterLe
               "factor" = isolate(input$selectFactor),
               "levels" = isolate(paste(input$selectLevels, collapse = ";")),
               "showMean" = isolate("Mean" %in% input$implantPlotOptions),
+              "overallFilter" = isolate(overallFilter()),
+              "overallFilterLevels" = isolate(paste(overallFilterLevels(), collapse = ";")),
               "tab" = "Implant"
             ))
           )

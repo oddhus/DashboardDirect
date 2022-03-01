@@ -1,6 +1,12 @@
-factorSurvivalPlot <- function(data, factor, levels, firstYear, secondYear, overallFilter, overallFilterLevels){
+factorSurvivalPlot <- function(data,
+                               factor = NULL,
+                               levels = NULL,
+                               firstYear = 2,
+                               secondYear = 5,
+                               overallFilter = NULL,
+                               overallFilterLevels = NULL){
   
-  if(isTruthy(overallFilter) & isTruthy(overallFilterLevels)) {
+  if(isTruthy(overallFilter) & isTruthy(overallFilterLevels) & isTruthy(overallFilter != "None")) {
     data <- data %>% filter(
       vectorContainsAnyElement(., overallFilterLevels, overallFilter)
     )
@@ -28,8 +34,19 @@ factorSurvivalPlot <- function(data, factor, levels, firstYear, secondYear, over
     group_by_at(factor) %>%
     summarise(removed = n())
   
+  #Must do this for the report functionality to work
+  if ("factor" %in% colnames(removed_FirstYearData)) {
+    removed_FirstYearData <- removed_FirstYearData %>% rename(!!sym(factor) := factor)
+  }
+  if ("factor" %in% colnames(removed_SecondYearData)) {
+    removed_SecondYearData <- removed_SecondYearData %>% rename(!!sym(factor) := factor)
+  }
+  if ("factor" %in% colnames(allData)) {
+    allData <- allData %>% rename(!!sym(factor) := factor)
+  }
+  
   data_FirstYear <- allData %>%
-    left_join(removed_FirstYearData, by=c(factor)) %>%
+    left_join(removed_FirstYearData, by=c(as.character(factor))) %>%
     mutate(
       success = all - removed,
       successRate = success / all,
@@ -40,7 +57,7 @@ factorSurvivalPlot <- function(data, factor, levels, firstYear, secondYear, over
     )
   
   data_SecondYear <- allData %>%
-    left_join(removed_SecondYearData, by=c(factor)) %>%
+    left_join(removed_SecondYearData, by=c(as.character(factor))) %>%
     mutate(
       success = all - removed,
       successRate = success / all,

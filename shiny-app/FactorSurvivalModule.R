@@ -78,10 +78,13 @@ factorSurvivalServer <- function(id, data, plotInReport, overallFilter, overallF
       observeEvent(input$confirm, {
         if(input$confirm){
           plotInReport$dList <- c(isolate(plotInReport$dList),
-                                  list(c("selectedImplants" = isolate(paste(input$selectedImplants, collapse = ";")),
+                                  list(c("factor" = isolate(input$selectFactor),
+                                         "levels" = isolate(paste(input$selectLevels, collapse = ";")),
                                          "firstYear" = isolate(input$selectFirst),
                                          "secondYear" = isolate(input$selectSecond),
                                          "selectedLotNrImplants" = isolate(paste(input$selectLotNrImplants, collapse = ";")),
+                                         "overallFilter" = isolate(overallFilter()),
+                                         "overallFilterLevels" = isolate(paste(overallFilterLevels(), collapse = ";")),
                                          "tab" = "Implant Survival")))
         }
       })

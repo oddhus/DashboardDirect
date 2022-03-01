@@ -10,7 +10,16 @@ explorerPlot <- function(data,
                             factor2Levels = NULL,
                             factorColor = NULL,
                             factorColorLevels = NULL,
-                            InsertionsOrRemovals = "Insertions") {
+                            InsertionsOrRemovals = "Insertions",
+                            overallFilter = NULL,
+                            overallFilterLevels = NULL) {
+  
+  if(isTruthy(overallFilter) & isTruthy(overallFilterLevels) & isTruthy(overallFilter != "None")) {
+    data <- data %>% filter(
+      vectorContainsAnyElement(., overallFilterLevels, overallFilter)
+    )
+  }
+  
   filteredData <- data
   n_operations <- NULL
   numericX <- is.numeric(data[[x]])

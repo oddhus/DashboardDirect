@@ -63,6 +63,8 @@ survivalPlotServer <- function(id, data, plotInReport, overallFilter, overallFil
                                          "levels" = isolate(paste(input$selectLevels, collapse = ";")),
                                          "additionalFactor" = isolate(input$selectAdditionalFactor),
                                          "additionalLevels" = isolate(paste(input$selectAdditionalLevels, collapse = ";")),
+                                         "overallFilter" = isolate(overallFilter()),
+                                         "overallFilterLevels" = isolate(paste(overallFilterLevels(), collapse = ";")),
                                          "tab" = "Survival")))
         }
       })

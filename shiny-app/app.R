@@ -36,12 +36,13 @@ ui <- dashboardPage(
       conditionalPanel(
         condition = "input.tabs == 'Overview Removals' |
                       input.tabs == 'Survival analysis' |
-                      input.tabs == 'Implant Survival' |
-                      input.tabs == 'Clinic'",
-        sidebarMenu(menuItem("Filter",
+                      input.tabs == 'Survival Factors' |
+                      input.tabs == 'Clinic' |
+                      input.tabs == 'Explorer'",
+        sidebarMenu(menuItem("Global Filter",
           tabName = "filter",
           pickerInput("overallFilter",
-            "Select Overall Filter",
+            "Select Global Filter",
             choices = c(
               "LekholmZarbVolume",
               "LekholmZarbDensity",
@@ -53,7 +54,7 @@ ui <- dashboardPage(
             selected = "None"
           ),
           htmlOutput("overallFilterLevels"),
-          style="padding-bottom:6px;"
+          style = "padding-bottom:6px;"
         ))
       ),
       conditionalPanel(
@@ -62,7 +63,7 @@ ui <- dashboardPage(
           tabName = "basic",
           implantInputBasicUI("RemovalReason"),
           startExpanded = T,
-          style="padding-bottom:6px;"
+          style = "padding-bottom:6px;"
         ))
       ),
       conditionalPanel(
@@ -71,9 +72,13 @@ ui <- dashboardPage(
           menuItem("Advanced options",
             tabName = "advanced",
             implantInputAdvancedUI("RemovalReason"),
-            style="padding-bottom:6px;"
+            style = "padding-bottom:6px;"
           )
         )
+      ),
+      conditionalPanel(
+        condition = "input.tabs == 'Overview Removals'",
+        implantInputGeneralUI("RemovalReason")
       ),
       conditionalPanel(
         condition = "input.tabs == 'Survival analysis'",
@@ -81,8 +86,9 @@ ui <- dashboardPage(
           tabName = "basic",
           survivalPlotBasicInputUI("SurvivalPlot"),
           startExpanded = T,
-          style="padding-bottom:6px;"
-        ))
+          style = "padding-bottom:6px;"
+        )
+        )
       ),
       conditionalPanel(
         condition = "input.tabs == 'Survival analysis'",
@@ -90,7 +96,7 @@ ui <- dashboardPage(
           menuItem("Advanced options",
             tabName = "advanced",
             survivalPlotAdvancedInputUI("SurvivalPlot"),
-            style="padding-bottom:6px;"
+            style = "padding-bottom:6px;"
           )
         )
       ),
@@ -99,17 +105,41 @@ ui <- dashboardPage(
         survivalPlotGeneralInputUI("SurvivalPlot")
       ),
       conditionalPanel(
-        condition = "input.tabs == 'Implant Survival'",
-        sidebarMenu(menuItem("Basic options",
-                             tabName = "basic",
-                             factorSurvivalPlotBasicInputUI("FactorSurvival"),
-                             startExpanded = T,
-                             style="padding-bottom:6px;"
-        ))
+        condition = "input.tabs == 'Survival Factors'",
+        sidebarMenu(
+          menuItem("Basic options",
+            tabName = "basic",
+            factorSurvivalPlotBasicInputUI("FactorSurvival"),
+            startExpanded = T,
+            style = "padding-bottom:6px;"
+          )
+        )
       ),
       conditionalPanel(
-        condition = "input.tabs == 'Implant Survival'",
+        condition = "input.tabs == 'Survival Factors'",
         factorSurvivalPlotGeneralInputUI("FactorSurvival")
+      ),
+      conditionalPanel(
+        condition = "input.tabs == 'Explorer'",
+        sidebarMenu(
+          menuItem("Options",
+            tagList(
+              explorerPlotOptionsUI("Explorer"),
+              materialSwitch(
+                inputId = "useAdvanced",
+                label = "Advanced Mode",
+                value = F,
+                status = "primary"
+              )
+            ),
+            startExpanded = T,
+            style = "padding-bottom:6px;"
+          )
+        )
+      ),
+      conditionalPanel(
+        condition = "input.tabs == 'Explorer'",
+        explorerPlotGeneralOptionsUI("Explorer")
       )
     ),
     sidebarMenu(
@@ -120,10 +150,6 @@ ui <- dashboardPage(
       conditionalPanel(
         condition = "input.tabs == 'Clinic'",
         clinicInputUI("ClinicInfo")
-      ),
-      conditionalPanel(
-        condition = "input.tabs == 'Explorer'",
-        explorePlotOptionsUI("Explorer")
       )
     )
   ),
@@ -155,7 +181,7 @@ ui <- dashboardPage(
         ),
       ),
       tabPanel(
-        "Implant Survival",
+        "Survival Factors",
         fluidRow(
           box(
             title = "Survival by factor",
@@ -267,6 +293,7 @@ server <- function(input, output, session) {
   completeTable <- getCompleteTable()
   overallFilter <- reactiveVal("None")
   overallFilterLevels <- reactiveVal(NULL)
+  useAdvanced <- reactiveVal(FALSE)
 
   # ---------------------------------------------------------------------------
   # Global events and variables
@@ -299,6 +326,10 @@ server <- function(input, output, session) {
     overallFilterLevels(input$overallFilterLevels)
   })
 
+  observeEvent(input$useAdvanced, {
+    useAdvanced(input$useAdvanced)
+  })
+
 
   # ---------------------------------------------------------------------------
   # Removals Plot
@@ -314,7 +345,13 @@ server <- function(input, output, session) {
   # Explorer plot
   #----------------------------------------------------------------------------
 
-  explorerPlotServer("Explorer", data = completeTable, plotInReport = plotsInReport)
+  explorerPlotServer("Explorer",
+    data = completeTable,
+    plotInReport = plotsInReport,
+    overallFilter = overallFilter,
+    overallFilterLevels = overallFilterLevels,
+    useAdvanced = useAdvanced
+  )
 
   #----------------------------------------------------------------------------
   # Analyses
@@ -340,17 +377,21 @@ server <- function(input, output, session) {
     overallFilterLevels = overallFilterLevels
   )
 
-  factorSurvivalServer("FactorSurvival", data = completeTable,
-                        plotInReport = plotsInReport,
-                        overallFilter = overallFilter,
-                        overallFilterLevels = overallFilterLevels)
+  factorSurvivalServer("FactorSurvival",
+    data = completeTable,
+    plotInReport = plotsInReport,
+    overallFilter = overallFilter,
+    overallFilterLevels = overallFilterLevels
+  )
 
   #----------------------------------------------------------------------------
   # Clinic
   #----------------------------------------------------------------------------
-  clinicServer("ClinicInfo", data = completeTable, plotInReport = plotsInReport,
-               overallFilter = overallFilter,
-               overallFilterLevels = overallFilterLevels)
+  clinicServer("ClinicInfo",
+    data = completeTable, plotInReport = plotsInReport,
+    overallFilter = overallFilter,
+    overallFilterLevels = overallFilterLevels
+  )
 }
 
 shinyApp(ui, server)

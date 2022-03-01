@@ -1,5 +1,5 @@
 antibioticsInfo <- function(data, selectedClinic, overallFilter, overallFilterLevels) {
-  if(isTruthy(overallFilter) & isTruthy(overallFilterLevels)) {
+  if(isTruthy(overallFilter) & isTruthy(overallFilterLevels) & isTruthy(overallFilter != "None")) {
     data <- data %>% filter(
       vectorContainsAnyElement(., overallFilterLevels, overallFilter)
     )
@@ -30,7 +30,7 @@ antibioticsInfo <- function(data, selectedClinic, overallFilter, overallFilterLe
 }
 
 complicationsInfo <- function(data, selectedClinic, overallFilter, overallFilterLevels) {
-  if(isTruthy(overallFilter) & isTruthy(overallFilterLevels)) {
+  if(isTruthy(overallFilter) & isTruthy(overallFilterLevels) & isTruthy(overallFilter != "None")) {
     data <- data %>% filter(
       vectorContainsAnyElement(., overallFilterLevels, overallFilter)
     )
@@ -61,7 +61,7 @@ complicationsInfo <- function(data, selectedClinic, overallFilter, overallFilter
 }
 
 guiderailInfo <- function(data, selectedClinic,  overallFilter, overallFilterLevels) {
-  if(isTruthy(overallFilter) & isTruthy(overallFilterLevels)) {
+  if(isTruthy(overallFilter) & isTruthy(overallFilterLevels) & isTruthy(overallFilter != "None")) {
     data <- data %>% filter(
       vectorContainsAnyElement(., overallFilterLevels, overallFilter)
     )

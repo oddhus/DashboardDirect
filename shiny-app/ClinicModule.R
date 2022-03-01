@@ -81,6 +81,8 @@ clinicServer <- function(id, data, plotInReport, overallFilter, overallFilterLev
         if(input$confirm){
           plotInReport$dList <- c(isolate(plotInReport$dList),
                                   list(c("clinic" = isolate(input$selectClinic),
+                                         "overallFilter" = isolate(overallFilter()),
+                                         "overallFilterLevels" = isolate(paste(overallFilterLevels(), collapse = ";")),
                                          "tab" = "Clinic")))
         }
       })

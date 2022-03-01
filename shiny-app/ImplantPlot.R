@@ -1,5 +1,5 @@
 overviewRemovalReasonPlot <- function(data, removalReasons, years, factor, levels, showMean, overallFilter, overallFilterLevels){
-  if(isTruthy(overallFilter) & isTruthy(overallFilterLevels)) {
+  if(isTruthy(overallFilter) & isTruthy(overallFilterLevels) & isTruthy(overallFilter != "None")) {
     data <- data %>% filter(
       vectorContainsAnyElement(., overallFilterLevels, overallFilter)
     )
@@ -67,7 +67,8 @@ overviewRemovalReasonPlot <- function(data, removalReasons, years, factor, level
     left_join(tot, by = c("RemovalBeforeNYear",
                           if (isTruthy(factor) & isTRUE(factor != "None")) as.character(factor) else NULL)) %>%
     mutate(Percentage = n/tot,
-           RemovalBeforeNYear = as.factor(RemovalBeforeNYear))
+           RemovalBeforeNYear = as.factor(RemovalBeforeNYear),
+           nObservations = paste0("N = ", n))
   
   
   p <- ggbarplot(filteredData, x = "RemovalReason", y = "Percentage",
@@ -78,10 +79,10 @@ overviewRemovalReasonPlot <- function(data, removalReasons, years, factor, level
             #sort.val = "asc",           # Sort the value in dscending order
             #sort.by.groups = TRUE,      # Sort inside each group
             #x.text.angle = 90           # Rotate vertically x axis texts,
-            title = "Tooth Implants Removal Reasons",
             xlab = "Removal Reason",
             rotate = TRUE,
-            position = position_dodge(0.9)
+            position = position_dodge(0.9),
+            label = filteredData$nObservations
   ) + {
     if (showMean) {
       stat_mean(data = meanData,aes(fill = RemovalReason), size = 2, color = "grey20", geom = "point")
