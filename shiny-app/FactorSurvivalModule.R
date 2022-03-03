@@ -16,7 +16,7 @@ factorSurvivalPlotBasicInputUI <- function(id) {
     sliderTextInput(
       inputId = ns("selectSecond"),
       label = "Choose second year:",
-      choices = c(4, 5, 6, 7, 8, 9),
+      choices = c(2, 3, 4, 5, 6, 7, 8, 9),
       grid = TRUE,
       selected = 5
     )

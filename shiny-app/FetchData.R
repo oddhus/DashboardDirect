@@ -34,8 +34,30 @@ getLocalCon <- function() {
   return(con)
 }
 
+getLocalCon2 <- function() {
+  con <- DBI::dbConnect(
+    odbc::odbc(),
+    Driver = "SQL Server",
+    Server = "localhost\\SQLEXPRESS",
+    Database = "DentalImplants2",
+  )
+  
+  return(con)
+}
+
+getLocalCon3 <- function() {
+  con <- DBI::dbConnect(
+    odbc::odbc(),
+    Driver = "SQL Server",
+    Server = "localhost\\SQLEXPRESS",
+    Database = "DentalImplants3",
+  )
+  
+  return(con)
+}
+
 getCompleteTable <- function() {
-  con <- getLocalCon()
+  con <- getLocalCon2()
   implant <- tbl(con, "Implant")
   removal <- tbl(con, "Removal")
   insertion <- tbl(con, "Insertion")
@@ -174,8 +196,8 @@ getCompleteTable <- function() {
       ),
       ImplantDiameterFactor = case_when(
         ceiling(ImplantDiameterMillimeter) < 4 ~ "< 4mm",
-        ceiling(ImplantDiameterMillimeter) <= 8 ~ "4-8mm",
-        ceiling(ImplantDiameterMillimeter) > 12 ~ "> 8mm",
+        ceiling(ImplantDiameterMillimeter) <= 6 ~ "4-6mm",
+        ceiling(ImplantDiameterMillimeter) > 6 ~ "> 6mm",
         TRUE ~ as.character(NA)
       ),
       AntibioticsDoseMgFactor = case_when(
@@ -186,7 +208,6 @@ getCompleteTable <- function() {
       )
     ) %>%
     mutate(across(where(is.character) | Position, as.factor))
-
 
   data$RemovalBeforeNYear <- factor(data$RemovalBeforeNYear, levels = c("Year 1", "Year 2-4", "Year 5-9", "Over 10"))
 
