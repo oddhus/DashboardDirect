@@ -13,7 +13,7 @@ factorSurvivalPlot <- function(data,
   }
   
   if (isTruthy(factor) & isTruthy(levels) & isTRUE(factor != "None")) {
-    filteredData <- filteredData %>% filter(
+    data <- data %>% filter(
       vectorContainsAnyElement(., levels, factor)
     )
   }
@@ -22,15 +22,11 @@ factorSurvivalPlot <- function(data,
     group_by_at(factor) %>%
     summarise(all = n())
   
-  removed_FirstYearData <- data %>% filter(!is.na(InsertionDate) &
-                                      !is.na(RemovalDate) &
-                                      ceiling(survt / 365.5) <= firstYear) %>%
+  removed_FirstYearData <- data %>% filter(ceiling(survt / 365.5) <= firstYear) %>%
     group_by_at(factor) %>%
     summarise(removed = n())
   
-  removed_SecondYearData <- data %>% filter(!is.na(InsertionDate) &
-                                      !is.na(RemovalDate) &
-                                      ceiling(survt / 365.5) <= secondYear) %>%
+  removed_SecondYearData <- data %>% filter(ceiling(survt / 365.5) <= secondYear) %>%
     group_by_at(factor) %>%
     summarise(removed = n())
   
@@ -71,6 +67,8 @@ factorSurvivalPlot <- function(data,
   data_SecondYear$Year = as.factor(secondYear)
   
   combinedData <- bind_rows(data_FirstYear, data_SecondYear)
+  
+  print(combinedData)
   
   ggdotchart(combinedData, x = "FactorWithN", y = "successRate",
              color = "Year",                                # Color by groups

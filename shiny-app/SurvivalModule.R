@@ -5,6 +5,13 @@ survivalPlotBasicInputUI <- function(id) {
   tagList(
     htmlOutput(ns("selectFactor")),
     htmlOutput(ns("selectLevels")),
+    sliderTextInput(
+      inputId = ns("selectTime"),
+      label = "Choose max time:", 
+      choices = c(100, 500, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000),
+      grid = TRUE,
+      selected = 4000
+    )
   )
 }
 
@@ -63,6 +70,7 @@ survivalPlotServer <- function(id, data, plotInReport, overallFilter, overallFil
                                          "levels" = isolate(paste(input$selectLevels, collapse = ";")),
                                          "additionalFactor" = isolate(input$selectAdditionalFactor),
                                          "additionalLevels" = isolate(paste(input$selectAdditionalLevels, collapse = ";")),
+                                         "time" = isolate(input$selectTime),
                                          "overallFilter" = isolate(overallFilter()),
                                          "overallFilterLevels" = isolate(paste(overallFilterLevels(), collapse = ";")),
                                          "tab" = "Survival")))
@@ -124,12 +132,14 @@ survivalPlotServer <- function(id, data, plotInReport, overallFilter, overallFil
       ## Plots --------------------------------------------------------------------
       output$survivalPlot <- renderPlot({
         req(isTruthy(input$selectFactor))
+        req(isTruthy(input$selectTime))
         
         survivalPlot(data = data,
                      factor = input$selectFactor,
                      levels = input$selectLevels,
                      additionalFactor = input$selectAdditionalFactor,
                      additionalLevels = input$selectAdditionalLevels,
+                     time = input$selectTime,
                      overallFilter = overallFilter(),
                      overallFilterLevels = overallFilterLevels())
       })

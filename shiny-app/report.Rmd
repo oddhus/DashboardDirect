@@ -117,6 +117,7 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor i
                       levels = strsplit(params$plotArgs[[i]]["levels"], ";")[[1]],
                       additionalFactor = params$plotArgs[[i]]["additionalFactor"],
                       additionalLevels = strsplit(params$plotArgs[[i]]["additionalLevels"], ";")[[1]],
+                      time = params$plotArgs[[i]]["time"],
                       overallFilter = params$plotArgs[[i]]["overallFilter"],
                       overallFilterLevels = strsplit(params$plotArgs[[i]]["overallFilterLevels"], ";")[[1]])
        )

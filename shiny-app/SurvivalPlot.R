@@ -1,9 +1,14 @@
-survivalPlot <- function(data, factor, levels, additionalFactor, additionalLevels, overallFilter, overallFilterLevels){
+survivalPlot <- function(data, factor, levels, additionalFactor, additionalLevels, time, overallFilter, overallFilterLevels){
   if(isTruthy(overallFilter) & isTruthy(overallFilterLevels) & isTruthy(overallFilter != "None")) {
     data <- data %>% filter(
       vectorContainsAnyElement(., overallFilterLevels, overallFilter)
     )
   }
+  
+  data <- data %>% mutate(
+    survStatusCencored = if_else(survt > time, 1, survStatus),
+    survTimeCencored = if_else(survt > time, as.double(time), survt)
+  )
   
   filteredData <- data
   

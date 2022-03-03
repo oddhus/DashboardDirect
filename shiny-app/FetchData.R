@@ -56,8 +56,19 @@ getLocalCon3 <- function() {
   return(con)
 }
 
+getLocalCon4 <- function() {
+  con <- DBI::dbConnect(
+    odbc::odbc(),
+    Driver = "SQL Server",
+    Server = "localhost\\SQLEXPRESS",
+    Database = "DentalImplants4",
+  )
+  
+  return(con)
+}
+
 getCompleteTable <- function() {
-  con <- getLocalCon2()
+  con <- getLocalCon4()
   implant <- tbl(con, "Implant")
   removal <- tbl(con, "Removal")
   insertion <- tbl(con, "Insertion")
@@ -178,7 +189,10 @@ getCompleteTable <- function() {
       intactAfter1Year = if_else(YearsSinceInsertion > 1, TRUE, FALSE),
       intactAfter3Year = if_else(YearsSinceInsertion > 3, TRUE, FALSE),
       intactAfter5Year = if_else(YearsSinceInsertion > 5, TRUE, FALSE),
-      intactAfter7Year = if_else(YearsSinceInsertion > 7, TRUE, FALSE)
+      intactAfter7Year = if_else(YearsSinceInsertion > 7, TRUE, FALSE),
+      ImplantLengthMillimeter = if_else(ImplantLengthMillimeter > 100,
+                                        ImplantLengthMillimeter / 100,
+                                        ImplantLengthMillimeter)
     ) %>%
     mutate(
       RemovalBeforeNYear = case_when(
@@ -205,7 +219,8 @@ getCompleteTable <- function() {
         ceiling(AntibioticsDoseMg) <= 4000 ~ "2500-3500mg",
         ceiling(AntibioticsDoseMg) > 4000 ~ "> 3500mg",
         TRUE ~ as.character(NA)
-      )
+      ),
+      survt = if_else(survt < 0 | survt > 10000, as.double(NA), survt)
     ) %>%
     mutate(across(where(is.character) | Position, as.factor))
 

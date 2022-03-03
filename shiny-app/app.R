@@ -302,13 +302,13 @@ server <- function(input, output, session) {
   plotsInReport <- reactiveValues()
 
   output$overallFilterLevels <- renderUI({
-    req(isTruthy(input$overallFilter) & isTRUE(input$overallFilter != "None"))
-
+    req(isTruthy(input$overallFilter),
+        isTruthy(input$overallFilter != "None"))
 
     pickerInput("overallFilterLevels",
-      paste("Filter ", input$overallFilter),
+      paste0("Filter ", input$overallFilter),
       choices = as.character(
-        sort(unique(data[[input$overallFilter]]))
+        sort(unique(completeTable[[input$overallFilter]]))
       ),
       multiple = T,
       options = list(
@@ -395,3 +395,4 @@ server <- function(input, output, session) {
 }
 
 shinyApp(ui, server)
+
