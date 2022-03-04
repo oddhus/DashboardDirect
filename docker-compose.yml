@@ -1,10 +1,9 @@
 version: "3.7"
 services:
-
   R-container:
     container_name: R-container
     image: dashboard-direct
     environment:
       - SHINY_LOG_STDERR=1
     ports:
-        - "3838:3838"
+      - "3838:3838"

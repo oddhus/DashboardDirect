@@ -5,5 +5,4 @@
 env.txt
 *.jar
 *.log
-load-test.R
-test_sessions
+

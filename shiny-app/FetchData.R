@@ -23,52 +23,19 @@ getCon <- function() {
   return(con)
 }
 
-getLocalCon <- function() {
+getLocalCon <- function(name = "DentalImplants", number = "") {
   con <- DBI::dbConnect(
     odbc::odbc(),
     Driver = "SQL Server",
     Server = "localhost\\SQLEXPRESS",
-    Database = "DentalImplants",
+    Database = paste0(name,number),
   )
 
-  return(con)
-}
-
-getLocalCon2 <- function() {
-  con <- DBI::dbConnect(
-    odbc::odbc(),
-    Driver = "SQL Server",
-    Server = "localhost\\SQLEXPRESS",
-    Database = "DentalImplants2",
-  )
-  
-  return(con)
-}
-
-getLocalCon3 <- function() {
-  con <- DBI::dbConnect(
-    odbc::odbc(),
-    Driver = "SQL Server",
-    Server = "localhost\\SQLEXPRESS",
-    Database = "DentalImplants3",
-  )
-  
-  return(con)
-}
-
-getLocalCon4 <- function() {
-  con <- DBI::dbConnect(
-    odbc::odbc(),
-    Driver = "SQL Server",
-    Server = "localhost\\SQLEXPRESS",
-    Database = "DentalImplants4",
-  )
-  
   return(con)
 }
 
 getCompleteTable <- function() {
-  con <- getLocalCon4()
+  con <- getCon()
   implant <- tbl(con, "Implant")
   removal <- tbl(con, "Removal")
   insertion <- tbl(con, "Insertion")
