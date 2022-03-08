@@ -99,7 +99,7 @@ explorerFunnelPlot <- function(data,
     geom_smooth(aes(y =lcl99.7),se = FALSE, linetype ="dashed",color = "steelblue", size = 1) +
     geom_smooth(aes(y =ucl99.7),se = FALSE, linetype ="dashed",color = "steelblue", size = 1) +
     geom_hline(aes(yintercept =OverallSuccess), color = "black", linetype="dashed") + 
-    scale_y_continuous(labels = scales::percent, limits = c(NA, 1)) + 
+    scale_y_continuous(labels = scales::percent) + 
     font("title", size = 18) +
     font("xlab", size = 14) +
     font("ylab", size = 14) +
